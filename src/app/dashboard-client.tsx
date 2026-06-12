@@ -17,9 +17,18 @@ import {
   useCreateParticipant,
   useParticipants,
 } from "@/hooks/use-participants";
+import {
+  useCreateProduct,
+  useProducts,
+  useUpdateProduct,
+} from "@/hooks/use-products";
 import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
-import type { ParticipantType } from "@/services/participants.service";
+import type {
+  Participant,
+  ParticipantType,
+} from "@/services/participants.service";
+import type { Product, ProductStatus } from "@/services/products.service";
 import { cn } from "@/lib/utils";
 
 const buttonClass = cva(
@@ -58,6 +67,11 @@ const participantTypeLabels: Record<ParticipantType, string> = {
   special_booth: "특수 부스",
 };
 
+const productStatusLabels: Record<ProductStatus, string> = {
+  active: "판매",
+  inactive: "중지",
+};
+
 export function DashboardClient() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -65,9 +79,13 @@ export function DashboardClient() {
   const [participantMessage, setParticipantMessage] = useState<string | null>(
     null,
   );
+  const [productMessage, setProductMessage] = useState<string | null>(null);
   const [requestedMarketId, setRequestedMarketId] = useState<string | null>(
     null,
   );
+  const [requestedParticipantId, setRequestedParticipantId] = useState<
+    string | null
+  >(null);
 
   const currentUser = useCurrentUser();
   const user = currentUser.data ?? null;
@@ -86,7 +104,21 @@ export function DashboardClient() {
   const createMarket = useCreateMarket();
   const updateMarket = useUpdateMarket();
   const participants = useParticipants(selectedMarketId);
+  const selectedParticipantId = useMemo(() => {
+    if (!participants.data?.length) {
+      return null;
+    }
+
+    const requestedParticipant = participants.data.find(
+      (participant) => participant.id === requestedParticipantId,
+    );
+
+    return requestedParticipant?.id ?? participants.data[0].id;
+  }, [participants.data, requestedParticipantId]);
   const createParticipant = useCreateParticipant(selectedMarketId);
+  const products = useProducts(selectedParticipantId);
+  const createProduct = useCreateProduct(selectedParticipantId);
+  const updateProduct = useUpdateProduct(selectedParticipantId);
   const login = useLogin();
   const register = useRegister();
   const logout = useLogout();
@@ -96,12 +128,19 @@ export function DashboardClient() {
       markets.data?.find((market) => market.id === selectedMarketId) ?? null,
     [markets.data, selectedMarketId],
   );
+  const selectedParticipant = useMemo(
+    () =>
+      participants.data?.find(
+        (participant) => participant.id === selectedParticipantId,
+      ) ?? null,
+    [participants.data, selectedParticipantId],
+  );
 
   const summary = [
     { label: "마켓", value: String(markets.data?.length ?? 0) },
     { label: "참가자", value: String(participants.data?.length ?? 0) },
+    { label: "상품", value: String(products.data?.length ?? 0) },
     { label: "운영 중", value: countMarketsByStatus(markets.data, "active") },
-    { label: "정산 대기", value: "0" },
   ];
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
@@ -131,6 +170,7 @@ export function DashboardClient() {
     setAuthMessage(null);
     await logout.mutateAsync();
     setRequestedMarketId(null);
+    setRequestedParticipantId(null);
   }
 
   async function handleCreateMarket(event: FormEvent<HTMLFormElement>) {
@@ -149,6 +189,7 @@ export function DashboardClient() {
       });
 
       setRequestedMarketId(market.id);
+      setRequestedParticipantId(null);
       form.reset();
     } catch (error) {
       setMarketMessage(getErrorMessage(error));
@@ -179,7 +220,7 @@ export function DashboardClient() {
     const formData = new FormData(form);
 
     try {
-      await createParticipant.mutateAsync({
+      const participant = await createParticipant.mutateAsync({
         displayName: getFormString(formData, "displayName"),
         participantType: getFormString(formData, "participantType") as ParticipantType,
         salesCommissionRate: getPercentRate(formData, "salesCommissionPercent"),
@@ -190,9 +231,50 @@ export function DashboardClient() {
         participationFeeAmount: getNumber(formData, "participationFeeAmount"),
       });
 
+      setRequestedParticipantId(participant.id);
       form.reset();
     } catch (error) {
       setParticipantMessage(getErrorMessage(error));
+    }
+  }
+
+  async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setProductMessage(null);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      await createProduct.mutateAsync({
+        name: getFormString(formData, "name"),
+        sku: getOptionalFormString(formData, "sku"),
+        priceAmount: getRequiredNumber(
+          formData,
+          "priceAmount",
+          "가격을 입력해주세요.",
+        ),
+      });
+
+      form.reset();
+    } catch (error) {
+      setProductMessage(getErrorMessage(error));
+    }
+  }
+
+  async function handleProductStatusChange(
+    productId: string,
+    status: ProductStatus,
+  ) {
+    setProductMessage(null);
+
+    try {
+      await updateProduct.mutateAsync({
+        productId,
+        payload: { status },
+      });
+    } catch (error) {
+      setProductMessage(getErrorMessage(error));
     }
   }
 
@@ -365,7 +447,10 @@ export function DashboardClient() {
             <MarketTable
               markets={markets.data ?? []}
               selectedMarketId={selectedMarketId}
-              onSelectMarket={setRequestedMarketId}
+              onSelectMarket={(marketId) => {
+                setRequestedMarketId(marketId);
+                setRequestedParticipantId(null);
+              }}
               onStatusChange={handleMarketStatusChange}
             />
           </div>
@@ -456,8 +541,85 @@ export function DashboardClient() {
                 </p>
               )}
             </form>
-            <ParticipantList participants={participants.data ?? []} />
+            <ParticipantList
+              participants={participants.data ?? []}
+              selectedParticipantId={selectedParticipantId}
+              onSelectParticipant={setRequestedParticipantId}
+            />
           </aside>
+        </section>
+
+        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-950">상품</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                {selectedParticipant
+                  ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
+                  : "참가자 미선택"}
+              </p>
+            </div>
+            <form
+              className="grid gap-2 lg:grid-cols-[200px_220px_160px_140px_auto]"
+              data-testid="product-form"
+              onSubmit={handleCreateProduct}
+            >
+              <select
+                className={selectClass}
+                disabled={!participants.data?.length}
+                onChange={(event) =>
+                  setRequestedParticipantId(event.target.value || null)
+                }
+                value={selectedParticipantId ?? ""}
+              >
+                <option value="">참가자 선택</option>
+                {(participants.data ?? []).map((participant) => (
+                  <option key={participant.id} value={participant.id}>
+                    {participant.displayName}
+                  </option>
+                ))}
+              </select>
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                name="name"
+                placeholder="상품명"
+                type="text"
+              />
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                name="sku"
+                placeholder="SKU"
+                type="text"
+              />
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                min="0"
+                name="priceAmount"
+                placeholder="가격"
+                step="1"
+                type="number"
+              />
+              <button
+                className={buttonClass()}
+                disabled={!selectedParticipant || createProduct.isPending}
+                type="submit"
+              >
+                상품 추가
+              </button>
+            </form>
+          </div>
+          {productMessage && (
+            <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+              {productMessage}
+            </p>
+          )}
+          <ProductTable
+            products={products.data ?? []}
+            onStatusChange={handleProductStatusChange}
+          />
         </section>
       </div>
     </main>
@@ -540,8 +702,12 @@ function MarketTable({
 
 function ParticipantList({
   participants,
+  selectedParticipantId,
+  onSelectParticipant,
 }: {
-  participants: NonNullable<ReturnType<typeof useParticipants>["data"]>;
+  participants: Participant[];
+  selectedParticipantId: string | null;
+  onSelectParticipant: (participantId: string) => void;
 }) {
   if (participants.length === 0) {
     return (
@@ -557,10 +723,15 @@ function ParticipantList({
       data-testid="participant-list"
     >
       {participants.map((participant) => (
-        <div
-          className="px-4 py-3"
+        <button
+          className={cn(
+            "w-full px-4 py-3 text-left transition hover:bg-emerald-50/50",
+            selectedParticipantId === participant.id && "bg-emerald-50",
+          )}
           data-testid="participant-row"
           key={participant.id}
+          onClick={() => onSelectParticipant(participant.id)}
+          type="button"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -589,8 +760,69 @@ function ParticipantList({
               </dd>
             </div>
           </dl>
-        </div>
+        </button>
       ))}
+    </div>
+  );
+}
+
+function ProductTable({
+  products,
+  onStatusChange,
+}: {
+  products: Product[];
+  onStatusChange: (productId: string, status: ProductStatus) => void;
+}) {
+  if (products.length === 0) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+        등록된 상품이 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] border-collapse text-sm">
+        <thead className="bg-zinc-50 text-left text-zinc-500">
+          <tr>
+            <th className="px-4 py-3 font-medium">상품명</th>
+            <th className="px-4 py-3 font-medium">SKU</th>
+            <th className="px-4 py-3 text-right font-medium">가격</th>
+            <th className="px-4 py-3 font-medium">상태</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100">
+          {products.map((product) => (
+            <tr data-testid="product-row" key={product.id}>
+              <td className="px-4 py-3 font-medium text-zinc-950">
+                {product.name}
+              </td>
+              <td className="px-4 py-3 text-zinc-600">
+                {product.sku ?? "-"}
+              </td>
+              <td className="px-4 py-3 text-right font-medium text-zinc-950">
+                {formatWon(product.priceAmount)}
+              </td>
+              <td className="px-4 py-3">
+                <select
+                  className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-800"
+                  onChange={(event) =>
+                    onStatusChange(product.id, event.target.value as ProductStatus)
+                  }
+                  value={product.status}
+                >
+                  {Object.entries(productStatusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -617,6 +849,20 @@ function getNumber(formData: FormData, name: string): number | undefined {
 
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
+function getRequiredNumber(
+  formData: FormData,
+  name: string,
+  message: string,
+): number {
+  const value = getNumber(formData, name);
+
+  if (value === undefined) {
+    throw new Error(message);
+  }
+
+  return value;
 }
 
 function getPercentRate(formData: FormData, name: string): number | undefined {
