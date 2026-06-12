@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+import { apiRequest } from "./api-client";
 
 export type HealthResponse = {
   status: string;
@@ -7,11 +6,5 @@ export type HealthResponse = {
 };
 
 export async function getHealth(): Promise<HealthResponse> {
-  const response = await fetch(`${API_BASE_URL}/health`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch API health status");
-  }
-
-  return response.json() as Promise<HealthResponse>;
+  return apiRequest<HealthResponse>("/health");
 }
