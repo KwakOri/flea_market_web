@@ -27,7 +27,11 @@ import {
   useReceipts,
   useUpdateReceipt,
 } from "@/hooks/use-receipts";
-import { useSettlementPreview } from "@/hooks/use-settlement-preview";
+import {
+  useCreateSettlement,
+  useSettlementPreview,
+  useSettlements,
+} from "@/hooks/use-settlement-preview";
 import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
@@ -40,6 +44,8 @@ import type { PaymentMethod, Receipt } from "@/services/receipts.service";
 import type {
   MarketSettlementPreview,
   ParticipantSettlementPreview,
+  SettlementListItem,
+  SettlementStatus,
 } from "@/services/settlements.service";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +103,12 @@ const settlementTypeLabels: Record<SettlementType, string> = {
   investment: "투자",
 };
 
+const settlementStatusLabels: Record<SettlementStatus, string> = {
+  confirmed: "확정",
+  superseded: "이전 회차",
+  voided: "무효",
+};
+
 export function DashboardClient() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -107,6 +119,9 @@ export function DashboardClient() {
   const [productMessage, setProductMessage] = useState<string | null>(null);
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null);
   const [receiptEditMessage, setReceiptEditMessage] = useState<string | null>(
+    null,
+  );
+  const [settlementMessage, setSettlementMessage] = useState<string | null>(
     null,
   );
   const [requestedMarketId, setRequestedMarketId] = useState<string | null>(
@@ -153,6 +168,8 @@ export function DashboardClient() {
   const createReceipt = useCreateReceipt(selectedMarketId);
   const updateReceipt = useUpdateReceipt(selectedMarketId);
   const settlementPreview = useSettlementPreview(selectedMarketId);
+  const settlementHistory = useSettlements(selectedMarketId);
+  const createSettlementSnapshot = useCreateSettlement(selectedMarketId);
   const login = useLogin();
   const register = useRegister();
   const logout = useLogout();
@@ -436,6 +453,30 @@ export function DashboardClient() {
       setEditingReceiptId(null);
     } catch (error) {
       setReceiptEditMessage(getErrorMessage(error));
+    }
+  }
+
+  async function handleConfirmSettlement(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSettlementMessage(null);
+
+    if (!settlementPreview.data || settlementPreview.data.receiptCount === 0) {
+      setSettlementMessage("확정할 영수증이 없습니다.");
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const settlement = await createSettlementSnapshot.mutateAsync({
+        memo: getOptionalFormString(formData, "memo"),
+      });
+
+      setSettlementMessage(`v${settlement.versionNo} 정산이 확정되었습니다.`);
+      form.reset();
+    } catch (error) {
+      setSettlementMessage(getErrorMessage(error));
     }
   }
 
@@ -898,8 +939,13 @@ export function DashboardClient() {
             </p>
           </div>
           <SettlementPreviewPanel
+            history={settlementHistory.data ?? []}
+            isConfirming={createSettlementSnapshot.isPending}
+            isHistoryLoading={settlementHistory.isLoading}
             isLoading={settlementPreview.isLoading}
+            message={settlementMessage}
             preview={settlementPreview.data ?? null}
+            onConfirm={handleConfirmSettlement}
           />
         </section>
       </div>
@@ -1288,10 +1334,20 @@ function ReceiptEditPanel({
 
 function SettlementPreviewPanel({
   preview,
+  history,
   isLoading,
+  isHistoryLoading,
+  isConfirming,
+  message,
+  onConfirm,
 }: {
   preview: MarketSettlementPreview | null;
+  history: SettlementListItem[];
   isLoading: boolean;
+  isHistoryLoading: boolean;
+  isConfirming: boolean;
+  message: string | null;
+  onConfirm: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   if (isLoading) {
     return (
@@ -1319,6 +1375,32 @@ function SettlementPreviewPanel({
 
   return (
     <div>
+      <form
+        className="grid gap-2 border-b border-zinc-200 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto]"
+        data-testid="settlement-confirm-form"
+        onSubmit={onConfirm}
+      >
+        <input
+          className={inputClass}
+          disabled={isConfirming || preview.receiptCount === 0}
+          name="memo"
+          placeholder="확정 메모"
+          type="text"
+        />
+        <button
+          className={buttonClass()}
+          data-testid="settlement-confirm-submit"
+          disabled={isConfirming || preview.receiptCount === 0}
+          type="submit"
+        >
+          정산 확정
+        </button>
+        {message && (
+          <p className="text-sm font-medium text-zinc-700 md:col-span-2">
+            {message}
+          </p>
+        )}
+      </form>
       <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-5">
         <SettlementMetric label="총매출" value={formatWon(preview.netSalesAmount)} />
         <SettlementMetric
@@ -1359,6 +1441,84 @@ function SettlementPreviewPanel({
                 key={participant.participantId}
                 participant={participant}
               />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <SettlementHistoryPanel
+        history={history}
+        isLoading={isHistoryLoading}
+      />
+    </div>
+  );
+}
+
+function SettlementHistoryPanel({
+  history,
+  isLoading,
+}: {
+  history: SettlementListItem[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+        확정 이력을 불러오는 중입니다.
+      </div>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+        확정된 정산이 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-zinc-200">
+      <div className="px-4 py-3">
+        <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[920px] border-collapse text-sm">
+          <thead className="bg-zinc-50 text-left text-zinc-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">회차</th>
+              <th className="px-4 py-3 font-medium">상태</th>
+              <th className="px-4 py-3 font-medium">확정 시각</th>
+              <th className="px-4 py-3 text-right font-medium">총매출</th>
+              <th className="px-4 py-3 text-right font-medium">지급 예정</th>
+              <th className="px-4 py-3 text-right font-medium">마켓 손익</th>
+              <th className="px-4 py-3 font-medium">메모</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {history.map((settlement) => (
+              <tr data-testid="settlement-history-row" key={settlement.id}>
+                <td className="px-4 py-3 font-medium text-zinc-950">
+                  v{settlement.versionNo}
+                </td>
+                <td className="px-4 py-3 text-zinc-700">
+                  {settlementStatusLabels[settlement.status]}
+                </td>
+                <td className="px-4 py-3 text-zinc-700">
+                  {formatDateTime(settlement.confirmedAt)}
+                </td>
+                <td className="px-4 py-3 text-right font-medium text-zinc-950">
+                  {formatWon(settlement.netSalesAmount)}
+                </td>
+                <td className="px-4 py-3 text-right text-zinc-700">
+                  {formatWon(settlement.participantPayoutAmount)}
+                </td>
+                <td className="px-4 py-3 text-right text-zinc-700">
+                  {formatWon(settlement.marketProfitAmount)}
+                </td>
+                <td className="max-w-[280px] truncate px-4 py-3 text-zinc-600">
+                  {settlement.memo ?? "-"}
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
