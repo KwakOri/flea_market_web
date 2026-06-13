@@ -22,6 +22,7 @@ import {
   useProducts,
   useUpdateProduct,
 } from "@/hooks/use-products";
+import { useCreateReceipt, useReceipts } from "@/hooks/use-receipts";
 import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
@@ -29,6 +30,7 @@ import type {
   ParticipantType,
 } from "@/services/participants.service";
 import type { Product, ProductStatus } from "@/services/products.service";
+import type { PaymentMethod, Receipt } from "@/services/receipts.service";
 import { cn } from "@/lib/utils";
 
 const buttonClass = cva(
@@ -72,6 +74,13 @@ const productStatusLabels: Record<ProductStatus, string> = {
   inactive: "중지",
 };
 
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  cash: "현금",
+  card: "카드",
+  transfer: "계좌이체",
+  other: "기타",
+};
+
 export function DashboardClient() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -80,6 +89,7 @@ export function DashboardClient() {
     null,
   );
   const [productMessage, setProductMessage] = useState<string | null>(null);
+  const [receiptMessage, setReceiptMessage] = useState<string | null>(null);
   const [requestedMarketId, setRequestedMarketId] = useState<string | null>(
     null,
   );
@@ -119,6 +129,8 @@ export function DashboardClient() {
   const products = useProducts(selectedParticipantId);
   const createProduct = useCreateProduct(selectedParticipantId);
   const updateProduct = useUpdateProduct(selectedParticipantId);
+  const receipts = useReceipts(selectedMarketId);
+  const createReceipt = useCreateReceipt(selectedMarketId);
   const login = useLogin();
   const register = useRegister();
   const logout = useLogout();
@@ -140,6 +152,7 @@ export function DashboardClient() {
     { label: "마켓", value: String(markets.data?.length ?? 0) },
     { label: "참가자", value: String(participants.data?.length ?? 0) },
     { label: "상품", value: String(products.data?.length ?? 0) },
+    { label: "영수증", value: String(receipts.data?.length ?? 0) },
     { label: "운영 중", value: countMarketsByStatus(markets.data, "active") },
   ];
 
@@ -278,6 +291,58 @@ export function DashboardClient() {
     }
   }
 
+  async function handleCreateReceipt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setReceiptMessage(null);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const participantId =
+      getFormString(formData, "participantId") || selectedParticipantId;
+    const totalAmount = getRequiredNumber(
+      formData,
+      "totalAmount",
+      "금액을 입력해주세요.",
+    );
+
+    if (!participantId) {
+      setReceiptMessage("참가자를 선택해주세요.");
+      return;
+    }
+
+    try {
+      await createReceipt.mutateAsync({
+        customerLabel: getOptionalFormString(formData, "customerLabel"),
+        memo: getOptionalFormString(formData, "memo"),
+        paymentSplits: [
+          {
+            paymentMethod: getFormString(
+              formData,
+              "paymentMethod",
+            ) as PaymentMethod,
+            amount: totalAmount,
+          },
+        ],
+        saleLines: [
+          {
+            participantId,
+            items: [
+              {
+                itemName: getFormString(formData, "itemName"),
+                quantity: 1,
+                unitPriceAmount: totalAmount,
+              },
+            ],
+          },
+        ],
+      });
+
+      form.reset();
+    } catch (error) {
+      setReceiptMessage(getErrorMessage(error));
+    }
+  }
+
   return (
     <main className="min-h-screen bg-zinc-100 text-zinc-950">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6">
@@ -379,7 +444,7 @@ export function DashboardClient() {
           </section>
         </header>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {summary.map((item) => (
             <div
               className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm"
@@ -621,6 +686,97 @@ export function DashboardClient() {
             onStatusChange={handleProductStatusChange}
           />
         </section>
+
+        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-950">영수증</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                {selectedMarket?.name ?? "마켓 미선택"}
+              </p>
+            </div>
+            <form
+              className="grid gap-2 xl:grid-cols-[180px_180px_220px_150px_150px_1fr_auto]"
+              data-testid="receipt-form"
+              onSubmit={handleCreateReceipt}
+            >
+              <select
+                className={selectClass}
+                disabled={!participants.data?.length}
+                name="participantId"
+                onChange={(event) =>
+                  setRequestedParticipantId(event.target.value || null)
+                }
+                value={selectedParticipantId ?? ""}
+              >
+                <option value="">참가자 선택</option>
+                {(participants.data ?? []).map((participant) => (
+                  <option key={participant.id} value={participant.id}>
+                    {participant.displayName}
+                  </option>
+                ))}
+              </select>
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                name="customerLabel"
+                placeholder="구매자"
+                type="text"
+              />
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                name="itemName"
+                placeholder="판매 항목"
+                type="text"
+              />
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                min="0"
+                name="totalAmount"
+                placeholder="금액"
+                step="1"
+                type="number"
+              />
+              <select
+                className={selectClass}
+                defaultValue="cash"
+                disabled={!selectedParticipant}
+                name="paymentMethod"
+              >
+                {Object.entries(paymentMethodLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <input
+                className={inputClass}
+                disabled={!selectedParticipant}
+                name="memo"
+                placeholder="메모"
+                type="text"
+              />
+              <button
+                className={buttonClass()}
+                disabled={!selectedParticipant || createReceipt.isPending}
+                type="submit"
+              >
+                영수증 추가
+              </button>
+            </form>
+          </div>
+          {receiptMessage && (
+            <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+              {receiptMessage}
+            </p>
+          )}
+          <ReceiptTable
+            participants={participants.data ?? []}
+            receipts={receipts.data ?? []}
+          />
+        </section>
       </div>
     </main>
   );
@@ -827,6 +983,63 @@ function ProductTable({
   );
 }
 
+function ReceiptTable({
+  receipts,
+  participants,
+}: {
+  receipts: Receipt[];
+  participants: Participant[];
+}) {
+  if (receipts.length === 0) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+        등록된 영수증이 없습니다.
+      </div>
+    );
+  }
+
+  const participantNames = new Map(
+    participants.map((participant) => [participant.id, participant.displayName]),
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[920px] border-collapse text-sm">
+        <thead className="bg-zinc-50 text-left text-zinc-500">
+          <tr>
+            <th className="px-4 py-3 font-medium">판매 시각</th>
+            <th className="px-4 py-3 font-medium">구매자</th>
+            <th className="px-4 py-3 font-medium">판매 라인</th>
+            <th className="px-4 py-3 font-medium">결제</th>
+            <th className="px-4 py-3 text-right font-medium">합계</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100">
+          {receipts.map((receipt) => (
+            <tr data-testid="receipt-row" key={receipt.id}>
+              <td className="px-4 py-3 text-zinc-700">
+                {formatDateTime(receipt.soldAt)}
+              </td>
+              <td className="px-4 py-3 font-medium text-zinc-950">
+                {receipt.customerLabel ?? "-"}
+              </td>
+              <td className="px-4 py-3 text-zinc-700">
+                {formatSaleLines(receipt, participantNames)}
+              </td>
+              <td className="px-4 py-3 text-zinc-700">
+                {formatPaymentSplits(receipt)}
+              </td>
+              <td className="px-4 py-3 text-right font-semibold text-zinc-950">
+                {formatWon(receipt.totalAmount)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function getFormString(formData: FormData, name: string): string {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
@@ -907,4 +1120,46 @@ function formatWon(value: number): string {
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(2).replace(/\\.00$/, "")}%`;
+}
+
+function formatDateTime(value: string): string {
+  try {
+    return new Intl.DateTimeFormat("ko-KR", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatSaleLines(
+  receipt: Receipt,
+  participantNames: Map<string, string>,
+): string {
+  return receipt.saleLines
+    .map((saleLine) => {
+      const participantName =
+        participantNames.get(saleLine.participantId) ?? "참가자";
+      const itemNames = saleLine.items
+        .map((item) => item.itemName)
+        .filter(Boolean)
+        .join(", ");
+
+      return `${participantName} · ${itemNames || formatWon(saleLine.netAmount)}`;
+    })
+    .join(" / ");
+}
+
+function formatPaymentSplits(receipt: Receipt): string {
+  return receipt.paymentSplits
+    .map(
+      (paymentSplit) =>
+        `${paymentMethodLabels[paymentSplit.paymentMethod]} ${formatWon(
+          paymentSplit.amount,
+        )}`,
+    )
+    .join(" / ");
 }
