@@ -7,6 +7,7 @@ import {
   listReceipts,
   type CreateReceiptPayload,
 } from "@/services/receipts.service";
+import { settlementPreviewKeys } from "./use-settlement-preview";
 
 export const receiptKeys = {
   byMarket: (marketId: string) => ["receipts", marketId] as const,
@@ -44,6 +45,9 @@ export function useCreateReceipt(marketId: string | null) {
       if (marketId) {
         void queryClient.invalidateQueries({
           queryKey: receiptKeys.byMarket(marketId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: settlementPreviewKeys.byMarket(marketId),
         });
       }
     },

@@ -23,14 +23,20 @@ import {
   useUpdateProduct,
 } from "@/hooks/use-products";
 import { useCreateReceipt, useReceipts } from "@/hooks/use-receipts";
+import { useSettlementPreview } from "@/hooks/use-settlement-preview";
 import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
   Participant,
   ParticipantType,
+  SettlementType,
 } from "@/services/participants.service";
 import type { Product, ProductStatus } from "@/services/products.service";
 import type { PaymentMethod, Receipt } from "@/services/receipts.service";
+import type {
+  MarketSettlementPreview,
+  ParticipantSettlementPreview,
+} from "@/services/settlements.service";
 import { cn } from "@/lib/utils";
 
 const buttonClass = cva(
@@ -79,6 +85,12 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
   card: "카드",
   transfer: "계좌이체",
   other: "기타",
+};
+
+const settlementTypeLabels: Record<SettlementType, string> = {
+  commission: "수수료",
+  manual: "수기",
+  investment: "투자",
 };
 
 export function DashboardClient() {
@@ -131,6 +143,7 @@ export function DashboardClient() {
   const updateProduct = useUpdateProduct(selectedParticipantId);
   const receipts = useReceipts(selectedMarketId);
   const createReceipt = useCreateReceipt(selectedMarketId);
+  const settlementPreview = useSettlementPreview(selectedMarketId);
   const login = useLogin();
   const register = useRegister();
   const logout = useLogout();
@@ -777,6 +790,21 @@ export function DashboardClient() {
             receipts={receipts.data ?? []}
           />
         </section>
+
+        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <div className="border-b border-zinc-200 px-4 py-3">
+            <h2 className="text-base font-semibold text-zinc-950">
+              정산 미리보기
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              {selectedMarket?.name ?? "마켓 미선택"}
+            </p>
+          </div>
+          <SettlementPreviewPanel
+            isLoading={settlementPreview.isLoading}
+            preview={settlementPreview.data ?? null}
+          />
+        </section>
       </div>
     </main>
   );
@@ -1037,6 +1065,145 @@ function ReceiptTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function SettlementPreviewPanel({
+  preview,
+  isLoading,
+}: {
+  preview: MarketSettlementPreview | null;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+        정산 데이터를 불러오는 중입니다.
+      </div>
+    );
+  }
+
+  if (!preview) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+        마켓을 선택하면 정산 미리보기가 표시됩니다.
+      </div>
+    );
+  }
+
+  if (preview.participants.length === 0) {
+    return (
+      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+        등록된 참가자가 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-5">
+        <SettlementMetric label="총매출" value={formatWon(preview.netSalesAmount)} />
+        <SettlementMetric
+          label="판매 수수료"
+          value={formatWon(preview.salesCommissionAmount)}
+        />
+        <SettlementMetric
+          label="참가자 부담 카드 수수료"
+          value={formatWon(preview.cardFeeChargedToParticipantAmount)}
+        />
+        <SettlementMetric
+          label="마켓 부담 카드 수수료"
+          value={formatWon(preview.cardFeePaidByMarketAmount)}
+        />
+        <SettlementMetric
+          label="지급 예정"
+          value={formatWon(preview.participantPayoutAmount)}
+        />
+      </dl>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1120px] border-collapse text-sm">
+          <thead className="bg-zinc-50 text-left text-zinc-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">참가자</th>
+              <th className="px-4 py-3 text-right font-medium">현금</th>
+              <th className="px-4 py-3 text-right font-medium">카드</th>
+              <th className="px-4 py-3 text-right font-medium">계좌이체</th>
+              <th className="px-4 py-3 text-right font-medium">기타</th>
+              <th className="px-4 py-3 text-right font-medium">총매출</th>
+              <th className="px-4 py-3 text-right font-medium">판매 수수료</th>
+              <th className="px-4 py-3 text-right font-medium">카드 수수료</th>
+              <th className="px-4 py-3 text-right font-medium">지급 예정</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {preview.participants.map((participant) => (
+              <SettlementPreviewRow
+                key={participant.participantId}
+                participant={participant}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SettlementMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white px-4 py-3">
+      <dt className="text-xs font-medium text-zinc-500">{label}</dt>
+      <dd className="mt-1 text-lg font-semibold text-zinc-950">{value}</dd>
+    </div>
+  );
+}
+
+function SettlementPreviewRow({
+  participant,
+}: {
+  participant: ParticipantSettlementPreview;
+}) {
+  return (
+    <tr data-testid="settlement-row">
+      <td className="px-4 py-3">
+        <p className="font-medium text-zinc-950">{participant.displayName}</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          {participantTypeLabels[participant.participantType]} ·{" "}
+          {settlementTypeLabels[participant.settlementType]} ·{" "}
+          {participant.saleLineCount}건
+        </p>
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.cashSalesAmount)}
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.cardSalesAmount)}
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.transferSalesAmount)}
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.otherSalesAmount)}
+      </td>
+      <td className="px-4 py-3 text-right font-medium text-zinc-950">
+        {formatWon(participant.netSalesAmount)}
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.salesCommissionAmount)}
+        <span className="ml-1 text-xs text-zinc-400">
+          {formatPercent(participant.salesCommissionRate)}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right text-zinc-700">
+        {formatWon(participant.cardFeeAmount)}
+        <span className="ml-1 text-xs text-zinc-400">
+          {participant.cardFeePayer === "participant" ? "참가자" : "마켓"}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right font-semibold text-zinc-950">
+        {formatWon(participant.payoutAmount)}
+      </td>
+    </tr>
   );
 }
 

@@ -6,6 +6,7 @@ import {
   listParticipants,
   type CreateParticipantPayload,
 } from "@/services/participants.service";
+import { settlementPreviewKeys } from "./use-settlement-preview";
 
 export const participantKeys = {
   byMarket: (marketId: string) => ["participants", marketId] as const,
@@ -34,6 +35,9 @@ export function useCreateParticipant(marketId: string | null) {
       if (marketId) {
         void queryClient.invalidateQueries({
           queryKey: participantKeys.byMarket(marketId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: settlementPreviewKeys.byMarket(marketId),
         });
       }
     },
