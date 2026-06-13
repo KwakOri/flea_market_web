@@ -89,6 +89,8 @@ export type CreateReceiptPayload = {
   saleLines: CreateSaleLinePayload[];
 };
 
+export type UpdateReceiptPayload = Partial<CreateReceiptPayload>;
+
 export async function listReceipts(marketId: string): Promise<Receipt[]> {
   return apiRequest<Receipt[]>(`/markets/${marketId}/receipts`);
 }
@@ -105,4 +107,14 @@ export async function createReceipt(
 
 export async function getReceipt(receiptId: string): Promise<Receipt> {
   return apiRequest<Receipt>(`/receipts/${receiptId}`);
+}
+
+export async function updateReceipt(
+  receiptId: string,
+  payload: UpdateReceiptPayload,
+): Promise<Receipt> {
+  return apiRequest<Receipt>(`/receipts/${receiptId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

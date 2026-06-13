@@ -5,7 +5,9 @@ import {
   createReceipt,
   getReceipt,
   listReceipts,
+  updateReceipt,
   type CreateReceiptPayload,
+  type UpdateReceiptPayload,
 } from "@/services/receipts.service";
 import { settlementPreviewKeys } from "./use-settlement-preview";
 
@@ -48,6 +50,36 @@ export function useCreateReceipt(marketId: string | null) {
         });
         void queryClient.invalidateQueries({
           queryKey: settlementPreviewKeys.byMarket(marketId),
+        });
+      }
+    },
+  });
+}
+
+export function useUpdateReceipt(marketId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      receiptId,
+      payload,
+    }: {
+      receiptId: string;
+      payload: UpdateReceiptPayload;
+    }) => updateReceipt(receiptId, payload),
+    onSuccess: (receipt) => {
+      const resolvedMarketId = marketId ?? receipt.marketId;
+
+      void queryClient.invalidateQueries({
+        queryKey: receiptKeys.detail(receipt.id),
+      });
+
+      if (resolvedMarketId) {
+        void queryClient.invalidateQueries({
+          queryKey: receiptKeys.byMarket(resolvedMarketId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: settlementPreviewKeys.byMarket(resolvedMarketId),
         });
       }
     },

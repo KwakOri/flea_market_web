@@ -22,7 +22,11 @@ import {
   useProducts,
   useUpdateProduct,
 } from "@/hooks/use-products";
-import { useCreateReceipt, useReceipts } from "@/hooks/use-receipts";
+import {
+  useCreateReceipt,
+  useReceipts,
+  useUpdateReceipt,
+} from "@/hooks/use-receipts";
 import { useSettlementPreview } from "@/hooks/use-settlement-preview";
 import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
@@ -102,9 +106,13 @@ export function DashboardClient() {
   );
   const [productMessage, setProductMessage] = useState<string | null>(null);
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null);
+  const [receiptEditMessage, setReceiptEditMessage] = useState<string | null>(
+    null,
+  );
   const [requestedMarketId, setRequestedMarketId] = useState<string | null>(
     null,
   );
+  const [editingReceiptId, setEditingReceiptId] = useState<string | null>(null);
   const [requestedParticipantId, setRequestedParticipantId] = useState<
     string | null
   >(null);
@@ -143,6 +151,7 @@ export function DashboardClient() {
   const updateProduct = useUpdateProduct(selectedParticipantId);
   const receipts = useReceipts(selectedMarketId);
   const createReceipt = useCreateReceipt(selectedMarketId);
+  const updateReceipt = useUpdateReceipt(selectedMarketId);
   const settlementPreview = useSettlementPreview(selectedMarketId);
   const login = useLogin();
   const register = useRegister();
@@ -159,6 +168,11 @@ export function DashboardClient() {
         (participant) => participant.id === selectedParticipantId,
       ) ?? null,
     [participants.data, selectedParticipantId],
+  );
+  const editingReceipt = useMemo(
+    () =>
+      receipts.data?.find((receipt) => receipt.id === editingReceiptId) ?? null,
+    [editingReceiptId, receipts.data],
   );
 
   const summary = [
@@ -353,6 +367,75 @@ export function DashboardClient() {
       form.reset();
     } catch (error) {
       setReceiptMessage(getErrorMessage(error));
+    }
+  }
+
+  function handleStartReceiptEdit(receipt: Receipt) {
+    setReceiptEditMessage(null);
+    setEditingReceiptId(receipt.id);
+
+    const saleLine = getPrimarySaleLine(receipt);
+    if (saleLine) {
+      setRequestedParticipantId(saleLine.participantId);
+    }
+  }
+
+  async function handleUpdateReceipt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setReceiptEditMessage(null);
+
+    if (!editingReceipt) {
+      setReceiptEditMessage("수정할 영수증을 선택해주세요.");
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const participantId = getFormString(formData, "participantId");
+    const totalAmount = getRequiredNumber(
+      formData,
+      "totalAmount",
+      "금액을 입력해주세요.",
+    );
+
+    if (!participantId) {
+      setReceiptEditMessage("참가자를 선택해주세요.");
+      return;
+    }
+
+    try {
+      await updateReceipt.mutateAsync({
+        receiptId: editingReceipt.id,
+        payload: {
+          customerLabel: getOptionalFormString(formData, "customerLabel"),
+          memo: getOptionalFormString(formData, "memo"),
+          paymentSplits: [
+            {
+              paymentMethod: getFormString(
+                formData,
+                "paymentMethod",
+              ) as PaymentMethod,
+              amount: totalAmount,
+            },
+          ],
+          saleLines: [
+            {
+              participantId,
+              items: [
+                {
+                  itemName: getFormString(formData, "itemName"),
+                  quantity: 1,
+                  unitPriceAmount: totalAmount,
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      setEditingReceiptId(null);
+    } catch (error) {
+      setReceiptEditMessage(getErrorMessage(error));
     }
   }
 
@@ -785,7 +868,21 @@ export function DashboardClient() {
               {receiptMessage}
             </p>
           )}
+          {editingReceipt && (
+            <ReceiptEditPanel
+              isPending={updateReceipt.isPending}
+              message={receiptEditMessage}
+              participants={participants.data ?? []}
+              receipt={editingReceipt}
+              onCancel={() => {
+                setEditingReceiptId(null);
+                setReceiptEditMessage(null);
+              }}
+              onSubmit={handleUpdateReceipt}
+            />
+          )}
           <ReceiptTable
+            onEditReceipt={handleStartReceiptEdit}
             participants={participants.data ?? []}
             receipts={receipts.data ?? []}
           />
@@ -1014,9 +1111,11 @@ function ProductTable({
 function ReceiptTable({
   receipts,
   participants,
+  onEditReceipt,
 }: {
   receipts: Receipt[];
   participants: Participant[];
+  onEditReceipt: (receipt: Receipt) => void;
 }) {
   if (receipts.length === 0) {
     return (
@@ -1040,6 +1139,7 @@ function ReceiptTable({
             <th className="px-4 py-3 font-medium">판매 라인</th>
             <th className="px-4 py-3 font-medium">결제</th>
             <th className="px-4 py-3 text-right font-medium">합계</th>
+            <th className="px-4 py-3 text-right font-medium">작업</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -1060,11 +1160,129 @@ function ReceiptTable({
               <td className="px-4 py-3 text-right font-semibold text-zinc-950">
                 {formatWon(receipt.totalAmount)}
               </td>
+              <td className="px-4 py-3 text-right">
+                <button
+                  className={buttonClass({ intent: "secondary" })}
+                  disabled={!isSimpleReceipt(receipt)}
+                  onClick={() => onEditReceipt(receipt)}
+                  type="button"
+                >
+                  수정
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ReceiptEditPanel({
+  receipt,
+  participants,
+  isPending,
+  message,
+  onCancel,
+  onSubmit,
+}: {
+  receipt: Receipt;
+  participants: Participant[];
+  isPending: boolean;
+  message: string | null;
+  onCancel: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const saleLine = getPrimarySaleLine(receipt);
+  const item = getPrimarySaleLineItem(receipt);
+  const paymentSplit = getPrimaryPaymentSplit(receipt);
+
+  return (
+    <form
+      className="grid gap-3 border-b border-zinc-200 bg-emerald-50/40 px-4 py-3"
+      data-testid="receipt-edit-form"
+      key={receipt.id}
+      onSubmit={onSubmit}
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-950">영수증 수정</h3>
+          <p className="text-xs text-zinc-500">
+            {formatDateTime(receipt.soldAt)}
+          </p>
+        </div>
+        <button
+          className={buttonClass({ intent: "quiet" })}
+          onClick={onCancel}
+          type="button"
+        >
+          취소
+        </button>
+      </div>
+      <div className="grid gap-2 xl:grid-cols-[180px_180px_220px_150px_150px_1fr_auto]">
+        <select
+          className={selectClass}
+          defaultValue={saleLine?.participantId ?? ""}
+          name="participantId"
+        >
+          <option value="">참가자 선택</option>
+          {participants.map((participant) => (
+            <option key={participant.id} value={participant.id}>
+              {participant.displayName}
+            </option>
+          ))}
+        </select>
+        <input
+          className={inputClass}
+          defaultValue={receipt.customerLabel ?? ""}
+          name="customerLabel"
+          placeholder="구매자"
+          type="text"
+        />
+        <input
+          className={inputClass}
+          defaultValue={item?.itemName ?? ""}
+          name="itemName"
+          placeholder="판매 항목"
+          type="text"
+        />
+        <input
+          className={inputClass}
+          defaultValue={String(item?.netAmount ?? receipt.totalAmount)}
+          min="0"
+          name="totalAmount"
+          placeholder="금액"
+          step="1"
+          type="number"
+        />
+        <select
+          className={selectClass}
+          defaultValue={paymentSplit?.paymentMethod ?? "cash"}
+          name="paymentMethod"
+        >
+          {Object.entries(paymentMethodLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <input
+          className={inputClass}
+          defaultValue={receipt.memo ?? ""}
+          name="memo"
+          placeholder="메모"
+          type="text"
+        />
+        <button
+          className={buttonClass()}
+          disabled={isPending}
+          type="submit"
+        >
+          저장
+        </button>
+      </div>
+      {message && <p className="text-sm font-medium text-red-700">{message}</p>}
+    </form>
   );
 }
 
@@ -1329,4 +1547,24 @@ function formatPaymentSplits(receipt: Receipt): string {
         )}`,
     )
     .join(" / ");
+}
+
+function getPrimarySaleLine(receipt: Receipt) {
+  return receipt.saleLines[0] ?? null;
+}
+
+function getPrimarySaleLineItem(receipt: Receipt) {
+  return getPrimarySaleLine(receipt)?.items[0] ?? null;
+}
+
+function getPrimaryPaymentSplit(receipt: Receipt) {
+  return receipt.paymentSplits[0] ?? null;
+}
+
+function isSimpleReceipt(receipt: Receipt): boolean {
+  return (
+    receipt.paymentSplits.length === 1 &&
+    receipt.saleLines.length === 1 &&
+    receipt.saleLines[0].items.length === 1
+  );
 }
