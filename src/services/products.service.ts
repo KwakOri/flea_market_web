@@ -24,19 +24,26 @@ export type CreateProductPayload = {
 export type UpdateProductPayload = Partial<CreateProductPayload>;
 
 export async function listProducts(
+  marketId: string,
   participantId: string,
 ): Promise<Product[]> {
-  return apiRequest<Product[]>(`/participants/${participantId}/products`);
+  return apiRequest<Product[]>(
+    `/markets/${marketId}/participants/${participantId}/products`,
+  );
 }
 
 export async function createProduct(
+  marketId: string,
   participantId: string,
   payload: CreateProductPayload,
 ): Promise<Product> {
-  return apiRequest<Product>(`/participants/${participantId}/products`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<Product>(
+    `/markets/${marketId}/participants/${participantId}/products`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function updateProduct(

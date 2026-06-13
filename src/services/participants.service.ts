@@ -7,7 +7,9 @@ export type CardFeePayer = "market" | "participant";
 
 export type ParticipantSettlementSettings = {
   id: string;
+  marketParticipantId: string | null;
   participantId: string;
+  marketId: string | null;
   settlementType: SettlementType;
   salesCommissionRate: number;
   cardFeeRate: number;
@@ -22,7 +24,8 @@ export type ParticipantSettlementSettings = {
 
 export type Participant = {
   id: string;
-  marketId: string;
+  marketId: string | null;
+  marketParticipantId: string | null;
   displayName: string;
   participantType: ParticipantType;
   contactName: string | null;
@@ -36,7 +39,8 @@ export type Participant = {
 };
 
 export type CreateParticipantPayload = {
-  displayName: string;
+  participantId?: string;
+  displayName?: string;
   participantType?: ParticipantType;
   contactName?: string;
   phone?: string;
@@ -49,7 +53,13 @@ export type CreateParticipantPayload = {
   participationFeeAmount?: number;
 };
 
-export async function listParticipants(marketId: string): Promise<Participant[]> {
+export async function listParticipantMasters(): Promise<Participant[]> {
+  return apiRequest<Participant[]>("/participants");
+}
+
+export async function listParticipants(
+  marketId: string,
+): Promise<Participant[]> {
   return apiRequest<Participant[]>(`/markets/${marketId}/participants`);
 }
 

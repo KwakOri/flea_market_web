@@ -10,40 +10,56 @@ import {
 } from "@/services/products.service";
 
 export const productKeys = {
-  byParticipant: (participantId: string) =>
-    ["products", participantId] as const,
+  byMarketParticipant: (marketId: string, participantId: string) =>
+    ["products", marketId, participantId] as const,
 };
 
-export function useProducts(participantId: string | null) {
+export function useProducts(
+  marketId: string | null,
+  participantId: string | null,
+) {
   return useQuery({
-    queryKey: productKeys.byParticipant(participantId ?? "none"),
-    queryFn: () => listProducts(participantId ?? ""),
-    enabled: Boolean(participantId),
+    queryKey: productKeys.byMarketParticipant(
+      marketId ?? "none",
+      participantId ?? "none",
+    ),
+    queryFn: () => listProducts(marketId ?? "", participantId ?? ""),
+    enabled: Boolean(marketId && participantId),
   });
 }
 
-export function useCreateProduct(participantId: string | null) {
+export function useCreateProduct(
+  marketId: string | null,
+  participantId: string | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateProductPayload) => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
       if (!participantId) {
         throw new Error("Participant is required");
       }
 
-      return createProduct(participantId, payload);
+      return createProduct(marketId, participantId, payload);
     },
     onSuccess: () => {
-      if (participantId) {
+      if (marketId && participantId) {
         void queryClient.invalidateQueries({
-          queryKey: productKeys.byParticipant(participantId),
+          queryKey: productKeys.byMarketParticipant(marketId, participantId),
         });
       }
     },
   });
 }
 
-export function useUpdateProduct(participantId: string | null) {
+export function useUpdateProduct(
+  marketId: string | null,
+  participantId: string | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -55,9 +71,9 @@ export function useUpdateProduct(participantId: string | null) {
       payload: UpdateProductPayload;
     }) => updateProduct(productId, payload),
     onSuccess: () => {
-      if (participantId) {
+      if (marketId && participantId) {
         void queryClient.invalidateQueries({
-          queryKey: productKeys.byParticipant(participantId),
+          queryKey: productKeys.byMarketParticipant(marketId, participantId),
         });
       }
     },

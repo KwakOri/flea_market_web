@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import { cva } from "class-variance-authority";
 import {
   useCurrentUser,
@@ -15,6 +16,7 @@ import {
 } from "@/hooks/use-markets";
 import {
   useCreateParticipant,
+  useParticipantMasters,
   useParticipants,
 } from "@/hooks/use-participants";
 import {
@@ -109,7 +111,13 @@ const settlementStatusLabels: Record<SettlementStatus, string> = {
   voided: "무효",
 };
 
-export function DashboardClient() {
+type DashboardView = "management" | "sales";
+
+export function DashboardClient({
+  view = "management",
+}: {
+  view?: DashboardView;
+}) {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [marketMessage, setMarketMessage] = useState<string | null>(null);
@@ -149,6 +157,7 @@ export function DashboardClient() {
   const createMarket = useCreateMarket();
   const updateMarket = useUpdateMarket();
   const participants = useParticipants(selectedMarketId);
+  const participantMasters = useParticipantMasters(Boolean(user));
   const selectedParticipantId = useMemo(() => {
     if (!participants.data?.length) {
       return null;
@@ -161,9 +170,15 @@ export function DashboardClient() {
     return requestedParticipant?.id ?? participants.data[0].id;
   }, [participants.data, requestedParticipantId]);
   const createParticipant = useCreateParticipant(selectedMarketId);
-  const products = useProducts(selectedParticipantId);
-  const createProduct = useCreateProduct(selectedParticipantId);
-  const updateProduct = useUpdateProduct(selectedParticipantId);
+  const products = useProducts(selectedMarketId, selectedParticipantId);
+  const createProduct = useCreateProduct(
+    selectedMarketId,
+    selectedParticipantId,
+  );
+  const updateProduct = useUpdateProduct(
+    selectedMarketId,
+    selectedParticipantId,
+  );
   const receipts = useReceipts(selectedMarketId);
   const createReceipt = useCreateReceipt(selectedMarketId);
   const updateReceipt = useUpdateReceipt(selectedMarketId);
@@ -199,6 +214,15 @@ export function DashboardClient() {
     { label: "영수증", value: String(receipts.data?.length ?? 0) },
     { label: "운영 중", value: countMarketsByStatus(markets.data, "active") },
   ];
+  const unlinkedParticipantMasters = useMemo(() => {
+    const linkedParticipantIds = new Set(
+      (participants.data ?? []).map((participant) => participant.id),
+    );
+
+    return (participantMasters.data ?? []).filter(
+      (participant) => !linkedParticipantIds.has(participant.id),
+    );
+  }, [participantMasters.data, participants.data]);
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -275,11 +299,24 @@ export function DashboardClient() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const participantId = getOptionalFormString(formData, "participantId");
+    const displayName = getFormString(formData, "displayName");
+
+    if (!participantId && !displayName.trim()) {
+      setParticipantMessage(
+        "참가자명을 입력하거나 기존 참가자를 선택해주세요.",
+      );
+      return;
+    }
 
     try {
       const participant = await createParticipant.mutateAsync({
-        displayName: getFormString(formData, "displayName"),
-        participantType: getFormString(formData, "participantType") as ParticipantType,
+        participantId,
+        displayName: participantId ? undefined : displayName,
+        participantType: getFormString(
+          formData,
+          "participantType",
+        ) as ParticipantType,
         salesCommissionRate: getPercentRate(formData, "salesCommissionPercent"),
         cardFeeRate: getPercentRate(formData, "cardFeePercent"),
         cardFeePayer: getFormString(formData, "cardFeePayer") as
@@ -489,8 +526,46 @@ export function DashboardClient() {
               Flea Market Settlement
             </p>
             <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
-              플리마켓 운영 대시보드
+              {view === "management" ? "운영 관리" : "판매 기록"}
             </h1>
+            {user && (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <nav className="flex gap-2">
+                  <Link
+                    className={buttonClass({
+                      intent: view === "management" ? "primary" : "secondary",
+                    })}
+                    href="/management"
+                  >
+                    관리
+                  </Link>
+                  <Link
+                    className={buttonClass({
+                      intent: view === "sales" ? "primary" : "secondary",
+                    })}
+                    href="/sales"
+                  >
+                    판매 기록
+                  </Link>
+                </nav>
+                <select
+                  className="h-10 min-w-[220px] rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950"
+                  disabled={!markets.data?.length}
+                  onChange={(event) => {
+                    setRequestedMarketId(event.target.value || null);
+                    setRequestedParticipantId(null);
+                  }}
+                  value={selectedMarketId ?? ""}
+                >
+                  <option value="">마켓 선택</option>
+                  {(markets.data ?? []).map((market) => (
+                    <option key={market.id} value={market.id}>
+                      {market.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <section className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm lg:min-w-[520px]">
@@ -587,9 +662,7 @@ export function DashboardClient() {
               className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm"
               key={item.label}
             >
-              <p className="text-sm font-medium text-zinc-500">
-                {item.label}
-              </p>
+              <p className="text-sm font-medium text-zinc-500">{item.label}</p>
               <p className="mt-2 text-2xl font-semibold text-zinc-950">
                 {item.value}
               </p>
@@ -597,357 +670,384 @@ export function DashboardClient() {
           ))}
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
-              <h2 className="text-base font-semibold text-zinc-950">마켓</h2>
+        {view === "management" && (
+          <>
+            <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+              <div className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                  <h2 className="text-base font-semibold text-zinc-950">
+                    마켓
+                  </h2>
+                  <form
+                    className="grid gap-2 md:grid-cols-[180px_160px_160px_1fr_auto]"
+                    data-testid="market-form"
+                    onSubmit={handleCreateMarket}
+                  >
+                    <input
+                      className={inputClass}
+                      disabled={!user}
+                      name="name"
+                      placeholder="마켓명"
+                      type="text"
+                    />
+                    <input
+                      className={inputClass}
+                      disabled={!user}
+                      name="startsOn"
+                      type="date"
+                    />
+                    <input
+                      className={inputClass}
+                      disabled={!user}
+                      name="endsOn"
+                      type="date"
+                    />
+                    <input
+                      className={inputClass}
+                      disabled={!user}
+                      name="description"
+                      placeholder="메모"
+                      type="text"
+                    />
+                    <button
+                      className={buttonClass()}
+                      disabled={!user || createMarket.isPending}
+                      type="submit"
+                    >
+                      추가
+                    </button>
+                  </form>
+                </div>
+                {marketMessage && (
+                  <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                    {marketMessage}
+                  </p>
+                )}
+                <MarketTable
+                  markets={markets.data ?? []}
+                  selectedMarketId={selectedMarketId}
+                  onSelectMarket={(marketId) => {
+                    setRequestedMarketId(marketId);
+                    setRequestedParticipantId(null);
+                  }}
+                  onStatusChange={handleMarketStatusChange}
+                />
+              </div>
+
+              <aside className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+                <div className="border-b border-zinc-200 px-4 py-3">
+                  <h2 className="text-base font-semibold text-zinc-950">
+                    참가자
+                  </h2>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {selectedMarket?.name ?? "마켓 미선택"}
+                  </p>
+                </div>
+                <form
+                  className="grid gap-3 p-4"
+                  data-testid="participant-form"
+                  onSubmit={handleCreateParticipant}
+                >
+                  <select
+                    className={selectClass}
+                    defaultValue=""
+                    disabled={!selectedMarket}
+                    name="participantId"
+                  >
+                    <option value="">새 참가자 등록</option>
+                    {unlinkedParticipantMasters.map((participant) => (
+                      <option key={participant.id} value={participant.id}>
+                        {participant.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                    <input
+                      className={inputClass}
+                      disabled={!selectedMarket}
+                      name="displayName"
+                      placeholder="참가자명"
+                      type="text"
+                    />
+                    <select
+                      className={selectClass}
+                      defaultValue="seller"
+                      disabled={!selectedMarket}
+                      name="participantType"
+                    >
+                      <option value="seller">셀러</option>
+                      <option value="staff">운영진</option>
+                      <option value="special_booth">특수 부스</option>
+                    </select>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      className={inputClass}
+                      disabled={!selectedMarket}
+                      min="0"
+                      name="salesCommissionPercent"
+                      placeholder="판매 수수료 %"
+                      step="0.01"
+                      type="number"
+                    />
+                    <input
+                      className={inputClass}
+                      disabled={!selectedMarket}
+                      min="0"
+                      name="cardFeePercent"
+                      placeholder="카드 수수료 %"
+                      step="0.01"
+                      type="number"
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <select
+                      className={selectClass}
+                      defaultValue="market"
+                      disabled={!selectedMarket}
+                      name="cardFeePayer"
+                    >
+                      <option value="market">마켓 부담</option>
+                      <option value="participant">참가자 부담</option>
+                    </select>
+                    <input
+                      className={inputClass}
+                      disabled={!selectedMarket}
+                      min="0"
+                      name="participationFeeAmount"
+                      placeholder="참가비"
+                      step="1"
+                      type="number"
+                    />
+                  </div>
+                  <button
+                    className={buttonClass()}
+                    disabled={!selectedMarket || createParticipant.isPending}
+                    type="submit"
+                  >
+                    참가자 추가
+                  </button>
+                  {participantMessage && (
+                    <p className="text-sm font-medium text-red-700">
+                      {participantMessage}
+                    </p>
+                  )}
+                </form>
+                <ParticipantList
+                  participants={participants.data ?? []}
+                  selectedParticipantId={selectedParticipantId}
+                  onSelectParticipant={setRequestedParticipantId}
+                />
+              </aside>
+            </section>
+
+            <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-950">
+                    상품
+                  </h2>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {selectedParticipant
+                      ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
+                      : "참가자 미선택"}
+                  </p>
+                </div>
+                <form
+                  className="grid gap-2 lg:grid-cols-[200px_220px_160px_140px_auto]"
+                  data-testid="product-form"
+                  onSubmit={handleCreateProduct}
+                >
+                  <select
+                    className={selectClass}
+                    disabled={!participants.data?.length}
+                    onChange={(event) =>
+                      setRequestedParticipantId(event.target.value || null)
+                    }
+                    value={selectedParticipantId ?? ""}
+                  >
+                    <option value="">참가자 선택</option>
+                    {(participants.data ?? []).map((participant) => (
+                      <option key={participant.id} value={participant.id}>
+                        {participant.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className={inputClass}
+                    disabled={!selectedParticipant}
+                    name="name"
+                    placeholder="상품명"
+                    type="text"
+                  />
+                  <input
+                    className={inputClass}
+                    disabled={!selectedParticipant}
+                    name="sku"
+                    placeholder="SKU"
+                    type="text"
+                  />
+                  <input
+                    className={inputClass}
+                    disabled={!selectedParticipant}
+                    min="0"
+                    name="priceAmount"
+                    placeholder="가격"
+                    step="1"
+                    type="number"
+                  />
+                  <button
+                    className={buttonClass()}
+                    disabled={!selectedParticipant || createProduct.isPending}
+                    type="submit"
+                  >
+                    상품 추가
+                  </button>
+                </form>
+              </div>
+              {productMessage && (
+                <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                  {productMessage}
+                </p>
+              )}
+              <ProductTable
+                products={products.data ?? []}
+                onStatusChange={handleProductStatusChange}
+              />
+            </section>
+          </>
+        )}
+
+        {view === "sales" && (
+          <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-zinc-950">
+                  영수증
+                </h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  {selectedMarket?.name ?? "마켓 미선택"}
+                </p>
+              </div>
               <form
-                className="grid gap-2 md:grid-cols-[180px_160px_160px_1fr_auto]"
-                data-testid="market-form"
-                onSubmit={handleCreateMarket}
+                className="grid gap-2 xl:grid-cols-[180px_180px_220px_150px_150px_1fr_auto]"
+                data-testid="receipt-form"
+                onSubmit={handleCreateReceipt}
               >
+                <select
+                  className={selectClass}
+                  disabled={!participants.data?.length}
+                  name="participantId"
+                  onChange={(event) =>
+                    setRequestedParticipantId(event.target.value || null)
+                  }
+                  value={selectedParticipantId ?? ""}
+                >
+                  <option value="">참가자 선택</option>
+                  {(participants.data ?? []).map((participant) => (
+                    <option key={participant.id} value={participant.id}>
+                      {participant.displayName}
+                    </option>
+                  ))}
+                </select>
                 <input
                   className={inputClass}
-                  disabled={!user}
-                  name="name"
-                  placeholder="마켓명"
+                  disabled={!selectedParticipant}
+                  name="customerLabel"
+                  placeholder="구매자"
                   type="text"
                 />
                 <input
                   className={inputClass}
-                  disabled={!user}
-                  name="startsOn"
-                  type="date"
+                  disabled={!selectedParticipant}
+                  name="itemName"
+                  placeholder="판매 항목"
+                  type="text"
                 />
                 <input
                   className={inputClass}
-                  disabled={!user}
-                  name="endsOn"
-                  type="date"
+                  disabled={!selectedParticipant}
+                  min="0"
+                  name="totalAmount"
+                  placeholder="금액"
+                  step="1"
+                  type="number"
                 />
+                <select
+                  className={selectClass}
+                  defaultValue="cash"
+                  disabled={!selectedParticipant}
+                  name="paymentMethod"
+                >
+                  {Object.entries(paymentMethodLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
                 <input
                   className={inputClass}
-                  disabled={!user}
-                  name="description"
+                  disabled={!selectedParticipant}
+                  name="memo"
                   placeholder="메모"
                   type="text"
                 />
                 <button
                   className={buttonClass()}
-                  disabled={!user || createMarket.isPending}
+                  disabled={!selectedParticipant || createReceipt.isPending}
                   type="submit"
                 >
-                  추가
+                  영수증 추가
                 </button>
               </form>
             </div>
-            {marketMessage && (
+            {receiptMessage && (
               <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                {marketMessage}
+                {receiptMessage}
               </p>
             )}
-            <MarketTable
-              markets={markets.data ?? []}
-              selectedMarketId={selectedMarketId}
-              onSelectMarket={(marketId) => {
-                setRequestedMarketId(marketId);
-                setRequestedParticipantId(null);
-              }}
-              onStatusChange={handleMarketStatusChange}
+            {editingReceipt && (
+              <ReceiptEditPanel
+                isPending={updateReceipt.isPending}
+                message={receiptEditMessage}
+                participants={participants.data ?? []}
+                receipt={editingReceipt}
+                onCancel={() => {
+                  setEditingReceiptId(null);
+                  setReceiptEditMessage(null);
+                }}
+                onSubmit={handleUpdateReceipt}
+              />
+            )}
+            <ReceiptTable
+              onEditReceipt={handleStartReceiptEdit}
+              participants={participants.data ?? []}
+              receipts={receipts.data ?? []}
             />
-          </div>
+          </section>
+        )}
 
-          <aside className="rounded-lg border border-zinc-200 bg-white shadow-sm">
+        {view === "management" && (
+          <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
             <div className="border-b border-zinc-200 px-4 py-3">
               <h2 className="text-base font-semibold text-zinc-950">
-                참가자
+                정산 미리보기
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
                 {selectedMarket?.name ?? "마켓 미선택"}
               </p>
             </div>
-            <form
-              className="grid gap-3 p-4"
-              data-testid="participant-form"
-              onSubmit={handleCreateParticipant}
-            >
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                <input
-                  className={inputClass}
-                  disabled={!selectedMarket}
-                  name="displayName"
-                  placeholder="참가자명"
-                  type="text"
-                />
-                <select
-                  className={selectClass}
-                  defaultValue="seller"
-                  disabled={!selectedMarket}
-                  name="participantType"
-                >
-                  <option value="seller">셀러</option>
-                  <option value="staff">운영진</option>
-                  <option value="special_booth">특수 부스</option>
-                </select>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <input
-                  className={inputClass}
-                  disabled={!selectedMarket}
-                  min="0"
-                  name="salesCommissionPercent"
-                  placeholder="판매 수수료 %"
-                  step="0.01"
-                  type="number"
-                />
-                <input
-                  className={inputClass}
-                  disabled={!selectedMarket}
-                  min="0"
-                  name="cardFeePercent"
-                  placeholder="카드 수수료 %"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <select
-                  className={selectClass}
-                  defaultValue="market"
-                  disabled={!selectedMarket}
-                  name="cardFeePayer"
-                >
-                  <option value="market">마켓 부담</option>
-                  <option value="participant">참가자 부담</option>
-                </select>
-                <input
-                  className={inputClass}
-                  disabled={!selectedMarket}
-                  min="0"
-                  name="participationFeeAmount"
-                  placeholder="참가비"
-                  step="1"
-                  type="number"
-                />
-              </div>
-              <button
-                className={buttonClass()}
-                disabled={!selectedMarket || createParticipant.isPending}
-                type="submit"
-              >
-                참가자 추가
-              </button>
-              {participantMessage && (
-                <p className="text-sm font-medium text-red-700">
-                  {participantMessage}
-                </p>
-              )}
-            </form>
-            <ParticipantList
-              participants={participants.data ?? []}
-              selectedParticipantId={selectedParticipantId}
-              onSelectParticipant={setRequestedParticipantId}
+            <SettlementPreviewPanel
+              history={settlementHistory.data ?? []}
+              isConfirming={createSettlementSnapshot.isPending}
+              isHistoryLoading={settlementHistory.isLoading}
+              isLoading={settlementPreview.isLoading}
+              message={settlementMessage}
+              preview={settlementPreview.data ?? null}
+              onConfirm={handleConfirmSettlement}
             />
-          </aside>
-        </section>
-
-        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-zinc-950">상품</h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                {selectedParticipant
-                  ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
-                  : "참가자 미선택"}
-              </p>
-            </div>
-            <form
-              className="grid gap-2 lg:grid-cols-[200px_220px_160px_140px_auto]"
-              data-testid="product-form"
-              onSubmit={handleCreateProduct}
-            >
-              <select
-                className={selectClass}
-                disabled={!participants.data?.length}
-                onChange={(event) =>
-                  setRequestedParticipantId(event.target.value || null)
-                }
-                value={selectedParticipantId ?? ""}
-              >
-                <option value="">참가자 선택</option>
-                {(participants.data ?? []).map((participant) => (
-                  <option key={participant.id} value={participant.id}>
-                    {participant.displayName}
-                  </option>
-                ))}
-              </select>
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                name="name"
-                placeholder="상품명"
-                type="text"
-              />
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                name="sku"
-                placeholder="SKU"
-                type="text"
-              />
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                min="0"
-                name="priceAmount"
-                placeholder="가격"
-                step="1"
-                type="number"
-              />
-              <button
-                className={buttonClass()}
-                disabled={!selectedParticipant || createProduct.isPending}
-                type="submit"
-              >
-                상품 추가
-              </button>
-            </form>
-          </div>
-          {productMessage && (
-            <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-              {productMessage}
-            </p>
-          )}
-          <ProductTable
-            products={products.data ?? []}
-            onStatusChange={handleProductStatusChange}
-          />
-        </section>
-
-        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-zinc-950">영수증</h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                {selectedMarket?.name ?? "마켓 미선택"}
-              </p>
-            </div>
-            <form
-              className="grid gap-2 xl:grid-cols-[180px_180px_220px_150px_150px_1fr_auto]"
-              data-testid="receipt-form"
-              onSubmit={handleCreateReceipt}
-            >
-              <select
-                className={selectClass}
-                disabled={!participants.data?.length}
-                name="participantId"
-                onChange={(event) =>
-                  setRequestedParticipantId(event.target.value || null)
-                }
-                value={selectedParticipantId ?? ""}
-              >
-                <option value="">참가자 선택</option>
-                {(participants.data ?? []).map((participant) => (
-                  <option key={participant.id} value={participant.id}>
-                    {participant.displayName}
-                  </option>
-                ))}
-              </select>
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                name="customerLabel"
-                placeholder="구매자"
-                type="text"
-              />
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                name="itemName"
-                placeholder="판매 항목"
-                type="text"
-              />
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                min="0"
-                name="totalAmount"
-                placeholder="금액"
-                step="1"
-                type="number"
-              />
-              <select
-                className={selectClass}
-                defaultValue="cash"
-                disabled={!selectedParticipant}
-                name="paymentMethod"
-              >
-                {Object.entries(paymentMethodLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <input
-                className={inputClass}
-                disabled={!selectedParticipant}
-                name="memo"
-                placeholder="메모"
-                type="text"
-              />
-              <button
-                className={buttonClass()}
-                disabled={!selectedParticipant || createReceipt.isPending}
-                type="submit"
-              >
-                영수증 추가
-              </button>
-            </form>
-          </div>
-          {receiptMessage && (
-            <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-              {receiptMessage}
-            </p>
-          )}
-          {editingReceipt && (
-            <ReceiptEditPanel
-              isPending={updateReceipt.isPending}
-              message={receiptEditMessage}
-              participants={participants.data ?? []}
-              receipt={editingReceipt}
-              onCancel={() => {
-                setEditingReceiptId(null);
-                setReceiptEditMessage(null);
-              }}
-              onSubmit={handleUpdateReceipt}
-            />
-          )}
-          <ReceiptTable
-            onEditReceipt={handleStartReceiptEdit}
-            participants={participants.data ?? []}
-            receipts={receipts.data ?? []}
-          />
-        </section>
-
-        <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="border-b border-zinc-200 px-4 py-3">
-            <h2 className="text-base font-semibold text-zinc-950">
-              정산 미리보기
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              {selectedMarket?.name ?? "마켓 미선택"}
-            </p>
-          </div>
-          <SettlementPreviewPanel
-            history={settlementHistory.data ?? []}
-            isConfirming={createSettlementSnapshot.isPending}
-            isHistoryLoading={settlementHistory.isLoading}
-            isLoading={settlementPreview.isLoading}
-            message={settlementMessage}
-            preview={settlementPreview.data ?? null}
-            onConfirm={handleConfirmSettlement}
-          />
-        </section>
+          </section>
+        )}
       </div>
     </main>
   );
@@ -1004,7 +1104,10 @@ function MarketTable({
                 <select
                   className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-800"
                   onChange={(event) =>
-                    onStatusChange(market.id, event.target.value as MarketStatus)
+                    onStatusChange(
+                      market.id,
+                      event.target.value as MarketStatus,
+                    )
                   }
                   onClick={(event) => event.stopPropagation()}
                   value={market.status}
@@ -1125,9 +1228,7 @@ function ProductTable({
               <td className="px-4 py-3 font-medium text-zinc-950">
                 {product.name}
               </td>
-              <td className="px-4 py-3 text-zinc-600">
-                {product.sku ?? "-"}
-              </td>
+              <td className="px-4 py-3 text-zinc-600">{product.sku ?? "-"}</td>
               <td className="px-4 py-3 text-right font-medium text-zinc-950">
                 {formatWon(product.priceAmount)}
               </td>
@@ -1135,7 +1236,10 @@ function ProductTable({
                 <select
                   className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-800"
                   onChange={(event) =>
-                    onStatusChange(product.id, event.target.value as ProductStatus)
+                    onStatusChange(
+                      product.id,
+                      event.target.value as ProductStatus,
+                    )
                   }
                   value={product.status}
                 >
@@ -1172,7 +1276,10 @@ function ReceiptTable({
   }
 
   const participantNames = new Map(
-    participants.map((participant) => [participant.id, participant.displayName]),
+    participants.map((participant) => [
+      participant.id,
+      participant.displayName,
+    ]),
   );
 
   return (
@@ -1319,11 +1426,7 @@ function ReceiptEditPanel({
           placeholder="메모"
           type="text"
         />
-        <button
-          className={buttonClass()}
-          disabled={isPending}
-          type="submit"
-        >
+        <button className={buttonClass()} disabled={isPending} type="submit">
           저장
         </button>
       </div>
@@ -1402,7 +1505,10 @@ function SettlementPreviewPanel({
         )}
       </form>
       <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-5">
-        <SettlementMetric label="총매출" value={formatWon(preview.netSalesAmount)} />
+        <SettlementMetric
+          label="총매출"
+          value={formatWon(preview.netSalesAmount)}
+        />
         <SettlementMetric
           label="판매 수수료"
           value={formatWon(preview.salesCommissionAmount)}
@@ -1445,10 +1551,7 @@ function SettlementPreviewPanel({
           </tbody>
         </table>
       </div>
-      <SettlementHistoryPanel
-        history={history}
-        isLoading={isHistoryLoading}
-      />
+      <SettlementHistoryPanel history={history} isLoading={isHistoryLoading} />
     </div>
   );
 }
@@ -1644,10 +1747,15 @@ function countMarketsByStatus(
   markets: Market[] | undefined,
   status: MarketStatus,
 ): string {
-  return String(markets?.filter((market) => market.status === status).length ?? 0);
+  return String(
+    markets?.filter((market) => market.status === status).length ?? 0,
+  );
 }
 
-function formatDateRange(startsOn: string | null, endsOn: string | null): string {
+function formatDateRange(
+  startsOn: string | null,
+  endsOn: string | null,
+): string {
   if (!startsOn && !endsOn) {
     return "-";
   }
