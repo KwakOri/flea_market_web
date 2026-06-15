@@ -2,7 +2,6 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
-import { cva } from "class-variance-authority";
 import {
   useCurrentUser,
   useLogin,
@@ -50,29 +49,21 @@ import type {
   SettlementStatus,
 } from "@/services/settlements.service";
 import { cn } from "@/lib/utils";
-
-const buttonClass = cva(
-  "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-  {
-    variants: {
-      intent: {
-        primary: "bg-zinc-950 text-white hover:bg-zinc-800",
-        secondary:
-          "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
-        quiet: "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
-      },
-    },
-    defaultVariants: {
-      intent: "primary",
-    },
-  },
-);
-
-const inputClass =
-  "h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
-
-const selectClass =
-  "h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+import {
+  appShellClass,
+  buttonVariants,
+  compactSelectClass,
+  dashboardTabListClass,
+  dashboardTabVariants,
+  inputClass,
+  pageShellClass,
+  panelVariants,
+  sectionDescriptionClass,
+  sectionHeaderClass,
+  sectionTitleClass,
+  selectClass,
+  statCardVariants,
+} from "@/lib/design-system";
 
 const marketStatusLabels: Record<MarketStatus, string> = {
   draft: "준비",
@@ -534,11 +525,11 @@ export function DashboardClient({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-100 text-zinc-950">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6">
-        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className={pageShellClass}>
+      <div className={appShellClass}>
+        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-emerald-700">
+            <p className="text-[13px] font-semibold text-emerald-700">
               Flea Market Settlement
             </p>
             <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
@@ -546,7 +537,7 @@ export function DashboardClient({
             </h1>
             <nav
               aria-label="업무 화면"
-              className="mt-3 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-200 p-1 sm:w-auto"
+              className={cn("mt-4", dashboardTabListClass)}
               role="tablist"
             >
               {dashboardTabs.map((tab) => {
@@ -556,12 +547,7 @@ export function DashboardClient({
                   <Link
                     aria-current={isActive ? "page" : undefined}
                     aria-selected={isActive}
-                    className={cn(
-                      "inline-flex h-9 flex-1 items-center justify-center rounded-md px-3 text-sm font-medium transition sm:flex-none",
-                      isActive
-                        ? "bg-zinc-950 text-white shadow-sm"
-                        : "text-zinc-600 hover:bg-white/70 hover:text-zinc-950",
-                    )}
+                    className={dashboardTabVariants({ active: isActive })}
                     href={tab.href}
                     key={tab.view}
                     role="tab"
@@ -574,7 +560,7 @@ export function DashboardClient({
             {user && (
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <select
-                  className="h-10 min-w-[220px] rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950"
+                  className={cn(selectClass, "min-w-[220px]")}
                   disabled={!markets.data?.length}
                   onChange={(event) => {
                     setRequestedMarketId(event.target.value || null);
@@ -593,7 +579,12 @@ export function DashboardClient({
             )}
           </div>
 
-          <section className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm lg:min-w-[520px]">
+          <section
+            className={cn(
+              panelVariants({ padding: "sm" }),
+              "lg:min-w-[520px]",
+            )}
+          >
             {user ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -605,7 +596,7 @@ export function DashboardClient({
                   </p>
                 </div>
                 <button
-                  className={buttonClass({ intent: "secondary" })}
+                  className={buttonVariants({ intent: "secondary" })}
                   disabled={logout.isPending}
                   onClick={handleLogout}
                   type="button"
@@ -621,7 +612,7 @@ export function DashboardClient({
               >
                 <div className="flex gap-2">
                   <button
-                    className={buttonClass({
+                    className={buttonVariants({
                       intent: authMode === "login" ? "primary" : "secondary",
                     })}
                     data-testid="auth-mode-login"
@@ -631,7 +622,7 @@ export function DashboardClient({
                     로그인
                   </button>
                   <button
-                    className={buttonClass({
+                    className={buttonVariants({
                       intent: authMode === "register" ? "primary" : "secondary",
                     })}
                     data-testid="auth-mode-register"
@@ -663,7 +654,7 @@ export function DashboardClient({
                     type="password"
                   />
                   <button
-                    className={buttonClass()}
+                    className={buttonVariants()}
                     data-testid="auth-submit"
                     disabled={login.isPending || register.isPending}
                     type="submit"
@@ -683,10 +674,7 @@ export function DashboardClient({
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {summary.map((item) => (
-            <div
-              className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm"
-              key={item.label}
-            >
+            <div className={statCardVariants()} key={item.label}>
               <p className="text-sm font-medium text-zinc-500">{item.label}</p>
               <p className="mt-2 text-2xl font-semibold text-zinc-950">
                 {item.value}
@@ -698,11 +686,14 @@ export function DashboardClient({
         {view === "management" && (
           <>
             <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
-              <div className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
-                  <h2 className="text-base font-semibold text-zinc-950">
-                    마켓
-                  </h2>
+              <div className={panelVariants()}>
+                <div
+                  className={cn(
+                    sectionHeaderClass,
+                    "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
+                  )}
+                >
+                  <h2 className={sectionTitleClass}>마켓</h2>
                   <form
                     className="grid gap-2 md:grid-cols-[180px_160px_160px_1fr_auto]"
                     data-testid="market-form"
@@ -735,7 +726,7 @@ export function DashboardClient({
                       type="text"
                     />
                     <button
-                      className={buttonClass()}
+                      className={buttonVariants()}
                       disabled={!user || createMarket.isPending}
                       type="submit"
                     >
@@ -759,12 +750,12 @@ export function DashboardClient({
                 />
               </div>
 
-              <aside className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-                <div className="border-b border-zinc-200 px-4 py-3">
-                  <h2 className="text-base font-semibold text-zinc-950">
+              <aside className={panelVariants()}>
+                <div className={sectionHeaderClass}>
+                  <h2 className={sectionTitleClass}>
                     참가자
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className={sectionDescriptionClass}>
                     {selectedMarket?.name ?? "마켓 미선택"}
                   </p>
                 </div>
@@ -846,7 +837,7 @@ export function DashboardClient({
                     />
                   </div>
                   <button
-                    className={buttonClass()}
+                    className={buttonVariants()}
                     disabled={!selectedMarket || createParticipant.isPending}
                     type="submit"
                   >
@@ -866,13 +857,18 @@ export function DashboardClient({
               </aside>
             </section>
 
-            <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            <section className={panelVariants()}>
+              <div
+                className={cn(
+                  sectionHeaderClass,
+                  "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
+                )}
+              >
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-950">
+                  <h2 className={sectionTitleClass}>
                     상품
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className={sectionDescriptionClass}>
                     {selectedParticipant
                       ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
                       : "참가자 미선택"}
@@ -922,7 +918,7 @@ export function DashboardClient({
                     type="number"
                   />
                   <button
-                    className={buttonClass()}
+                    className={buttonVariants()}
                     disabled={!selectedParticipant || createProduct.isPending}
                     type="submit"
                   >
@@ -944,13 +940,18 @@ export function DashboardClient({
         )}
 
         {view === "sales" && (
-          <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+          <section className={panelVariants()}>
+            <div
+              className={cn(
+                sectionHeaderClass,
+                "flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between",
+              )}
+            >
               <div>
-                <h2 className="text-base font-semibold text-zinc-950">
+                <h2 className={sectionTitleClass}>
                   영수증
                 </h2>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className={sectionDescriptionClass}>
                   {selectedMarket?.name ?? "마켓 미선택"}
                 </p>
               </div>
@@ -1018,7 +1019,7 @@ export function DashboardClient({
                   type="text"
                 />
                 <button
-                  className={buttonClass()}
+                  className={buttonVariants()}
                   disabled={!selectedParticipant || createReceipt.isPending}
                   type="submit"
                 >
@@ -1053,12 +1054,12 @@ export function DashboardClient({
         )}
 
         {view === "settlements" && (
-          <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
-            <div className="border-b border-zinc-200 px-4 py-3">
-              <h2 className="text-base font-semibold text-zinc-950">
-                정산
+          <section className={panelVariants()}>
+            <div className={sectionHeaderClass}>
+              <h2 className={sectionTitleClass}>
+                정산 미리보기
               </h2>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className={sectionDescriptionClass}>
                 {selectedMarket?.name ?? "마켓 미선택"}
               </p>
             </div>
@@ -1127,7 +1128,7 @@ function MarketTable({
               </td>
               <td className="px-4 py-3">
                 <select
-                  className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-800"
+                  className={compactSelectClass}
                   onChange={(event) =>
                     onStatusChange(
                       market.id,
@@ -1259,7 +1260,7 @@ function ProductTable({
               </td>
               <td className="px-4 py-3">
                 <select
-                  className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-800"
+                  className={compactSelectClass}
                   onChange={(event) =>
                     onStatusChange(
                       product.id,
@@ -1340,7 +1341,7 @@ function ReceiptTable({
               </td>
               <td className="px-4 py-3 text-right">
                 <button
-                  className={buttonClass({ intent: "secondary" })}
+                  className={buttonVariants({ intent: "secondary", size: "sm" })}
                   disabled={!isSimpleReceipt(receipt)}
                   onClick={() => onEditReceipt(receipt)}
                   type="button"
@@ -1390,7 +1391,7 @@ function ReceiptEditPanel({
           </p>
         </div>
         <button
-          className={buttonClass({ intent: "quiet" })}
+          className={buttonVariants({ intent: "quiet" })}
           onClick={onCancel}
           type="button"
         >
@@ -1451,7 +1452,7 @@ function ReceiptEditPanel({
           placeholder="메모"
           type="text"
         />
-        <button className={buttonClass()} disabled={isPending} type="submit">
+        <button className={buttonVariants()} disabled={isPending} type="submit">
           저장
         </button>
       </div>
@@ -1516,7 +1517,7 @@ function SettlementPreviewPanel({
           type="text"
         />
         <button
-          className={buttonClass()}
+          className={buttonVariants()}
           data-testid="settlement-confirm-submit"
           disabled={isConfirming || preview.receiptCount === 0}
           type="submit"
