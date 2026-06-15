@@ -111,7 +111,23 @@ const settlementStatusLabels: Record<SettlementStatus, string> = {
   voided: "무효",
 };
 
-type DashboardView = "management" | "sales";
+type DashboardView = "management" | "sales" | "settlements";
+
+const dashboardViewLabels: Record<DashboardView, string> = {
+  management: "매장관리",
+  sales: "영수증입력",
+  settlements: "정산",
+};
+
+const dashboardTabs: Array<{
+  href: string;
+  label: string;
+  view: DashboardView;
+}> = [
+  { href: "/management", label: "매장관리", view: "management" },
+  { href: "/sales", label: "영수증입력", view: "sales" },
+  { href: "/settlements", label: "정산", view: "settlements" },
+];
 
 export function DashboardClient({
   view = "management",
@@ -526,28 +542,37 @@ export function DashboardClient({
               Flea Market Settlement
             </p>
             <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
-              {view === "management" ? "운영 관리" : "판매 기록"}
+              {dashboardViewLabels[view]}
             </h1>
+            <nav
+              aria-label="업무 화면"
+              className="mt-3 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-200 p-1 sm:w-auto"
+              role="tablist"
+            >
+              {dashboardTabs.map((tab) => {
+                const isActive = view === tab.view;
+
+                return (
+                  <Link
+                    aria-current={isActive ? "page" : undefined}
+                    aria-selected={isActive}
+                    className={cn(
+                      "inline-flex h-9 flex-1 items-center justify-center rounded-md px-3 text-sm font-medium transition sm:flex-none",
+                      isActive
+                        ? "bg-zinc-950 text-white shadow-sm"
+                        : "text-zinc-600 hover:bg-white/70 hover:text-zinc-950",
+                    )}
+                    href={tab.href}
+                    key={tab.view}
+                    role="tab"
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
             {user && (
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <nav className="flex gap-2">
-                  <Link
-                    className={buttonClass({
-                      intent: view === "management" ? "primary" : "secondary",
-                    })}
-                    href="/management"
-                  >
-                    관리
-                  </Link>
-                  <Link
-                    className={buttonClass({
-                      intent: view === "sales" ? "primary" : "secondary",
-                    })}
-                    href="/sales"
-                  >
-                    판매 기록
-                  </Link>
-                </nav>
                 <select
                   className="h-10 min-w-[220px] rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950"
                   disabled={!markets.data?.length}
@@ -1027,11 +1052,11 @@ export function DashboardClient({
           </section>
         )}
 
-        {view === "management" && (
+        {view === "settlements" && (
           <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
             <div className="border-b border-zinc-200 px-4 py-3">
               <h2 className="text-base font-semibold text-zinc-950">
-                정산 미리보기
+                정산
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
                 {selectedMarket?.name ?? "마켓 미선택"}
