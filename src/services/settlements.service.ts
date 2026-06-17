@@ -1,4 +1,4 @@
-import { apiRequest } from "./api-client";
+import { apiDownload, apiRequest, type ApiDownloadResult } from "./api-client";
 import type {
   CardFeePayer,
   ParticipantType,
@@ -192,4 +192,13 @@ export async function createSettlement(
 
 export async function getSettlement(settlementId: string): Promise<Settlement> {
   return apiRequest<Settlement>(`/settlements/${settlementId}`);
+}
+
+export async function downloadSettlementPdfArchive(
+  marketId: string,
+): Promise<ApiDownloadResult> {
+  return apiDownload(
+    `/markets/${marketId}/settlement-pdfs`,
+    `settlement-${marketId}.zip`,
+  );
 }

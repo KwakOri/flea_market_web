@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createParticipant,
+  createParticipantMaster,
   listParticipantMasters,
   listParticipants,
   type CreateParticipantPayload,
@@ -27,6 +28,20 @@ export function useParticipants(marketId: string | null) {
     queryKey: participantKeys.byMarket(marketId ?? "none"),
     queryFn: () => listParticipants(marketId ?? ""),
     enabled: Boolean(marketId),
+  });
+}
+
+export function useCreateParticipantMaster() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateParticipantPayload) =>
+      createParticipantMaster(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: participantKeys.all,
+      });
+    },
   });
 }
 

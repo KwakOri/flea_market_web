@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSettlement,
+  downloadSettlementPdfArchive,
   getSettlement,
   getSettlementPreview,
   listSettlements,
@@ -66,6 +67,18 @@ export function useCreateSettlement(marketId: string | null) {
       void queryClient.invalidateQueries({
         queryKey: settlementKeys.detail(settlement.id),
       });
+    },
+  });
+}
+
+export function useDownloadSettlementPdfArchive(marketId: string | null) {
+  return useMutation({
+    mutationFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return downloadSettlementPdfArchive(marketId);
     },
   });
 }

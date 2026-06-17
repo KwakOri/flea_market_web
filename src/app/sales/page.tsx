@@ -1,5 +1,5 @@
-import { DashboardClient } from "../dashboard-client";
+import { redirect } from "next/navigation";
 
 export default function SalesPage() {
-  return <DashboardClient view="sales" />;
+  redirect("/management");
 }

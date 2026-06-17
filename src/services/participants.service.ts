@@ -10,11 +10,11 @@ export type ParticipantSettlementSettings = {
   marketParticipantId: string | null;
   participantId: string;
   marketId: string | null;
-  settlementType: SettlementType;
-  salesCommissionRate: number;
-  cardFeeRate: number;
-  cardFeePayer: CardFeePayer;
-  participationFeeAmount: number;
+  settlementType: SettlementType | null;
+  salesCommissionRate: number | null;
+  cardFeeRate: number | null;
+  cardFeePayer: CardFeePayer | null;
+  participationFeeAmount: number | null;
   payoutBankName: string | null;
   payoutAccountNumber: string | null;
   payoutAccountHolder: string | null;
@@ -55,6 +55,15 @@ export type CreateParticipantPayload = {
 
 export async function listParticipantMasters(): Promise<Participant[]> {
   return apiRequest<Participant[]>("/participants");
+}
+
+export async function createParticipantMaster(
+  payload: CreateParticipantPayload,
+): Promise<Participant> {
+  return apiRequest<Participant>("/participants", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function listParticipants(

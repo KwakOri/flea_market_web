@@ -17,6 +17,11 @@ export class ApiError extends Error {
   }
 }
 
+export type ApiDownloadResult = {
+  blob: Blob;
+  filename: string;
+};
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
@@ -45,6 +50,36 @@ export async function apiRequest<T>(
   return response.json() as Promise<T>;
 }
 
+export async function apiDownload(
+  path: string,
+  fallbackFilename: string,
+  init: RequestInit = {},
+): Promise<ApiDownloadResult> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    cache: "no-store",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const body = await parseErrorBody(response);
+    throw new ApiError(getErrorMessage(body, response.status), response.status, body);
+  }
+
+  const blob = await response.blob();
+
+  if (!blob || blob.size === 0) {
+    throw new Error("생성된 파일이 비어 있습니다.");
+  }
+
+  return {
+    blob,
+    filename:
+      resolveFilenameFromDisposition(response.headers.get("Content-Disposition")) ??
+      fallbackFilename,
+  };
+}
+
 async function parseErrorBody(response: Response): Promise<ApiErrorBody | null> {
   try {
     return (await response.json()) as ApiErrorBody;
@@ -63,4 +98,24 @@ function getErrorMessage(body: ApiErrorBody | null, status: number): string {
   }
 
   return `Request failed with status ${status}`;
+}
+
+function resolveFilenameFromDisposition(
+  contentDisposition: string | null,
+): string | null {
+  if (!contentDisposition) {
+    return null;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]).trim();
+    } catch {
+      return utf8Match[1].trim();
+    }
+  }
+
+  const plainMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  return plainMatch?.[1]?.trim() ?? null;
 }

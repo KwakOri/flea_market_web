@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function SettlementsPage() {
+export default function ReceiptsPage() {
   redirect("/management");
 }

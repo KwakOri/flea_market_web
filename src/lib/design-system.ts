@@ -1,9 +1,10 @@
 import { cva } from "class-variance-authority";
 
-export const pageShellClass = "min-h-screen bg-zinc-50 text-zinc-950";
+export const pageShellClass =
+  "min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-950";
 
 export const appShellClass =
-  "mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6";
+  "flex w-full max-w-none flex-col gap-5 px-4 py-5 sm:px-6";
 
 export const buttonVariants = cva(
   "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
@@ -68,10 +69,10 @@ export const selectVariants = cva(
 );
 
 export const dashboardTabListClass =
-  "inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-100 p-1 sm:w-auto";
+  "flex w-full overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-1 sm:inline-flex sm:w-auto";
 
 export const dashboardTabVariants = cva(
-  "inline-flex h-10 min-w-0 flex-1 items-center justify-center rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 sm:flex-none sm:min-w-28",
+  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 sm:min-w-28",
   {
     variants: {
       active: {

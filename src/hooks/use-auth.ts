@@ -27,7 +27,8 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      queryClient.setQueryData(authKeys.me, response.user);
       void queryClient.invalidateQueries({ queryKey: authKeys.me });
     },
   });
@@ -38,7 +39,8 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: (payload: RegisterPayload) => register(payload),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      queryClient.setQueryData(authKeys.me, response.user);
       void queryClient.invalidateQueries({ queryKey: authKeys.me });
     },
   });
