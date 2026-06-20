@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Pencil,
   Plus,
-  Trash2,
   X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
@@ -55,7 +54,7 @@ import type {
   ParticipantStatus,
   ParticipantType,
 } from "@/services/participants.service";
-import type { Product, ProductStatus } from "@/services/products.service";
+import type { ProductStatus } from "@/services/products.service";
 import type {
   CreateReceiptPayload,
   CreateReceiptPaymentSplitPayload,
@@ -82,12 +81,13 @@ import { FeeStatusView } from "@/features/fees/components/fee-status-view";
 import {
   defaultFeeSettings,
   feeSettingScopeLabels,
-  formatParticipantFeeFieldDisplay,
-  getParticipantFeePolicySource,
   getParticipantFeeSettingsDefaults,
   type FeeSettingScope,
 } from "@/features/fees/lib/fee-policy";
+import { ParticipantList } from "@/features/participants/components/participant-list";
+import { ParticipantMasterTable } from "@/features/participants/components/participant-master-table";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
+import { ProductTable } from "@/features/products/components/product-table";
 import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
 import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
 import {
@@ -100,7 +100,6 @@ import { cn } from "@/lib/utils";
 import {
   appShellClass,
   buttonVariants,
-  compactSelectClass,
   inputClass,
   pageShellClass,
   panelVariants,
@@ -125,11 +124,6 @@ const marketStatusLabels: Record<MarketStatus, string> = {
   active: "진행중",
   closed: "종료",
   archived: "보관",
-};
-
-const productStatusLabels: Record<ProductStatus, string> = {
-  active: "판매",
-  inactive: "중지",
 };
 
 type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
@@ -2417,312 +2411,6 @@ function MarketSelectionCards({
           </article>
         );
       })}
-    </div>
-  );
-}
-
-function ParticipantMasterTable({
-  participants,
-  linkedParticipantIds = new Set<string>(),
-  onEditParticipant,
-  showLinkStatus = true,
-}: {
-  participants: Participant[];
-  linkedParticipantIds?: Set<string>;
-  onEditParticipant?: (participant: Participant) => void;
-  showLinkStatus?: boolean;
-}) {
-  if (participants.length === 0) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
-        등록된 참가부스가 없습니다.
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-w-0 max-w-full overflow-x-auto">
-      <table className="w-full min-w-[980px] border-collapse text-sm">
-        <thead className="bg-zinc-50 text-left text-zinc-500">
-          <tr>
-            <th className="px-4 py-3 font-medium">부스명</th>
-            <th className="px-4 py-3 font-medium">유형</th>
-            <th className="px-4 py-3 font-medium">담당자</th>
-            <th className="px-4 py-3 font-medium">연락처</th>
-            <th className="px-4 py-3 font-medium">이메일</th>
-            <th className="px-4 py-3 font-medium">상태</th>
-            {showLinkStatus && (
-              <th className="px-4 py-3 font-medium">선택 마켓</th>
-            )}
-            <th className="px-4 py-3 font-medium">메모</th>
-            {onEditParticipant && (
-              <th className="px-4 py-3 text-right font-medium">관리</th>
-            )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {participants.map((participant) => (
-            <tr data-testid="participant-master-row" key={participant.id}>
-              <td className="px-4 py-3 font-medium text-zinc-950">
-                {participant.displayName}
-              </td>
-              <td className="px-4 py-3 text-zinc-700">
-                {participantTypeLabels[participant.participantType]}
-              </td>
-              <td className="px-4 py-3 text-zinc-700">
-                {participant.contactName ?? "-"}
-              </td>
-              <td className="px-4 py-3 text-zinc-700">
-                {participant.phone ?? "-"}
-              </td>
-              <td className="max-w-[220px] truncate px-4 py-3 text-zinc-700">
-                {participant.email ?? "-"}
-              </td>
-              <td className="px-4 py-3">
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-1 text-xs font-medium",
-                    participant.status === "active"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-zinc-100 text-zinc-500",
-                  )}
-                >
-                  {participant.status === "active" ? "활성" : "비활성"}
-                </span>
-              </td>
-              {showLinkStatus && (
-                <td className="px-4 py-3">
-                  {linkedParticipantIds.has(participant.id) ? (
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
-                      연결됨
-                    </span>
-                  ) : (
-                    <span className="text-zinc-400">-</span>
-                  )}
-                </td>
-              )}
-              <td className="max-w-[260px] truncate px-4 py-3 text-zinc-600">
-                {participant.memo ?? "-"}
-              </td>
-              {onEditParticipant && (
-                <td className="px-4 py-3 text-right">
-                  <button
-                    className={buttonVariants({
-                      intent: "secondary",
-                      size: "sm",
-                    })}
-                    onClick={() => onEditParticipant(participant)}
-                    type="button"
-                  >
-                    <Pencil aria-hidden className="mr-1.5 h-3.5 w-3.5" />
-                    관리
-                  </button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function ParticipantList({
-  deleteDisabled = false,
-  globalSettings,
-  marketSettings,
-  participants,
-  selectedParticipantId,
-  onDeleteParticipant,
-  onEditParticipant,
-  onSelectParticipant,
-  emptyMessage = "등록된 참가부스가 없습니다.",
-}: {
-  deleteDisabled?: boolean;
-  globalSettings: SettlementDefaultSettings | null;
-  marketSettings: SettlementDefaultSettings | null;
-  participants: Participant[];
-  selectedParticipantId: string | null;
-  onDeleteParticipant?: (participant: Participant) => void;
-  onEditParticipant: (participant: Participant) => void;
-  onSelectParticipant: (participantId: string) => void;
-  emptyMessage?: string;
-}) {
-  if (participants.length === 0) {
-    return (
-      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
-        {emptyMessage}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="divide-y divide-zinc-100 border-t border-zinc-200"
-      data-testid="participant-list"
-    >
-      {participants.map((participant) => {
-        const hasMarketSettings = Boolean(marketSettings?.id);
-        const activeScope = getParticipantFeePolicySource(
-          participant,
-          hasMarketSettings,
-        );
-
-        return (
-          <div
-            className={cn(
-              "grid gap-3 px-4 py-3 transition hover:bg-emerald-50/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start",
-              selectedParticipantId === participant.id && "bg-emerald-50",
-            )}
-            data-testid="participant-row"
-            key={participant.id}
-          >
-            <button
-              className="min-w-0 text-left"
-              onClick={() => onSelectParticipant(participant.id)}
-              type="button"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-zinc-950">
-                    {participant.displayName}
-                  </p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {participantTypeLabels[participant.participantType]}
-                  </p>
-                </div>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-1 text-xs font-medium",
-                    activeScope === "booth"
-                      ? "bg-amber-100 text-amber-800"
-                      : activeScope === "market"
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-zinc-100 text-zinc-600",
-                  )}
-                >
-                  {feeSettingScopeLabels[activeScope]}
-                </span>
-              </div>
-              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <dt className="text-zinc-500">카드 수수료</dt>
-                  <dd className="mt-1 font-medium text-zinc-800">
-                    {formatParticipantFeeFieldDisplay(
-                      participant,
-                      globalSettings,
-                      marketSettings,
-                      "cardFeeRate",
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-zinc-500">참가비</dt>
-                  <dd className="mt-1 font-medium text-zinc-800">
-                    {formatParticipantFeeFieldDisplay(
-                      participant,
-                      globalSettings,
-                      marketSettings,
-                      "participationFeeAmount",
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </button>
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                aria-label={`${participant.displayName} 수정`}
-                className={cn(
-                  buttonVariants({ intent: "secondary", size: "sm" }),
-                  "h-10 w-10 px-0",
-                )}
-                onClick={() => onEditParticipant(participant)}
-                title="수정"
-                type="button"
-              >
-                <Pencil aria-hidden className="h-4 w-4" />
-              </button>
-              {onDeleteParticipant && (
-                <button
-                  aria-label={`${participant.displayName} 삭제`}
-                  className={cn(
-                    buttonVariants({ intent: "secondary", size: "sm" }),
-                    "h-10 w-10 border-red-200 px-0 text-red-700 hover:bg-red-50",
-                  )}
-                  disabled={deleteDisabled}
-                  onClick={() => onDeleteParticipant(participant)}
-                  title="삭제"
-                  type="button"
-                >
-                  <Trash2 aria-hidden className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function ProductTable({
-  products,
-  onStatusChange,
-}: {
-  products: Product[];
-  onStatusChange: (productId: string, status: ProductStatus) => void;
-}) {
-  if (products.length === 0) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
-        등록된 상품이 없습니다.
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-w-0 max-w-full overflow-x-auto">
-      <table className="w-full min-w-[760px] border-collapse text-sm">
-        <thead className="bg-zinc-50 text-left text-zinc-500">
-          <tr>
-            <th className="px-4 py-3 font-medium">상품명</th>
-            <th className="px-4 py-3 font-medium">SKU</th>
-            <th className="px-4 py-3 text-right font-medium">가격</th>
-            <th className="px-4 py-3 font-medium">상태</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {products.map((product) => (
-            <tr data-testid="product-row" key={product.id}>
-              <td className="px-4 py-3 font-medium text-zinc-950">
-                {product.name}
-              </td>
-              <td className="px-4 py-3 text-zinc-600">{product.sku ?? "-"}</td>
-              <td className="px-4 py-3 text-right font-medium text-zinc-950">
-                {formatWon(product.priceAmount)}
-              </td>
-              <td className="px-4 py-3">
-                <select
-                  className={compactSelectClass}
-                  onChange={(event) =>
-                    onStatusChange(
-                      product.id,
-                      event.target.value as ProductStatus,
-                    )
-                  }
-                  value={product.status}
-                >
-                  {Object.entries(productStatusLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
