@@ -9,10 +9,8 @@ import {
   type LoginPayload,
   type RegisterPayload,
 } from "@/services/auth.service";
-
-export const authKeys = {
-  me: ["auth", "me"] as const,
-};
+import { setCurrentUserCache } from "@/hooks/query-invalidations";
+import { authKeys } from "@/hooks/query-keys";
 
 export function useCurrentUser() {
   return useQuery({
@@ -28,8 +26,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
     onSuccess: (response) => {
-      queryClient.setQueryData(authKeys.me, response.user);
-      void queryClient.invalidateQueries({ queryKey: authKeys.me });
+      void setCurrentUserCache(queryClient, response.user);
     },
   });
 }
@@ -40,8 +37,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (payload: RegisterPayload) => register(payload),
     onSuccess: (response) => {
-      queryClient.setQueryData(authKeys.me, response.user);
-      void queryClient.invalidateQueries({ queryKey: authKeys.me });
+      void setCurrentUserCache(queryClient, response.user);
     },
   });
 }

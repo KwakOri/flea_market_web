@@ -9,25 +9,37 @@ import {
   type CreateReceiptPayload,
   type UpdateReceiptPayload,
 } from "@/services/receipts.service";
-import { settlementPreviewKeys } from "./use-settlement-preview";
-
-export const receiptKeys = {
-  byMarket: (marketId: string) => ["receipts", marketId] as const,
-  detail: (receiptId: string) => ["receipt", receiptId] as const,
-};
+import {
+  invalidateReceiptDetail,
+  invalidateReceiptsByMarket,
+  invalidateSettlementPreviewByMarket,
+} from "@/hooks/query-invalidations";
+import { receiptKeys } from "@/hooks/query-keys";
 
 export function useReceipts(marketId: string | null) {
   return useQuery({
-    queryKey: receiptKeys.byMarket(marketId ?? "none"),
-    queryFn: () => listReceipts(marketId ?? ""),
+    queryKey: receiptKeys.byMarket(marketId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return listReceipts(marketId);
+    },
     enabled: Boolean(marketId),
   });
 }
 
 export function useReceipt(receiptId: string | null) {
   return useQuery({
-    queryKey: receiptKeys.detail(receiptId ?? "none"),
-    queryFn: () => getReceipt(receiptId ?? ""),
+    queryKey: receiptKeys.detail(receiptId),
+    queryFn: () => {
+      if (!receiptId) {
+        throw new Error("Receipt is required");
+      }
+
+      return getReceipt(receiptId);
+    },
     enabled: Boolean(receiptId),
   });
 }
@@ -45,12 +57,8 @@ export function useCreateReceipt(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: receiptKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateReceiptsByMarket(queryClient, marketId);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
     },
   });
@@ -70,17 +78,11 @@ export function useUpdateReceipt(marketId: string | null) {
     onSuccess: (receipt) => {
       const resolvedMarketId = marketId ?? receipt.marketId;
 
-      void queryClient.invalidateQueries({
-        queryKey: receiptKeys.detail(receipt.id),
-      });
+      void invalidateReceiptDetail(queryClient, receipt.id);
 
       if (resolvedMarketId) {
-        void queryClient.invalidateQueries({
-          queryKey: receiptKeys.byMarket(resolvedMarketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(resolvedMarketId),
-        });
+        void invalidateReceiptsByMarket(queryClient, resolvedMarketId);
+        void invalidateSettlementPreviewByMarket(queryClient, resolvedMarketId);
       }
     },
   });

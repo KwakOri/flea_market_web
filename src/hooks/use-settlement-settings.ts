@@ -8,14 +8,13 @@ import {
   updateMarketSettlementSettings,
   type UpdateSettlementFeeSettingsPayload,
 } from "@/services/settlement-settings.service";
-import { participantKeys } from "./use-participants";
-import { settlementPreviewKeys } from "./use-settlement-preview";
-
-export const settlementSettingsKeys = {
-  global: ["settlement-settings", "global"] as const,
-  market: (marketId: string) =>
-    ["settlement-settings", "market", marketId] as const,
-};
+import {
+  invalidateGlobalSettlementSettings,
+  invalidateMarketSettlementSettings,
+  invalidateParticipantsByMarket,
+  invalidateSettlementPreviewByMarket,
+} from "@/hooks/query-invalidations";
+import { settlementSettingsKeys } from "@/hooks/query-keys";
 
 export function useGlobalSettlementSettings(enabled: boolean) {
   return useQuery({
@@ -32,17 +31,21 @@ export function useUpdateGlobalSettlementSettings() {
     mutationFn: (payload: UpdateSettlementFeeSettingsPayload) =>
       updateGlobalSettlementSettings(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: settlementSettingsKeys.global,
-      });
+      void invalidateGlobalSettlementSettings(queryClient);
     },
   });
 }
 
 export function useMarketSettlementSettings(marketId: string | null) {
   return useQuery({
-    queryKey: settlementSettingsKeys.market(marketId ?? "none"),
-    queryFn: () => getMarketSettlementSettings(marketId ?? ""),
+    queryKey: settlementSettingsKeys.market(marketId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return getMarketSettlementSettings(marketId);
+    },
     enabled: Boolean(marketId),
   });
 }
@@ -60,15 +63,9 @@ export function useUpdateMarketSettlementSettings(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: settlementSettingsKeys.market(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: participantKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateMarketSettlementSettings(queryClient, marketId);
+        void invalidateParticipantsByMarket(queryClient, marketId);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
     },
   });

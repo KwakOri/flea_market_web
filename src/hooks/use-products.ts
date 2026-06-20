@@ -8,22 +8,26 @@ import {
   type CreateProductPayload,
   type UpdateProductPayload,
 } from "@/services/products.service";
-
-export const productKeys = {
-  byMarketParticipant: (marketId: string, participantId: string) =>
-    ["products", marketId, participantId] as const,
-};
+import { invalidateProductsByMarketParticipant } from "@/hooks/query-invalidations";
+import { productKeys } from "@/hooks/query-keys";
 
 export function useProducts(
   marketId: string | null,
   participantId: string | null,
 ) {
   return useQuery({
-    queryKey: productKeys.byMarketParticipant(
-      marketId ?? "none",
-      participantId ?? "none",
-    ),
-    queryFn: () => listProducts(marketId ?? "", participantId ?? ""),
+    queryKey: productKeys.byMarketParticipant(marketId, participantId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      if (!participantId) {
+        throw new Error("Participant is required");
+      }
+
+      return listProducts(marketId, participantId);
+    },
     enabled: Boolean(marketId && participantId),
   });
 }
@@ -48,9 +52,11 @@ export function useCreateProduct(
     },
     onSuccess: () => {
       if (marketId && participantId) {
-        void queryClient.invalidateQueries({
-          queryKey: productKeys.byMarketParticipant(marketId, participantId),
-        });
+        void invalidateProductsByMarketParticipant(
+          queryClient,
+          marketId,
+          participantId,
+        );
       }
     },
   });
@@ -72,9 +78,11 @@ export function useUpdateProduct(
     }) => updateProduct(productId, payload),
     onSuccess: () => {
       if (marketId && participantId) {
-        void queryClient.invalidateQueries({
-          queryKey: productKeys.byMarketParticipant(marketId, participantId),
-        });
+        void invalidateProductsByMarketParticipant(
+          queryClient,
+          marketId,
+          participantId,
+        );
       }
     },
   });

@@ -8,10 +8,8 @@ import {
   type CreateMarketPayload,
   type UpdateMarketPayload,
 } from "@/services/markets.service";
-
-export const marketKeys = {
-  all: ["markets"] as const,
-};
+import { invalidateMarkets } from "@/hooks/query-invalidations";
+import { marketKeys } from "@/hooks/query-keys";
 
 export function useMarkets(enabled: boolean) {
   return useQuery({
@@ -27,7 +25,7 @@ export function useCreateMarket() {
   return useMutation({
     mutationFn: (payload: CreateMarketPayload) => createMarket(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: marketKeys.all });
+      void invalidateMarkets(queryClient);
     },
   });
 }
@@ -44,7 +42,7 @@ export function useUpdateMarket() {
       payload: UpdateMarketPayload;
     }) => updateMarket(marketId, payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: marketKeys.all });
+      void invalidateMarkets(queryClient);
     },
   });
 }

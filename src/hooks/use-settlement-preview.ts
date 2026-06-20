@@ -11,36 +11,54 @@ import {
   type CreateSettlementPayload,
   type VoidSettlementPayload,
 } from "@/services/settlements.service";
-
-export const settlementPreviewKeys = {
-  byMarket: (marketId: string) => ["settlement-preview", marketId] as const,
-};
-
-export const settlementKeys = {
-  byMarket: (marketId: string) => ["settlements", marketId] as const,
-  detail: (settlementId: string) => ["settlement", settlementId] as const,
-};
+import {
+  invalidateSettlementDetail,
+  invalidateSettlementPreviewByMarket,
+  invalidateSettlementsByMarket,
+} from "@/hooks/query-invalidations";
+import {
+  settlementKeys,
+  settlementPreviewKeys,
+} from "@/hooks/query-keys";
 
 export function useSettlementPreview(marketId: string | null) {
   return useQuery({
-    queryKey: settlementPreviewKeys.byMarket(marketId ?? "none"),
-    queryFn: () => getSettlementPreview(marketId ?? ""),
+    queryKey: settlementPreviewKeys.byMarket(marketId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return getSettlementPreview(marketId);
+    },
     enabled: Boolean(marketId),
   });
 }
 
 export function useSettlements(marketId: string | null) {
   return useQuery({
-    queryKey: settlementKeys.byMarket(marketId ?? "none"),
-    queryFn: () => listSettlements(marketId ?? ""),
+    queryKey: settlementKeys.byMarket(marketId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return listSettlements(marketId);
+    },
     enabled: Boolean(marketId),
   });
 }
 
 export function useSettlement(settlementId: string | null) {
   return useQuery({
-    queryKey: settlementKeys.detail(settlementId ?? "none"),
-    queryFn: () => getSettlement(settlementId ?? ""),
+    queryKey: settlementKeys.detail(settlementId),
+    queryFn: () => {
+      if (!settlementId) {
+        throw new Error("Settlement is required");
+      }
+
+      return getSettlement(settlementId);
+    },
     enabled: Boolean(settlementId),
   });
 }
@@ -58,17 +76,11 @@ export function useCreateSettlement(marketId: string | null) {
     },
     onSuccess: (settlement) => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: settlementKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateSettlementsByMarket(queryClient, marketId);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
 
-      void queryClient.invalidateQueries({
-        queryKey: settlementKeys.detail(settlement.id),
-      });
+      void invalidateSettlementDetail(queryClient, settlement.id);
     },
   });
 }
@@ -85,12 +97,8 @@ export function useVoidSettlement(settlementId: string | null) {
       return voidSettlement(settlementId, payload);
     },
     onSuccess: (settlement) => {
-      void queryClient.invalidateQueries({
-        queryKey: settlementKeys.detail(settlement.id),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: settlementKeys.byMarket(settlement.marketId),
-      });
+      void invalidateSettlementDetail(queryClient, settlement.id);
+      void invalidateSettlementsByMarket(queryClient, settlement.marketId);
     },
   });
 }

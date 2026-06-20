@@ -12,16 +12,18 @@ import {
   type CreateParticipantPayload,
   type UpdateParticipantPayload,
 } from "@/services/participants.service";
-import { settlementPreviewKeys } from "./use-settlement-preview";
-
-export const participantKeys = {
-  all: ["participant-masters"] as const,
-  byMarket: (marketId: string) => ["participants", marketId] as const,
-};
+import {
+  invalidateAllMarketParticipantLists,
+  invalidateParticipantMasterDetail,
+  invalidateParticipantMasters,
+  invalidateParticipantsByMarket,
+  invalidateSettlementPreviewByMarket,
+} from "@/hooks/query-invalidations";
+import { participantKeys } from "@/hooks/query-keys";
 
 export function useParticipantMasters(enabled: boolean) {
   return useQuery({
-    queryKey: participantKeys.all,
+    queryKey: participantKeys.masters,
     queryFn: listParticipantMasters,
     enabled,
   });
@@ -29,8 +31,14 @@ export function useParticipantMasters(enabled: boolean) {
 
 export function useParticipants(marketId: string | null) {
   return useQuery({
-    queryKey: participantKeys.byMarket(marketId ?? "none"),
-    queryFn: () => listParticipants(marketId ?? ""),
+    queryKey: participantKeys.byMarket(marketId),
+    queryFn: () => {
+      if (!marketId) {
+        throw new Error("Market is required");
+      }
+
+      return listParticipants(marketId);
+    },
     enabled: Boolean(marketId),
   });
 }
@@ -42,9 +50,7 @@ export function useCreateParticipantMaster() {
     mutationFn: (payload: CreateParticipantPayload) =>
       createParticipantMaster(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: participantKeys.all,
-      });
+      void invalidateParticipantMasters(queryClient);
     },
   });
 }
@@ -61,15 +67,9 @@ export function useUpdateParticipantMaster() {
       payload: UpdateParticipantPayload;
     }) => updateParticipantMaster(participantId, payload),
     onSuccess: (participant) => {
-      void queryClient.invalidateQueries({
-        queryKey: participantKeys.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["participant", participant.id],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["participants"],
-      });
+      void invalidateParticipantMasters(queryClient);
+      void invalidateParticipantMasterDetail(queryClient, participant.id);
+      void invalidateAllMarketParticipantLists(queryClient);
     },
   });
 }
@@ -87,15 +87,9 @@ export function useCreateParticipant(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: participantKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: participantKeys.all,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateParticipantsByMarket(queryClient, marketId);
+        void invalidateParticipantMasters(queryClient);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
     },
   });
@@ -120,20 +114,12 @@ export function useUpdateParticipantForMarket(marketId: string | null) {
     },
     onSuccess: (participant) => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: participantKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateParticipantsByMarket(queryClient, marketId);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
 
-      void queryClient.invalidateQueries({
-        queryKey: participantKeys.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["participant", participant.id],
-      });
+      void invalidateParticipantMasters(queryClient);
+      void invalidateParticipantMasterDetail(queryClient, participant.id);
     },
   });
 }
@@ -151,17 +137,11 @@ export function useDeleteParticipantFromMarket(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void queryClient.invalidateQueries({
-          queryKey: participantKeys.byMarket(marketId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: settlementPreviewKeys.byMarket(marketId),
-        });
+        void invalidateParticipantsByMarket(queryClient, marketId);
+        void invalidateSettlementPreviewByMarket(queryClient, marketId);
       }
 
-      void queryClient.invalidateQueries({
-        queryKey: participantKeys.all,
-      });
+      void invalidateParticipantMasters(queryClient);
     },
   });
 }
