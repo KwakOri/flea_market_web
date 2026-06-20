@@ -63,10 +63,7 @@ import type {
 import type {
   UpdateSettlementFeeSettingsPayload,
 } from "@/services/settlement-settings.service";
-import {
-  useDashboardDialogStore,
-  type MarketDialogMode,
-} from "@/stores/dashboard-dialog.store";
+import { useDashboardDialogStore } from "@/stores/dashboard-dialog.store";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import {
   DashboardShell,
@@ -79,6 +76,14 @@ import {
   ParticipantDialog,
   ParticipantMasterDialog,
 } from "@/features/participants/components/participant-dialogs";
+import { MarketDetailPanel } from "@/features/markets/components/market-detail-panel";
+import { MarketDialog } from "@/features/markets/components/market-dialog";
+import { MarketLifecycleFilterControl } from "@/features/markets/components/market-lifecycle-filter-control";
+import { MarketSelectionCards } from "@/features/markets/components/market-selection-cards";
+import {
+  marketStatusLabels,
+  type MarketLifecycleFilter,
+} from "@/features/markets/lib/market-display";
 import { ParticipantList } from "@/features/participants/components/participant-list";
 import { ParticipantMasterTable } from "@/features/participants/components/participant-master-table";
 import { ProductTable } from "@/features/products/components/product-table";
@@ -102,40 +107,18 @@ import {
   sectionTitleClass,
   selectClass,
 } from "@/lib/design-system";
-import {
-  formatDate,
-  formatDateRange,
-  formatMarketDuration,
-} from "@/lib/date-format";
+import { formatDateRange } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
 import {
   parseReceiptAmountInput,
   paymentMethods,
 } from "@/lib/receipt-matrix";
 
-const marketStatusLabels: Record<MarketStatus, string> = {
-  draft: "예정",
-  active: "진행중",
-  closed: "종료",
-  archived: "보관",
-};
-
-type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
 type ToastState = {
   id: number;
   message: string;
   title: string;
 };
-
-const marketLifecycleFilters: Array<{
-  label: string;
-  value: MarketLifecycleFilter;
-}> = [
-  { label: "전체", value: "all" },
-  { label: "예정", value: "upcoming" },
-  { label: "진행중", value: "active" },
-  { label: "종료", value: "ended" },
-];
 
 type ReceiptLineDraft = {
   participantId: string;
@@ -1454,349 +1437,6 @@ function HomeActionCard({
   );
 }
 
-function MarketDialog({
-  editingMarket,
-  isSubmitting,
-  message,
-  mode,
-  onClose,
-  onCreateSubmit,
-  onUpdateSubmit,
-}: {
-  editingMarket: Market | null;
-  isSubmitting: boolean;
-  message: string | null;
-  mode: MarketDialogMode;
-  onClose: () => void;
-  onCreateSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onUpdateSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  const isEditMode = mode === "edit";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
-      <div
-        aria-modal="true"
-        className="w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl"
-        role="dialog"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-950">
-              {isEditMode ? "플리마켓 관리" : "플리마켓 추가"}
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              {isEditMode
-                ? "플리마켓의 기본 정보와 진행 상태를 수정합니다."
-                : "새로운 플리마켓 이벤트를 등록합니다."}
-            </p>
-          </div>
-          <button
-            aria-label="닫기"
-            className={buttonVariants({ intent: "quiet", size: "sm" })}
-            onClick={onClose}
-            type="button"
-          >
-            <X aria-hidden className="h-4 w-4" />
-          </button>
-        </div>
-        {message && (
-          <p className="border-b border-zinc-200 px-5 py-3 text-sm font-medium text-red-700">
-            {message}
-          </p>
-        )}
-        <form
-          className="grid max-h-[calc(100vh-12rem)] gap-4 overflow-y-auto p-5"
-          data-testid="market-form"
-          onSubmit={isEditMode ? onUpdateSubmit : onCreateSubmit}
-        >
-          <label className="grid gap-2 text-sm font-medium text-zinc-700">
-            마켓명
-            <input
-              className={inputClass}
-              defaultValue={editingMarket?.name ?? ""}
-              name="name"
-              placeholder="마켓명"
-              type="text"
-            />
-          </label>
-          {isEditMode && (
-            <label className="grid gap-2 text-sm font-medium text-zinc-700">
-              상태
-              <select
-                className={selectClass}
-                defaultValue={editingMarket?.status ?? "draft"}
-                name="status"
-              >
-                {Object.entries(marketStatusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-zinc-700">
-              시작일
-              <input
-                className={inputClass}
-                defaultValue={editingMarket?.startsOn ?? ""}
-                name="startsOn"
-                type="date"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-zinc-700">
-              종료일
-              <input
-                className={inputClass}
-                defaultValue={editingMarket?.endsOn ?? ""}
-                name="endsOn"
-                type="date"
-              />
-            </label>
-          </div>
-          <label className="grid gap-2 text-sm font-medium text-zinc-700">
-            메모
-            <textarea
-              className={cn(inputClass, "h-auto min-h-28 py-3")}
-              defaultValue={editingMarket?.description ?? ""}
-              name="description"
-              placeholder="메모"
-            />
-          </label>
-          <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4">
-            <button
-              className={buttonVariants({ intent: "secondary" })}
-              onClick={onClose}
-              type="button"
-            >
-              취소
-            </button>
-            <button
-              className={buttonVariants()}
-              disabled={isSubmitting}
-              type="submit"
-            >
-              {isSubmitting ? "저장 중" : isEditMode ? "저장" : "추가"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function MarketDetailPanel({
-  market,
-}: {
-  market: Market | null;
-}) {
-  if (!market) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
-        마켓 정보를 불러오는 중입니다.
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4">
-      <dl className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-          <dt className="text-xs font-medium text-zinc-500">마켓명</dt>
-          <dd className="mt-1 text-sm font-semibold text-zinc-950">
-            {market.name}
-          </dd>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-          <dt className="text-xs font-medium text-zinc-500">상태</dt>
-          <dd className="mt-1">
-            <span
-              className={cn(
-                "rounded-md px-2 py-1 text-xs font-semibold",
-                getMarketStatusBadgeClass(market.status),
-              )}
-            >
-              {marketStatusLabels[market.status]}
-            </span>
-          </dd>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-          <dt className="text-xs font-medium text-zinc-500">기간</dt>
-          <dd className="mt-1 text-sm font-semibold text-zinc-950">
-            {formatDateRange(market.startsOn, market.endsOn)}
-          </dd>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-          <dt className="text-xs font-medium text-zinc-500">진행일</dt>
-          <dd className="mt-1 text-sm font-semibold text-zinc-950">
-            {formatMarketDuration(market.startsOn, market.endsOn)}
-          </dd>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-          <dt className="text-xs font-medium text-zinc-500">등록일</dt>
-          <dd className="mt-1 text-sm font-semibold text-zinc-950">
-            {formatDate(market.createdAt)}
-          </dd>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 sm:col-span-2 2xl:col-span-5">
-          <dt className="text-xs font-medium text-zinc-500">메모</dt>
-          <dd className="mt-1 text-sm font-medium text-zinc-800">
-            {market.description || "-"}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-function MarketLifecycleFilterControl({
-  onSelectFilter,
-  selectedFilter,
-}: {
-  onSelectFilter: (filter: MarketLifecycleFilter) => void;
-  selectedFilter: MarketLifecycleFilter;
-}) {
-  return (
-    <div
-      aria-label="플리마켓 상태 필터"
-      className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-100 p-1"
-      role="group"
-    >
-      {marketLifecycleFilters.map((filter) => {
-        const isActive = selectedFilter === filter.value;
-
-        return (
-          <button
-            aria-pressed={isActive}
-            className={cn(
-              "h-9 rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2",
-              isActive
-                ? "bg-white text-zinc-950 shadow-sm ring-1 ring-zinc-200"
-                : "text-zinc-500 hover:bg-white/70 hover:text-zinc-950",
-            )}
-            key={filter.value}
-            onClick={() => onSelectFilter(filter.value)}
-            type="button"
-          >
-            {filter.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function MarketSelectionCards({
-  emptyMessage = "등록된 마켓이 없습니다.",
-  markets,
-  selectedMarketId,
-  onManageMarket,
-  onSelectMarket,
-}: {
-  emptyMessage?: string;
-  markets: Market[];
-  selectedMarketId: string | null;
-  onManageMarket?: (market: Market) => void;
-  onSelectMarket: (marketId: string) => void;
-}) {
-  if (markets.length === 0) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
-        {emptyMessage}
-      </div>
-    );
-  }
-
-  return (
-    <div className="divide-y divide-zinc-100 border-t border-zinc-200">
-      {markets.map((market) => {
-        const isSelected = selectedMarketId === market.id;
-
-        return (
-          <article
-            className={cn(
-              "grid cursor-pointer gap-4 px-4 py-4 transition hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_auto] lg:items-center",
-              isSelected && "bg-emerald-50",
-            )}
-            data-testid="receipt-market-row"
-            key={market.id}
-            onClick={() => onSelectMarket(market.id)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onSelectMarket(market.id);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs font-semibold text-emerald-700">
-                  플리마켓
-                </p>
-                <span
-                  className={cn(
-                    "rounded-md px-2 py-1 text-xs font-semibold",
-                    getMarketStatusBadgeClass(market.status),
-                  )}
-                >
-                  {marketStatusLabels[market.status]}
-                </span>
-              </div>
-              <h3 className="mt-2 truncate text-lg font-semibold text-zinc-950">
-                {market.name}
-              </h3>
-              <p className="mt-2 text-sm font-medium text-zinc-700">
-                {formatDateRange(market.startsOn, market.endsOn)}
-              </p>
-            </div>
-
-            <dl className="grid gap-3 text-sm sm:grid-cols-[120px_140px_minmax(0,1fr)]">
-              <div>
-                <dt className="text-xs font-medium text-zinc-500">진행일</dt>
-                <dd className="mt-1 font-medium text-zinc-800">
-                  {formatMarketDuration(market.startsOn, market.endsOn)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-zinc-500">등록일</dt>
-                <dd className="mt-1 font-medium text-zinc-800">
-                  {formatDate(market.createdAt)}
-                </dd>
-              </div>
-              <div className="min-w-0">
-                <dt className="text-xs font-medium text-zinc-500">메모</dt>
-                <dd className="mt-1 truncate text-zinc-700">
-                  {market.description || "-"}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              {onManageMarket && (
-                <button
-                  className={buttonVariants({ intent: "secondary", size: "sm" })}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onManageMarket(market);
-                  }}
-                  type="button"
-                >
-                  <Pencil aria-hidden className="mr-1.5 h-3.5 w-3.5" />
-                  정보 수정
-                </button>
-              )}
-            </div>
-          </article>
-        );
-      })}
-    </div>
-  );
-}
-
 function getFormString(formData: FormData, name: string): string {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
@@ -2022,19 +1662,5 @@ function getMarketLifecycle(status: MarketStatus): Exclude<MarketLifecycleFilter
     case "archived":
     default:
       return "ended";
-  }
-}
-
-function getMarketStatusBadgeClass(status: MarketStatus): string {
-  switch (status) {
-    case "active":
-      return "bg-emerald-100 text-emerald-800";
-    case "closed":
-      return "bg-zinc-100 text-zinc-700";
-    case "archived":
-      return "bg-slate-100 text-slate-700";
-    case "draft":
-    default:
-      return "bg-amber-100 text-amber-800";
   }
 }
