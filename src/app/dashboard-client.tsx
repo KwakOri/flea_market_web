@@ -6,16 +6,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  BarChart3,
   Banknote,
   CheckCircle2,
   CircleDollarSign,
+  ClipboardList,
   CreditCard,
   Download,
   Landmark,
+  ListChecks,
+  LogOut,
   Pencil,
   Plus,
+  Percent,
+  Settings,
+  Store,
   Trash2,
   type LucideIcon,
+  Users,
   X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
@@ -85,8 +93,6 @@ import {
   appShellClass,
   buttonVariants,
   compactSelectClass,
-  dashboardTabListClass,
-  dashboardTabVariants,
   inputClass,
   pageShellClass,
   panelVariants,
@@ -94,7 +100,6 @@ import {
   sectionHeaderClass,
   sectionTitleClass,
   selectClass,
-  statCardVariants,
 } from "@/lib/design-system";
 
 const marketStatusLabels: Record<MarketStatus, string> = {
@@ -218,16 +223,17 @@ const dashboardViewLabels: Record<DashboardView, string> = {
 };
 
 const dashboardTabs: Array<{
+  icon: LucideIcon;
   label: string;
   segment: string;
   view: DashboardView;
 }> = [
-  { label: "마켓관리", segment: "management", view: "management" },
-  { label: "참가부스관리", segment: "booths", view: "booths" },
-  { label: "수수료 현황", segment: "fees", view: "feeStatus" },
-  { label: "영수증 입력", segment: "sales", view: "salesMatrix" },
-  { label: "영수증조회", segment: "receipts", view: "receiptLookup" },
-  { label: "정산", segment: "settlements", view: "settlements" },
+  { icon: Store, label: "마켓관리", segment: "management", view: "management" },
+  { icon: ClipboardList, label: "영수증 입력", segment: "sales", view: "salesMatrix" },
+  { icon: ListChecks, label: "영수증 조회", segment: "receipts", view: "receiptLookup" },
+  { icon: BarChart3, label: "정산", segment: "settlements", view: "settlements" },
+  { icon: Percent, label: "수수료 정책", segment: "fees", view: "feeStatus" },
+  { icon: Users, label: "참가 부스", segment: "booths", view: "booths" },
 ];
 
 function getDashboardBackHref(pathname: string): string | null {
@@ -309,6 +315,7 @@ export function DashboardClient({
   >(null);
   const [marketLifecycleFilter, setMarketLifecycleFilter] =
     useState<MarketLifecycleFilter>("active");
+  const [railOpen, setRailOpen] = useState(false);
 
   const currentUser = useCurrentUser();
   const user = currentUser.data ?? null;
@@ -411,9 +418,25 @@ export function DashboardClient({
     matrixReceiptTotal - matrixPaymentSplitTotal,
     0,
   );
-  const summary = [
-    { label: "참가부스", value: String(participants.data?.length ?? 0) },
-    { label: "영수증", value: String(receipts.data?.length ?? 0) },
+  const marketSummaryItems = [
+    { accent: false, label: "BOOTHS", value: String(participants.data?.length ?? 0) },
+    { accent: false, label: "RECEIPTS", value: String(receipts.data?.length ?? 0) },
+    {
+      accent: false,
+      label: "총매출",
+      value: formatWon(settlementPreview.data?.netSalesAmount ?? 0),
+    },
+    {
+      accent: true,
+      label: "정산",
+      value:
+        (settlementHistory.data?.[0]?.versionNo
+          ? `v${settlementHistory.data[0].versionNo}`
+          : "미확정") +
+        (settlementHistory.data?.[0]?.status
+          ? ` · ${settlementStatusLabels[settlementHistory.data[0].status]}`
+          : ""),
+    },
   ];
   const shouldShowSummary = Boolean(marketId) && view !== "receiptLookup";
   const linkedParticipantIds = useMemo(
@@ -1020,102 +1043,193 @@ export function DashboardClient({
 
   return (
     <main className={pageShellClass}>
-      <div className={appShellClass}>
-        <header className="grid min-w-0 gap-4 border-b border-zinc-200 pb-5 xl:grid-cols-[minmax(0,1fr)_520px] xl:items-start">
-          <div className="min-w-0">
-            {backHref && (
-              <button
-                className={cn(
-                  buttonVariants({ intent: "secondary", size: "sm" }),
-                  "mb-3 w-fit gap-1.5",
-                )}
-                onClick={() => router.push(backHref)}
-                type="button"
-              >
-                <ArrowLeft aria-hidden className="h-4 w-4" />
-                뒤로가기
-              </button>
-            )}
-            <p className="text-[13px] font-semibold text-emerald-700">
-              Flea Market Settlement
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
-              {dashboardViewLabels[view]}
-            </h1>
-            {selectedMarket && (
-              <p className="mt-2 text-sm font-medium text-zinc-500">
-                {selectedMarket.name} ·{" "}
-                {formatDateRange(selectedMarket.startsOn, selectedMarket.endsOn)}
-              </p>
+      <aside
+        className="fixed bottom-0 left-0 top-0 z-[60] flex flex-col gap-1 overflow-hidden bg-[#16170f] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out"
+        onMouseEnter={() => setRailOpen(true)}
+        onMouseLeave={() => setRailOpen(false)}
+        style={{ width: railOpen ? 248 : 76 }}
+      >
+        <Link
+          className="mb-3 flex h-11 flex-none items-center gap-3 rounded-[11px] pl-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+          href="/management"
+        >
+          <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-lg bg-[#c7f94b] font-display text-[17px] font-bold text-[#16170f]">
+            L
+          </span>
+          <span
+            className="whitespace-nowrap font-display text-[15px] font-semibold text-[#f3f0e2] transition-opacity"
+            style={{ opacity: railOpen ? 1 : 0 }}
+          >
+            Ledger&nbsp;OS
+          </span>
+        </Link>
+
+        <nav aria-label="업무 화면" className="grid gap-1">
+          {marketId
+            ? dashboardTabs.map((tab) => (
+                <RailLink
+                  active={view === tab.view}
+                  href={`/markets/${marketId}/${tab.segment}`}
+                  icon={tab.icon}
+                  key={tab.view}
+                  label={tab.label}
+                  railOpen={railOpen}
+                />
+              ))
+            : [
+                {
+                  active: view === "management",
+                  href: "/markets",
+                  icon: Store,
+                  label: "마켓 관리",
+                },
+                {
+                  active: view === "boothMasters",
+                  href: "/booths",
+                  icon: Users,
+                  label: "부스 관리",
+                },
+                {
+                  active: view === "settings",
+                  href: "/settings",
+                  icon: Settings,
+                  label: "설정",
+                },
+              ].map((item) => (
+                <RailLink
+                  active={item.active}
+                  href={item.href}
+                  icon={item.icon}
+                  key={item.href}
+                  label={item.label}
+                  railOpen={railOpen}
+                />
+              ))}
+        </nav>
+
+        <div className="flex-1" />
+        <div className="flex h-12 flex-none items-center gap-3 px-2">
+          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-[#2a2b20] text-[13px] font-bold text-[#c7f94b]">
+            {user.displayName.charAt(0)}
+          </div>
+          <div
+            className="min-w-0 whitespace-nowrap leading-tight transition-opacity"
+            style={{ opacity: railOpen ? 1 : 0 }}
+          >
+            <div className="truncate text-[13px] font-semibold text-[#f3f0e2]">
+              {user.displayName}
+            </div>
+            <div
+              className="truncate font-mono text-[10.5px] text-[#7d7c6a]"
+              data-testid="user-email"
+            >
+              {user.email}
+            </div>
+          </div>
+        </div>
+        <button
+          aria-label="로그아웃"
+          className="flex h-11 flex-none items-center gap-3 rounded-[11px] px-3 text-[#cfccba] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+          disabled={logout.isPending}
+          onClick={handleLogout}
+          type="button"
+        >
+          <LogOut aria-hidden className="h-[21px] w-[21px] flex-none" />
+          <span
+            className="whitespace-nowrap text-sm font-semibold transition-opacity"
+            style={{ opacity: railOpen ? 1 : 0 }}
+          >
+            로그아웃
+          </span>
+        </button>
+      </aside>
+
+      <div className="min-h-screen min-w-0 pl-[76px]">
+        <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 px-5 py-[18px] backdrop-blur-md sm:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="flex min-w-0 flex-wrap items-center gap-4">
+              {backHref && (
+                <button
+                  className={cn(
+                    buttonVariants({ intent: "secondary", size: "sm" }),
+                    "gap-1.5",
+                  )}
+                  onClick={() => router.push(backHref)}
+                  type="button"
+                >
+                  <ArrowLeft aria-hidden className="h-4 w-4" />
+                  뒤로
+                </button>
+              )}
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#bfe3cd] bg-[#e6f4ec] px-3 py-1.5">
+                <span className="h-[7px] w-[7px] rounded-full bg-[#1f8a4d] [animation:okpulse_2.4s_infinite]" />
+                <span className="font-mono text-[11px] font-semibold tracking-[0.04em] text-[#1f8a4d]">
+                  {selectedMarket?.status === "active"
+                    ? "LIVE · 진행중"
+                    : selectedMarket
+                      ? marketStatusLabels[selectedMarket.status]
+                      : "LEDGER OS"}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <div className="font-mono text-[10.5px] tracking-[0.08em] text-[#8a8775]">
+                  {selectedMarket ? "CURRENT MARKET" : "WORKSPACE"}
+                </div>
+                <h1 className="mt-0.5 truncate font-display text-[22px] font-bold tracking-[-0.02em] text-[#1a1b12]">
+                  {selectedMarket?.name ?? dashboardViewLabels[view]}
+                </h1>
+              </div>
+              {selectedMarket && (
+                <span className="pb-0.5 font-mono text-[11.5px] text-[#8a8775]">
+                  {formatDateRange(selectedMarket.startsOn, selectedMarket.endsOn)}
+                </span>
+              )}
+            </div>
+
+            {shouldShowSummary ? (
+              <div className="flex min-w-0 items-stretch overflow-hidden rounded-[14px] border border-[#d8d3c2] bg-[#fbf9f1]">
+                {marketSummaryItems.map((item, index) => (
+                  <div
+                    className={cn(
+                      "min-w-[112px] px-[18px] py-2.5",
+                      index > 0 && "border-l border-[#e7e2d2]",
+                      item.accent && "bg-[#faf0db]",
+                    )}
+                    key={item.label}
+                  >
+                    <div
+                      className={cn(
+                        "font-mono text-[10px] tracking-[0.06em]",
+                        item.accent ? "text-[#a9791f]" : "text-[#8a8775]",
+                      )}
+                    >
+                      {item.label}
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-0.5 whitespace-nowrap font-display text-[19px] font-bold",
+                        item.accent && "text-[#a9791f]",
+                      )}
+                    >
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="hidden rounded-[14px] border border-[#d8d3c2] bg-[#fbf9f1] px-[18px] py-2.5 sm:block">
+                <div className="font-mono text-[10px] tracking-[0.06em] text-[#8a8775]">
+                  OPERATOR
+                </div>
+                <div className="mt-0.5 text-sm font-bold text-[#1a1b12]">
+                  {user.displayName}
+                </div>
+              </div>
             )}
           </div>
-
-          {marketId && (
-            <nav
-              aria-label="업무 화면"
-              className={cn("min-w-0 xl:col-span-2", dashboardTabListClass)}
-              role="tablist"
-            >
-              {dashboardTabs.map((tab) => {
-                const isActive = view === tab.view;
-
-                return (
-                  <Link
-                    aria-current={isActive ? "page" : undefined}
-                    aria-selected={isActive}
-                    className={dashboardTabVariants({ active: isActive })}
-                    href={`/markets/${marketId}/${tab.segment}`}
-                    key={tab.view}
-                    role="tab"
-                  >
-                    {tab.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
-
-          <section
-            className={cn(
-              panelVariants({ padding: "sm" }),
-              "w-full min-w-0 xl:col-start-2 xl:row-start-1 xl:w-auto",
-            )}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-zinc-950">
-                  {user.displayName}
-                </p>
-                <p className="text-xs text-zinc-500" data-testid="user-email">
-                  {user.email}
-                </p>
-              </div>
-              <button
-                className={buttonVariants({ intent: "secondary" })}
-                disabled={logout.isPending}
-                onClick={handleLogout}
-                type="button"
-              >
-                로그아웃
-              </button>
-            </div>
-          </section>
         </header>
 
-        {shouldShowSummary && (
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-            {summary.map((item) => (
-              <div className={statCardVariants()} key={item.label}>
-                <p className="text-sm font-medium text-zinc-500">
-                  {item.label}
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-zinc-950">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </section>
-        )}
+        <div className="px-5 py-[30px] pb-14 sm:px-8">
 
         {view === "home" && (
           <>
@@ -1472,108 +1586,86 @@ export function DashboardClient({
         )}
 
         {view === "feeStatus" && (
-          <section className={panelVariants()}>
-            <div
-              className={cn(
-                sectionHeaderClass,
-                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-              )}
-            >
-              <div>
-                <h2 className={sectionTitleClass}>수수료 적용 현황</h2>
-                <p className={sectionDescriptionClass}>
-                  참가부스별로 전체 설정, 플리마켓 설정, 부스 설정
-                  중 어떤 값이 적용되는지 확인합니다.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  className={buttonVariants({ intent: "secondary" })}
-                  href="/settings"
-                >
-                  전체 설정
-                </Link>
-                <Link
-                  className={buttonVariants({ intent: "secondary" })}
-                  href={`/markets/${marketId}/management`}
-                >
-                  플리마켓 설정
-                </Link>
-              </div>
-            </div>
-            <FeeApplicationMatrix
-              globalSettings={globalFeeSettings.data ?? null}
-              isLoading={
-                globalFeeSettings.isLoading ||
-                marketFeeSettings.isLoading ||
-                participants.isLoading
-              }
-              marketSettings={marketFeeSettings.data ?? null}
-              participants={participants.data ?? []}
-              onEditParticipant={openEditParticipantDialog}
+          <div>
+            <DashboardPageTitle
+              subtitle="전체 → 플리마켓 → 부스 우선순위로 적용되는 정책입니다."
+              title="수수료 정책 현황"
             />
-          </section>
+            <div className="mb-[22px] flex flex-wrap gap-2">
+              <Link
+                className={buttonVariants({ intent: "secondary" })}
+                href="/settings"
+              >
+                전체 설정
+              </Link>
+              <Link
+                className={buttonVariants({ intent: "secondary" })}
+                href={`/markets/${marketId}/management`}
+              >
+                플리마켓 설정
+              </Link>
+            </div>
+            <section className={panelVariants()}>
+              <FeeApplicationMatrix
+                globalSettings={globalFeeSettings.data ?? null}
+                isLoading={
+                  globalFeeSettings.isLoading ||
+                  marketFeeSettings.isLoading ||
+                  participants.isLoading
+                }
+                marketSettings={marketFeeSettings.data ?? null}
+                participants={participants.data ?? []}
+                onEditParticipant={openEditParticipantDialog}
+              />
+            </section>
+          </div>
         )}
 
         {view === "salesMatrix" && (
-          <section className={panelVariants()}>
-                <div
-                  className={cn(
-                    sectionHeaderClass,
-                    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-                  )}
-                >
-                  <div>
-                    <h2 className={sectionTitleClass}>영수증 입력</h2>
-                    <p className={sectionDescriptionClass}>
-                      {selectedMarket?.name ?? "마켓 미선택"}
-                    </p>
-                  </div>
-                </div>
-                <form
-                  className="grid gap-0"
-                  data-testid="receipt-matrix-form"
-                  onSubmit={handleCreateMatrixReceipt}
-                >
-                  {receiptMessage && (
-                    <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                      {receiptMessage}
-                    </p>
-                  )}
-                  <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
+          <div>
+            <DashboardPageTitle
+              eyebrow={selectedMarket?.name ?? "마켓 미선택"}
+              subtitle="한 결제 묶음에서 여러 부스 판매 라인을 한 번에 기록합니다."
+              title="영수증 입력"
+            />
+            <form
+              className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
+              data-testid="receipt-matrix-form"
+              onSubmit={handleCreateMatrixReceipt}
+            >
+              <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+                <div className="grid gap-4 border-b border-dashed border-[#e0dbca] bg-[#fcfbf6] px-6 py-5 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
+                  <div className="min-w-0">
+                    <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+                      판매 시각
+                    </div>
                     {matrixReceiptDateTimeEnabled ? (
-                      <div className="grid gap-2 md:grid-cols-[minmax(0,18rem)_auto]">
-                        <label
-                          className="grid gap-1 text-sm font-medium text-zinc-700"
-                          htmlFor="receipt-sold-at"
-                        >
-                          구매 날짜와 시간
-                          <input
-                            className={inputClass}
-                            disabled={!selectedMarket}
-                            id="receipt-sold-at"
-                            max={getReceiptDateTimeMax(
-                              selectedMarket?.endsOn ?? null,
-                            )}
-                            min={getReceiptDateTimeMin(
-                              selectedMarket?.startsOn ?? null,
-                            )}
-                            onChange={(event) =>
-                              setMatrixReceiptDateTimeDraft({
-                                enabled: true,
-                                marketId: selectedMarketId,
-                                value: event.target.value,
-                              })
-                            }
-                            required
-                            type="datetime-local"
-                            value={matrixReceiptDateTimeValue}
-                          />
-                        </label>
+                      <div className="grid gap-2">
+                        <input
+                          className={inputClass}
+                          disabled={!selectedMarket}
+                          id="receipt-sold-at"
+                          max={getReceiptDateTimeMax(
+                            selectedMarket?.endsOn ?? null,
+                          )}
+                          min={getReceiptDateTimeMin(
+                            selectedMarket?.startsOn ?? null,
+                          )}
+                          onChange={(event) =>
+                            setMatrixReceiptDateTimeDraft({
+                              enabled: true,
+                              marketId: selectedMarketId,
+                              value: event.target.value,
+                            })
+                          }
+                          required
+                          type="datetime-local"
+                          value={matrixReceiptDateTimeValue}
+                        />
                         <button
                           className={cn(
-                            buttonVariants({ intent: "secondary" }),
-                            "self-end",
+                            buttonVariants({ intent: "secondary", size: "sm" }),
+                            "w-fit",
                           )}
                           onClick={() => {
                             setMatrixReceiptDateTimeDraft(null);
@@ -1603,239 +1695,275 @@ export function DashboardClient({
                       </button>
                     )}
                   </div>
-                  <ReceiptMatrixInputTable
-                    amounts={matrixReceiptAmounts}
-                    onAmountChange={handleMatrixReceiptAmountChange}
-                    participants={participants.data ?? []}
+                  <label className="min-w-0">
+                    <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+                      구매자
+                    </span>
+                    <input
+                      className={inputClass}
+                      disabled={!participants.data?.length}
+                      name="customerLabel"
+                      placeholder="현장 고객"
+                      type="text"
+                    />
+                  </label>
+                  <label className="min-w-0">
+                    <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+                      메모
+                    </span>
+                    <input
+                      className={inputClass}
+                      disabled={!participants.data?.length}
+                      name="memo"
+                      placeholder="묶음 결제 · 요청사항"
+                      type="text"
+                    />
+                  </label>
+                </div>
+
+                {receiptMessage && (
+                  <p className="border-b border-[#f1eee2] px-6 py-3 text-sm font-semibold text-[#cf3d3d]">
+                    {receiptMessage}
+                  </p>
+                )}
+
+                <ReceiptMatrixInputTable
+                  amounts={matrixReceiptAmounts}
+                  onAmountChange={handleMatrixReceiptAmountChange}
+                  participants={participants.data ?? []}
+                />
+
+                <div className="grid gap-px border-t border-[#e6e2d4] bg-[#e6e2d4] md:grid-cols-3">
+                  <ReceiptTotalCell
+                    label="종합 금액"
+                    testId="receipt-matrix-total"
+                    value={formatWon(matrixReceiptTotal)}
                   />
-                  <div className="grid gap-3 border-t border-zinc-200 bg-zinc-50 px-4 py-3">
-                    <div className="grid gap-2 md:grid-cols-3">
-                      <div
-                        className="flex items-center justify-between gap-4 rounded-md border border-zinc-200 bg-white px-4 py-3"
-                        data-testid="receipt-matrix-total"
-                      >
-                        <span className="text-sm font-medium text-zinc-600">
-                          종합 금액
-                        </span>
-                        <span className="text-lg font-semibold text-zinc-950">
-                          {formatWon(matrixReceiptTotal)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 rounded-md border border-zinc-200 bg-white px-4 py-3">
-                        <span className="text-sm font-medium text-zinc-600">
-                          결제 입력
-                        </span>
-                        <span className="text-lg font-semibold text-zinc-950">
-                          {formatWon(
-                            matrixPaymentMode === "split"
-                              ? matrixPaymentSplitTotal
-                              : matrixReceiptTotal,
-                          )}
-                        </span>
-                      </div>
-                      <div
-                        className="flex items-center justify-between gap-4 rounded-md border border-zinc-200 bg-white px-4 py-3"
-                        data-testid="receipt-matrix-payment-remaining"
-                      >
-                        <span className="text-sm font-medium text-zinc-600">
-                          남은 금액
-                        </span>
-                        <span className="text-lg font-semibold text-emerald-700">
-                          {formatWon(
-                            matrixPaymentMode === "split"
-                              ? matrixPaymentRemaining
-                              : 0,
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 rounded-md border border-zinc-200 bg-white p-3">
-                      <div className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-100 p-1">
-                        <button
-                          className={buttonVariants({
-                            intent:
-                              matrixPaymentMode === "single"
-                                ? "primary"
-                                : "quiet",
-                            size: "sm",
-                          })}
-                          onClick={() =>
-                            handleMatrixPaymentModeChange("single")
-                          }
-                          type="button"
-                        >
-                          단일 결제
-                        </button>
-                        <button
-                          className={buttonVariants({
-                            intent:
-                              matrixPaymentMode === "split"
-                                ? "primary"
-                                : "quiet",
-                            size: "sm",
-                          })}
-                          onClick={() => handleMatrixPaymentModeChange("split")}
-                          type="button"
-                        >
-                          분할 결제
-                        </button>
-                      </div>
-                      {matrixPaymentMode === "single" ? (
-                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                          {paymentMethods.map((paymentMethod) => {
-                            const Icon = paymentMethodIcons[paymentMethod];
-                            const isActive =
-                              matrixSinglePaymentMethod === paymentMethod;
+                  <ReceiptTotalCell
+                    label="결제 입력"
+                    value={formatWon(
+                      matrixPaymentMode === "split"
+                        ? matrixPaymentSplitTotal
+                        : matrixReceiptTotal,
+                    )}
+                  />
+                  <ReceiptTotalCell
+                    accent
+                    label="남은 금액"
+                    testId="receipt-matrix-payment-remaining"
+                    value={formatWon(
+                      matrixPaymentMode === "split"
+                        ? matrixPaymentRemaining
+                        : 0,
+                    )}
+                  />
+                </div>
+              </section>
 
-                            return (
-                              <button
-                                className={cn(
-                                  "flex h-12 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-                                  isActive
-                                    ? "border-zinc-950 bg-zinc-950 text-white"
-                                    : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
-                                )}
-                                disabled={!participants.data?.length}
-                                key={paymentMethod}
-                                onClick={() =>
-                                  setMatrixSinglePaymentMethod(paymentMethod)
-                                }
-                                type="button"
-                              >
-                                <Icon
-                                  aria-hidden="true"
-                                  className="h-4 w-4 flex-none"
-                                />
-                                <span className="whitespace-nowrap">
-                                  {paymentMethodLabels[paymentMethod]}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                          {paymentMethods.map((paymentMethod) => {
-                            const Icon = paymentMethodIcons[paymentMethod];
-
-                            return (
-                              <div
-                                className="grid gap-2 rounded-md border border-zinc-200 p-3"
-                                key={paymentMethod}
-                              >
-                                <label
-                                  className="flex items-center gap-2 text-sm font-medium text-zinc-700"
-                                  htmlFor={`matrix-payment-${paymentMethod}`}
-                                >
-                                  <Icon
-                                    aria-hidden="true"
-                                    className="h-4 w-4 text-zinc-500"
-                                  />
-                                  {paymentMethodLabels[paymentMethod]}
-                                </label>
-                                <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
-                                  <input
-                                    className={cn(inputClass, "text-right")}
-                                    disabled={
-                                      !participants.data?.length ||
-                                      matrixReceiptTotal <= 0
-                                    }
-                                    id={`matrix-payment-${paymentMethod}`}
-                                    inputMode="numeric"
-                                    onChange={(event) =>
-                                      handleMatrixPaymentSplitChange(
-                                        paymentMethod,
-                                        event.target.value,
-                                      )
-                                    }
-                                    placeholder="0"
-                                    type="text"
-                                    value={matrixPaymentSplits[paymentMethod]}
-                                  />
-                                  <button
-                                    className={cn(
-                                      buttonVariants({
-                                        intent: "secondary",
-                                        size: "sm",
-                                      }),
-                                      "h-10 min-w-16 whitespace-nowrap px-3 text-sm",
-                                    )}
-                                    disabled={
-                                      !participants.data?.length ||
-                                      matrixReceiptTotal <= 0
-                                    }
-                                    onClick={() =>
-                                      handleMatrixPaymentFillRemaining(
-                                        paymentMethod,
-                                      )
-                                    }
-                                    type="button"
-                                  >
-                                    잔액
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <div className="grid gap-2 xl:grid-cols-[180px_1fr_auto]">
-                      <input
-                        className={inputClass}
-                        disabled={!participants.data?.length}
-                        name="customerLabel"
-                        placeholder="구매자"
-                        type="text"
-                      />
-                      <input
-                        className={inputClass}
-                        disabled={!participants.data?.length}
-                        name="memo"
-                        placeholder="메모"
-                        type="text"
-                      />
+              <aside className="grid gap-5">
+                <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-5 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+                  <div className="mb-3.5 flex items-center justify-between gap-3">
+                    <h3 className="font-display text-[15px] font-bold">
+                      결제수단 분할
+                    </h3>
+                    <div className="inline-flex rounded-[9px] bg-[#f1eee2] p-[3px]">
                       <button
-                        className={buttonVariants()}
-                        disabled={
-                          !participants.data?.length ||
-                          createReceipt.isPending ||
-                          matrixReceiptTotal <= 0 ||
-                          (matrixPaymentMode === "split" &&
-                            matrixPaymentRemaining !== 0)
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-bold transition",
+                          matrixPaymentMode === "single"
+                            ? "bg-[#c7f94b] text-[#16170f]"
+                            : "text-[#8a8775]",
+                        )}
+                        onClick={() =>
+                          handleMatrixPaymentModeChange("single")
                         }
-                        type="submit"
+                        type="button"
                       >
-                        저장
+                        단일
+                      </button>
+                      <button
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-bold transition",
+                          matrixPaymentMode === "split"
+                            ? "bg-[#c7f94b] text-[#16170f]"
+                            : "text-[#8a8775]",
+                        )}
+                        onClick={() => handleMatrixPaymentModeChange("split")}
+                        type="button"
+                      >
+                        분할
                       </button>
                     </div>
                   </div>
-                </form>
-          </section>
+
+                  {matrixPaymentMode === "single" ? (
+                    <div className="grid gap-2">
+                      {paymentMethods.map((paymentMethod) => {
+                        const Icon = paymentMethodIcons[paymentMethod];
+                        const isActive =
+                          matrixSinglePaymentMethod === paymentMethod;
+
+                        return (
+                          <button
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-[11px] border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                              isActive
+                                ? "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f6e40]"
+                                : "border-[#eee9da] bg-[#fcfbf6] text-[#8a8775] hover:bg-[#f1eee2]",
+                            )}
+                            disabled={!participants.data?.length}
+                            key={paymentMethod}
+                            onClick={() =>
+                              setMatrixSinglePaymentMethod(paymentMethod)
+                            }
+                            type="button"
+                          >
+                            <Icon aria-hidden className="h-4 w-4 flex-none" />
+                            <span className="flex-1">
+                              {paymentMethodLabels[paymentMethod]}
+                            </span>
+                            <span className="font-display text-[15px] font-bold">
+                              {isActive ? formatWon(matrixReceiptTotal) : "0원"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid gap-2">
+                      {paymentMethods.map((paymentMethod) => {
+                        const Icon = paymentMethodIcons[paymentMethod];
+
+                        return (
+                          <div
+                            className="grid gap-2 rounded-[11px] border border-[#eee9da] bg-[#fcfbf6] p-3"
+                            key={paymentMethod}
+                          >
+                            <label
+                              className="flex items-center gap-2 text-sm font-semibold text-[#56564a]"
+                              htmlFor={`matrix-payment-${paymentMethod}`}
+                            >
+                              <Icon
+                                aria-hidden="true"
+                                className="h-4 w-4 text-[#8a8775]"
+                              />
+                              {paymentMethodLabels[paymentMethod]}
+                            </label>
+                            <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
+                              <input
+                                className={cn(inputClass, "text-right")}
+                                disabled={
+                                  !participants.data?.length ||
+                                  matrixReceiptTotal <= 0
+                                }
+                                id={`matrix-payment-${paymentMethod}`}
+                                inputMode="numeric"
+                                onChange={(event) =>
+                                  handleMatrixPaymentSplitChange(
+                                    paymentMethod,
+                                    event.target.value,
+                                  )
+                                }
+                                placeholder="0"
+                                type="text"
+                                value={matrixPaymentSplits[paymentMethod]}
+                              />
+                              <button
+                                className={cn(
+                                  buttonVariants({
+                                    intent: "secondary",
+                                    size: "sm",
+                                  }),
+                                  "h-10 min-w-16 whitespace-nowrap px-3 text-sm",
+                                )}
+                                disabled={
+                                  !participants.data?.length ||
+                                  matrixReceiptTotal <= 0
+                                }
+                                onClick={() =>
+                                  handleMatrixPaymentFillRemaining(
+                                    paymentMethod,
+                                  )
+                                }
+                                type="button"
+                              >
+                                잔액
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+
+                <section className="rounded-[18px] bg-[#16170f] p-[22px] text-[#f3f0e2]">
+                  <div className="mb-3.5 flex items-center gap-2.5">
+                    <span
+                      className={cn(
+                        "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full",
+                        matrixPaymentMode === "split" &&
+                          matrixPaymentRemaining !== 0
+                          ? "bg-[#c47d12]"
+                          : "bg-[#1f8a4d]",
+                      )}
+                    >
+                      <CheckCircle2 aria-hidden className="h-[18px] w-[18px]" strokeWidth={3} />
+                    </span>
+                    <div>
+                      <div className="font-display text-base font-bold">
+                        {matrixPaymentMode === "split" &&
+                        matrixPaymentRemaining !== 0
+                          ? "검증 대기"
+                          : "검증 완료"}
+                      </div>
+                      <div className="font-mono text-[10.5px] tracking-[0.04em] text-[#8d8c79]">
+                        입력 합계 = 결제 합계
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between border-t border-[#2c2d22] py-1.5 text-[12.5px]">
+                    <span className="text-[#9b9a86]">남은 금액</span>
+                    <span className="font-display font-bold text-[#c7f94b]">
+                      {formatWon(
+                        matrixPaymentMode === "split"
+                          ? matrixPaymentRemaining
+                          : 0,
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    className="mt-3.5 w-full rounded-xl border-0 bg-[#c7f94b] p-3 text-[15px] font-bold text-[#16170f] transition hover:bg-[#d4ff5e] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={
+                      !participants.data?.length ||
+                      createReceipt.isPending ||
+                      matrixReceiptTotal <= 0 ||
+                      (matrixPaymentMode === "split" &&
+                        matrixPaymentRemaining !== 0)
+                    }
+                    type="submit"
+                  >
+                    영수증 저장
+                  </button>
+                </section>
+              </aside>
+            </form>
+          </div>
         )}
 
         {view === "receiptLookup" && (
-          <section className={panelVariants()}>
-                <div
-                  className={cn(
-                    sectionHeaderClass,
-                    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-                  )}
-                >
-                  <div>
-                    <h2 className={sectionTitleClass}>
-                      {selectedMarket?.name ?? "마켓을 불러오는 중입니다"}
-                    </h2>
-                    <p className={sectionDescriptionClass}>
-                      {formatDateRange(
-                        selectedMarket?.startsOn ?? null,
-                        selectedMarket?.endsOn ?? null,
-                      )}
-                    </p>
-                  </div>
-                </div>
+          <div>
+            <DashboardPageTitle
+              eyebrow={formatDateRange(
+                selectedMarket?.startsOn ?? null,
+                selectedMarket?.endsOn ?? null,
+              )}
+              subtitle="행과 부스별 기여 금액을 한 화면에서 비교합니다."
+              title="영수증 조회"
+            />
+            <section className={panelVariants()}>
                 {participants.isLoading || receipts.isLoading ? (
-                  <div className="px-4 py-12 text-center text-sm text-zinc-500">
+                  <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
                     영수증을 불러오는 중입니다.
                   </div>
                 ) : (
@@ -1844,24 +1972,18 @@ export function DashboardClient({
                     receipts={receipts.data ?? []}
                   />
                 )}
-          </section>
+            </section>
+          </div>
         )}
 
         {view === "settlements" && (
-          <section className={panelVariants()}>
-                <div
-                  className={cn(
-                    sectionHeaderClass,
-                    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-                  )}
-                >
-                  <div>
-                    <h2 className={sectionTitleClass}>정산 미리보기</h2>
-                    <p className={sectionDescriptionClass}>
-                      {selectedMarket?.name ?? "마켓 미선택"}
-                    </p>
-                  </div>
-                </div>
+          <div>
+            <DashboardPageTitle
+              eyebrow={selectedMarket?.name ?? "마켓 미선택"}
+              subtitle="확정 시 현재 정산 결과가 회차 스냅샷으로 저장됩니다."
+              title="정산 프리뷰 / 확정"
+            />
+            <section className={panelVariants()}>
                 <SettlementPreviewPanel
                   history={settlementHistory.data ?? []}
                   isConfirming={createSettlementSnapshot.isPending}
@@ -1896,7 +2018,8 @@ export function DashboardClient({
                     }
                   }}
                 />
-          </section>
+            </section>
+          </div>
         )}
         {participantDialogMode && (
           <ParticipantDialog
@@ -1923,7 +2046,122 @@ export function DashboardClient({
           }}
         />
       </div>
+      </div>
     </main>
+  );
+}
+
+function RailLink({
+  active,
+  href,
+  icon: Icon,
+  label,
+  railOpen,
+}: {
+  active: boolean;
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  railOpen: boolean;
+}) {
+  return (
+    <Link
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex h-[46px] flex-none items-center gap-3.5 rounded-[11px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]",
+        active
+          ? "bg-[#c7f94b] text-[#16170f]"
+          : "text-[#cfccba] hover:bg-white/10 hover:text-white",
+      )}
+      href={href}
+    >
+      <Icon aria-hidden className="h-[21px] w-[21px] flex-none" strokeWidth={1.8} />
+      <span
+        className="whitespace-nowrap transition-opacity"
+        style={{ opacity: railOpen ? 1 : 0 }}
+      >
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+function DashboardPageTitle({
+  eyebrow,
+  subtitle,
+  title,
+}: {
+  eyebrow?: string;
+  subtitle?: string;
+  title: string;
+}) {
+  return (
+    <div className="mb-[22px] flex flex-wrap items-baseline gap-3.5">
+      <h2 className="m-0 font-display text-[30px] font-bold tracking-[-0.025em] text-[#1a1b12]">
+        {title}
+      </h2>
+      {subtitle ? (
+        <span className="font-mono text-xs text-[#8a8775]">{subtitle}</span>
+      ) : null}
+      {eyebrow ? (
+        <span className="font-mono text-[11px] text-[#a8a593]">{eyebrow}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function ReceiptTotalCell({
+  accent = false,
+  label,
+  testId,
+  value,
+}: {
+  accent?: boolean;
+  label: string;
+  testId?: string;
+  value: string;
+}) {
+  return (
+    <div
+      className={cn("px-6 py-4", accent ? "bg-[#e6f4ec]" : "bg-[#fcfbf6]")}
+      data-testid={testId}
+    >
+      <div
+        className={cn(
+          "font-mono text-[10.5px] tracking-[0.06em]",
+          accent ? "text-[#1f8a4d]" : "text-[#8a8775]",
+        )}
+      >
+        {label}
+      </div>
+      <div
+        className={cn(
+          "mt-1 font-display text-[22px] font-bold",
+          accent ? "text-[#1f8a4d]" : "text-[#1a1b12]",
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantTypeBadge({ type }: { type: ParticipantType }) {
+  const classNameByType: Record<ParticipantType, string> = {
+    seller: "bg-[#f1eee2] text-[#8a8775]",
+    staff: "bg-[#26271c] text-[#d7d3bf]",
+    special_booth: "bg-[#eef9d4] text-[#5c7a16]",
+  };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md px-2 py-1 font-mono text-[10.5px] font-semibold",
+        classNameByType[type],
+      )}
+    >
+      {participantTypeLabels[type]}
+    </span>
   );
 }
 
@@ -2633,7 +2871,7 @@ function FeeApplicationMatrix({
 }) {
   if (isLoading) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
         수수료 적용 현황을 불러오는 중입니다.
       </div>
     );
@@ -2641,7 +2879,7 @@ function FeeApplicationMatrix({
 
   if (participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
         연결된 참가부스가 없습니다.
       </div>
     );
@@ -2659,26 +2897,26 @@ function FeeApplicationMatrix({
   const hasMarketSettings = Boolean(marketSettings?.id);
 
   return (
-    <div className="overflow-x-auto border-t border-zinc-200">
+    <div className="overflow-x-auto">
       <table className="min-w-[1240px] border-collapse text-sm">
-        <thead className="bg-zinc-50 text-left text-zinc-500">
+        <thead className="bg-[#16170f] text-left font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]">
           <tr>
-            <th className="sticky left-0 z-20 w-[220px] border-r border-zinc-200 bg-zinc-50 px-4 py-3 font-medium">
+            <th className="sticky left-0 z-20 w-[220px] border-r border-[#2c2d22] bg-[#16170f] px-5 py-3 font-semibold">
               참가부스
             </th>
-            <th className="w-[300px] px-4 py-3 font-medium">전체 설정</th>
-            <th className="w-[300px] px-4 py-3 font-medium">
+            <th className="w-[300px] px-5 py-3 font-semibold">전체 설정</th>
+            <th className="w-[300px] px-5 py-3 font-semibold">
               플리마켓 설정
             </th>
-            <th className="w-[300px] px-4 py-3 font-medium">
+            <th className="w-[300px] px-5 py-3 font-semibold text-[#c7f94b]">
               이 플리마켓 부스 설정
             </th>
-            <th className="sticky right-0 z-20 w-[120px] border-l border-zinc-200 bg-zinc-50 px-4 py-3 text-center font-medium">
+            <th className="sticky right-0 z-20 w-[120px] border-l border-[#2c2d22] bg-[#16170f] px-5 py-3 text-center font-semibold">
               설정
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100">
+        <tbody className="divide-y divide-[#f1eee2]">
           {participants.map((participant) => {
             const activeScope = getParticipantFeePolicySource(
               participant,
@@ -2689,12 +2927,12 @@ function FeeApplicationMatrix({
 
             return (
               <tr data-testid="fee-status-row" key={participant.id}>
-                <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 align-top">
-                  <p className="font-semibold text-zinc-950">
+                <td className="sticky left-0 z-10 border-r border-[#f1eee2] bg-white px-5 py-4 align-top">
+                  <p className="text-[14.5px] font-semibold text-[#1a1b12]">
                     {participant.displayName}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {participantTypeLabels[participant.participantType]}
+                  <p className="mt-2">
+                    <ParticipantTypeBadge type={participant.participantType} />
                   </p>
                 </td>
                 <FeeApplicationCell
@@ -2718,7 +2956,7 @@ function FeeApplicationMatrix({
                   title="부스 설정"
                   unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
                 />
-                <td className="sticky right-0 z-10 border-l border-zinc-200 bg-white px-4 py-4">
+                <td className="sticky right-0 z-10 border-l border-[#f1eee2] bg-white px-5 py-4">
                   <div className="flex min-h-[190px] items-center justify-center">
                   <button
                     aria-label={`${participant.displayName} 부스별 수수료 설정`}
@@ -2768,29 +3006,31 @@ function FeeApplicationCell({
   const isUnavailable = !settings;
 
   return (
-    <td className="px-4 py-4 align-top">
+    <td className="px-5 py-4 align-top">
       <div
         className={cn(
-          "grid min-h-[190px] gap-2 rounded-md border border-zinc-200 bg-white p-3 transition-opacity",
-          isActive && "border-emerald-200 bg-emerald-50/40",
-          !isActive && "opacity-30 hover:opacity-60",
+          "grid min-h-[190px] gap-2 rounded-xl border border-[#ece7d8] bg-white p-3 transition-opacity",
+          isActive && "border-[#1f8a4d] bg-[#e6f4ec]",
+          !isActive && "opacity-50 hover:opacity-75",
         )}
       >
         <div className="flex items-center justify-between gap-2">
-          <p className="font-semibold text-zinc-950">{title}</p>
+          <p className="text-xs font-semibold text-[#56564a]">{title}</p>
           <span
             className={cn(
-              "rounded-full px-2 py-1 text-xs font-semibold",
+              "font-mono text-[9.5px] font-bold",
               isActive
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-zinc-100 text-zinc-500",
+                ? "text-[#1f8a4d]"
+                : isUnavailable
+                  ? "text-[#bdb9a8]"
+                  : "text-[#bdb9a8]",
             )}
           >
             {isActive ? "적용 중" : isUnavailable ? "미설정" : "대기"}
           </span>
         </div>
         {isUnavailable ? (
-          <p className="mt-5 rounded-md bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
+          <p className="mt-5 rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm text-[#8a8775]">
             {unavailableMessage ?? "설정이 없습니다."}
           </p>
         ) : (
@@ -2799,13 +3039,13 @@ function FeeApplicationCell({
               return (
                 <div
                   className={cn(
-                    "grid grid-cols-[92px_minmax(0,1fr)_44px] items-center gap-2 rounded px-2 py-1",
-                    isActive && "bg-white shadow-sm ring-1 ring-emerald-100",
+                    "grid grid-cols-[92px_minmax(0,1fr)_44px] items-center gap-2 rounded-md px-2 py-1",
+                    isActive && "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
                   )}
                   key={field.key}
                 >
-                  <dt className="text-xs text-zinc-500">{field.label}</dt>
-                  <dd className="truncate font-medium text-zinc-800">
+                  <dt className="text-xs text-[#8a8775]">{field.label}</dt>
+                  <dd className="truncate font-display font-semibold text-[#1a1b12]">
                     {formatFeeFieldValue(
                       field.key,
                       getScopedFeeFieldValue(scope, settings, field.key),
@@ -2814,8 +3054,8 @@ function FeeApplicationCell({
                   </dd>
                   <span
                     className={cn(
-                      "text-right text-[11px] font-semibold",
-                      isActive ? "text-emerald-700" : "text-zinc-300",
+                      "text-right font-mono text-[11px] font-semibold",
+                      isActive ? "text-[#1f8a4d]" : "text-[#c4c0ae]",
                     )}
                   >
                     {isActive ? "적용" : "-"}
@@ -3490,7 +3730,7 @@ function ReceiptMatrixInputTable({
 }) {
   if (participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-6 py-12 text-center text-sm text-[#8a8775]">
         마켓에 연결된 참가부스가 없습니다.
       </div>
     );
@@ -3498,40 +3738,71 @@ function ReceiptMatrixInputTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-sm">
-        <thead className="bg-zinc-50 text-left text-zinc-500">
-          <tr>
-            <th className="px-4 py-3 font-medium">참가부스</th>
-            <th className="px-4 py-3 font-medium">구매 금액</th>
-            <th className="px-4 py-3 font-medium">유형</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {participants.map((participant) => (
-            <tr key={participant.id}>
-              <td className="px-4 py-3 font-medium text-zinc-950">
+      <div className="min-w-[640px]">
+        <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-3">
+          <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+            참가 부스
+          </span>
+          <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+            구매 금액
+          </span>
+          <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+            유형
+          </span>
+        </div>
+        <div>
+          {participants.map((participant) => {
+            const hasAmount =
+              (parseOptionalReceiptAmount(amounts[participant.id] ?? "") ?? 0) >
+              0;
+
+            return (
+              <div
+                className={cn(
+                  "grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] items-center border-b border-[#f1eee2] px-6 py-2.5",
+                  hasAmount ? "bg-[#fcfdf7]" : "bg-white",
+                )}
+                key={participant.id}
+              >
+                <div
+                  className={cn(
+                    "text-[14.5px] font-semibold",
+                    hasAmount ? "text-[#16170f]" : "text-[#56564a]",
+                  )}
+                >
                 {participant.displayName}
-              </td>
-              <td className="px-4 py-3">
-                <input
-                  className={cn(inputClass, "max-w-[180px] text-right")}
-                  inputMode="numeric"
-                  name={`amount-${participant.id}`}
-                  onChange={(event) =>
-                    onAmountChange(participant.id, event.target.value)
-                  }
-                  placeholder="0"
-                  type="text"
-                  value={amounts[participant.id] ?? ""}
-                />
-              </td>
-              <td className="px-4 py-3 text-zinc-700">
-                {participantTypeLabels[participant.participantType]}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </div>
+                <div className="flex justify-end">
+                  <div
+                    className={cn(
+                      "flex w-[150px] items-center gap-1 rounded-[9px] border px-3 py-2",
+                      hasAmount
+                        ? "border-[#16170f] bg-[#f7fbe9]"
+                        : "border-[#e6e2d4] bg-[#fcfbf6]",
+                    )}
+                  >
+                    <input
+                      className="min-w-0 flex-1 bg-transparent text-right font-display text-[15px] font-bold text-[#16170f] outline-none placeholder:text-[#c4c0ae]"
+                      inputMode="numeric"
+                      name={`amount-${participant.id}`}
+                      onChange={(event) =>
+                        onAmountChange(participant.id, event.target.value)
+                      }
+                      placeholder="0"
+                      type="text"
+                      value={amounts[participant.id] ?? ""}
+                    />
+                    <span className="text-xs text-[#a8a593]">원</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <ParticipantTypeBadge type={participant.participantType} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -3549,7 +3820,7 @@ function ReceiptMatrixTable({
 
   if (receipts.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
         등록된 영수증이 없습니다.
       </div>
     );
@@ -3599,33 +3870,33 @@ function ReceiptMatrixTable({
   }
 
   return (
-    <div className="border-t border-zinc-200">
+    <div>
       <div className="grid h-[calc(100vh-260px)] min-h-[320px] max-h-[720px] overflow-hidden grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)]">
         <div
-          className="z-20 grid items-center border-b border-r border-zinc-200 bg-zinc-50 text-sm text-zinc-500"
+          className="z-20 grid items-center border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
           style={{ gridTemplateColumns: fixedGridTemplate }}
         >
-          <div className="px-4 text-center font-medium">판매 시각</div>
-          <div className="px-4 text-center font-medium">영수증번호</div>
-          <div className="px-4 text-center font-medium">구매자</div>
-          <div className="px-4 text-center font-medium">결제</div>
-          <div className="px-4 text-center font-medium">합계</div>
+          <div className="px-4 text-center font-semibold">판매 시각</div>
+          <div className="px-4 text-center font-semibold">영수증번호</div>
+          <div className="px-4 text-center font-semibold">구매자</div>
+          <div className="px-4 text-center font-semibold">결제</div>
+          <div className="px-4 text-center font-semibold">합계</div>
         </div>
 
         <div
-          className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden border-b border-zinc-200 bg-zinc-50"
+          className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden border-b border-[#2c2d22] bg-[#16170f]"
           data-testid="receipt-booth-header"
           onScroll={handleBoothHeaderScroll}
           ref={boothHeaderRef}
         >
           {participants.length > 0 && (
             <div
-              className="grid h-full min-w-max items-center text-sm text-zinc-500"
+              className="grid h-full min-w-max items-center font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
               style={{ gridTemplateColumns: boothGridTemplate }}
             >
               {participants.map((participant) => (
                 <div
-                  className="break-keep px-4 text-center font-medium"
+                  className="break-keep px-4 text-center font-semibold"
                   key={participant.id}
                 >
                   {participant.displayName}
@@ -3636,12 +3907,12 @@ function ReceiptMatrixTable({
         </div>
 
         <div
-          className="scrollbar-hidden overflow-x-hidden overflow-y-auto border-r border-zinc-200 bg-white"
+          className="scrollbar-hidden overflow-x-hidden overflow-y-auto border-r border-[#f1eee2] bg-white"
           data-testid="receipt-fixed-pane"
           onScroll={handleFixedBodyScroll}
           ref={fixedBodyRef}
         >
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-[#f1eee2]">
             {receipts.map((receipt) => (
               <div
                 className="grid h-[88px] items-center text-sm"
@@ -3649,19 +3920,19 @@ function ReceiptMatrixTable({
                 key={receipt.id}
                 style={{ gridTemplateColumns: fixedGridTemplate }}
               >
-                <div className="whitespace-nowrap px-4 text-center text-zinc-700">
+                <div className="whitespace-nowrap px-4 text-center font-display text-[13px] text-[#56564a]">
                   {formatDateTime(receipt.soldAt)}
                 </div>
-                <div className="truncate px-4 text-center font-medium text-zinc-950">
+                <div className="truncate px-4 text-center font-mono text-[11.5px] text-[#8a8775]">
                   {receipt.receiptNo ?? "-"}
                 </div>
-                <div className="truncate px-4 text-center font-medium text-zinc-950">
+                <div className="truncate px-4 text-center font-semibold text-[#1a1b12]">
                   {receipt.customerLabel ?? "-"}
                 </div>
-                <div className="px-4 text-center text-zinc-700">
+                <div className="px-4 text-center text-[#56564a]">
                   <ReceiptPaymentSplits receipt={receipt} />
                 </div>
-                <div className="px-4 text-center font-semibold text-zinc-950">
+                <div className="px-4 text-center font-display text-[15px] font-bold text-[#1a1b12]">
                   {formatWon(receipt.totalAmount)}
                 </div>
               </div>
@@ -3676,11 +3947,11 @@ function ReceiptMatrixTable({
           ref={boothBodyRef}
         >
           {participants.length === 0 ? (
-            <div className="flex h-full min-h-[248px] items-center justify-center px-4 text-sm text-zinc-500">
+            <div className="flex h-full min-h-[248px] items-center justify-center px-4 text-sm text-[#8a8775]">
               마켓에 연결된 참가부스가 없습니다.
             </div>
           ) : (
-            <div className="min-w-max divide-y divide-zinc-100">
+            <div className="min-w-max divide-y divide-[#f1eee2]">
               {receipts.map((receipt) => {
                 const amountsByParticipant =
                   getReceiptAmountsByParticipant(receipt);
@@ -3693,7 +3964,7 @@ function ReceiptMatrixTable({
                   >
                     {participants.map((participant) => (
                       <div
-                        className="px-4 text-center text-zinc-700"
+                        className="px-4 text-center font-display text-[13.5px] text-[#56564a]"
                         key={participant.id}
                       >
                         {formatOptionalWon(
@@ -3732,7 +4003,7 @@ function ReceiptPaymentSplits({ receipt }: { receipt: Receipt }) {
           >
             <Icon
               aria-hidden="true"
-              className="h-4 w-4 flex-none text-zinc-500"
+              className="h-4 w-4 flex-none text-[#8a8775]"
               strokeWidth={2}
             />
             <span>{formatWon(paymentSplit.amount)}</span>
@@ -3809,9 +4080,35 @@ function SettlementPreviewPanel({
     : null;
 
   return (
-    <div>
+    <div className="grid gap-[18px] p-0">
+      <dl className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+        <SettlementMetric
+          label="총매출"
+          tone="dark"
+          value={formatWon(preview.netSalesAmount)}
+        />
+        <SettlementMetric
+          label="판매 수수료"
+          value={formatWon(preview.salesCommissionAmount)}
+        />
+        <SettlementMetric
+          label="참가부스 부담 카드 수수료"
+          tone="blue"
+          value={formatWon(preview.cardFeeChargedToParticipantAmount)}
+        />
+        <SettlementMetric
+          label="마켓 부담 카드 수수료"
+          tone="amber"
+          value={formatWon(preview.cardFeePaidByMarketAmount)}
+        />
+        <SettlementMetric
+          label="지급 예정"
+          tone="green"
+          value={formatWon(preview.participantPayoutAmount)}
+        />
+      </dl>
       <form
-        className="grid gap-2 border-b border-zinc-200 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto_auto]"
+        className="grid gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-3.5 shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
         data-testid="settlement-confirm-form"
         onSubmit={onConfirm}
       >
@@ -3819,7 +4116,7 @@ function SettlementPreviewPanel({
           className={inputClass}
           disabled={isConfirming || preview.receiptCount === 0}
           name="memo"
-          placeholder="확정 메모"
+          placeholder="확정 메모 (예: 5월 정산 최종 확정)"
           type="text"
         />
         <button
@@ -3841,33 +4138,11 @@ function SettlementPreviewPanel({
           정산 확정
         </button>
         {message && (
-          <p className="text-sm font-medium text-red-700 md:col-span-3">
+          <p className="text-sm font-semibold text-[#cf3d3d] md:col-span-3">
             {message}
           </p>
         )}
       </form>
-      <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        <SettlementMetric
-          label="총매출"
-          value={formatWon(preview.netSalesAmount)}
-        />
-        <SettlementMetric
-          label="판매 수수료"
-          value={formatWon(preview.salesCommissionAmount)}
-        />
-        <SettlementMetric
-          label="참가부스 부담 카드 수수료"
-          value={formatWon(preview.cardFeeChargedToParticipantAmount)}
-        />
-        <SettlementMetric
-          label="마켓 부담 카드 수수료"
-          value={formatWon(preview.cardFeePaidByMarketAmount)}
-        />
-        <SettlementMetric
-          label="지급 예정"
-          value={formatWon(preview.participantPayoutAmount)}
-        />
-      </dl>
       {selectedParticipantId ? (
         <ParticipantDailySalesDetail
           isReceiptsLoading={isReceiptsLoading}
@@ -3881,22 +4156,22 @@ function SettlementPreviewPanel({
       )}
       {!selectedParticipantId && (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
             <table className="w-full min-w-[1120px] border-collapse text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+              <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
                 <tr>
-                  <th className="px-4 py-3 font-medium">참가부스</th>
-                  <th className="px-4 py-3 text-right font-medium">현금</th>
-                  <th className="px-4 py-3 text-right font-medium">카드</th>
-                  <th className="px-4 py-3 text-right font-medium">계좌이체</th>
-                  <th className="px-4 py-3 text-right font-medium">기타</th>
-                  <th className="px-4 py-3 text-right font-medium">총매출</th>
-                  <th className="px-4 py-3 text-right font-medium">판매 수수료</th>
-                  <th className="px-4 py-3 text-right font-medium">카드 수수료</th>
-                  <th className="px-4 py-3 text-right font-medium">지급 예정</th>
+                  <th className="px-5 py-3 font-semibold">참가 부스</th>
+                  <th className="px-5 py-3 text-right font-semibold">현금</th>
+                  <th className="px-5 py-3 text-right font-semibold">카드</th>
+                  <th className="px-5 py-3 text-right font-semibold">계좌이체</th>
+                  <th className="px-5 py-3 text-right font-semibold">기타</th>
+                  <th className="px-5 py-3 text-right font-semibold">총매출</th>
+                  <th className="px-5 py-3 text-right font-semibold">판매 수수료</th>
+                  <th className="px-5 py-3 text-right font-semibold">카드 수수료</th>
+                  <th className="px-5 py-3 text-right font-semibold text-[#c7f94b]">지급 예정</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-[#f1eee2]">
                 {preview.participants.map((participant) => (
                   <SettlementPreviewRow
                     key={participant.participantId}
@@ -4007,11 +4282,61 @@ function SettlementHistoryPanel({
   );
 }
 
-function SettlementMetric({ label, value }: { label: string; value: string }) {
+function SettlementMetric({
+  label,
+  tone = "default",
+  value,
+}: {
+  label: string;
+  tone?: "amber" | "blue" | "dark" | "default" | "green";
+  value: string;
+}) {
+  const toneClass = {
+    amber: {
+      card: "border-[#e6e2d4] bg-white",
+      label: "text-[#8a8775]",
+      value: "text-[#a9791f]",
+    },
+    blue: {
+      card: "border-[#e6e2d4] bg-white",
+      label: "text-[#8a8775]",
+      value: "text-[#2d6fe0]",
+    },
+    dark: {
+      card: "border-[#16170f] bg-[#16170f]",
+      label: "text-[#9b9a86]",
+      value: "text-white",
+    },
+    default: {
+      card: "border-[#e6e2d4] bg-white",
+      label: "text-[#8a8775]",
+      value: "text-[#1a1b12]",
+    },
+    green: {
+      card: "border-[#bfe3cd] bg-[#e6f4ec]",
+      label: "text-[#1f8a4d]",
+      value: "text-[#1f8a4d]",
+    },
+  }[tone];
+
   return (
-    <div className="bg-white px-4 py-3">
-      <dt className="text-xs font-medium text-zinc-500">{label}</dt>
-      <dd className="mt-1 text-lg font-semibold text-zinc-950">{value}</dd>
+    <div className={cn("rounded-[16px] border p-[18px]", toneClass.card)}>
+      <dt
+        className={cn(
+          "font-mono text-[10.5px] tracking-[0.05em]",
+          toneClass.label,
+        )}
+      >
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          "mt-1.5 font-display text-[23px] font-bold",
+          toneClass.value,
+        )}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -4543,7 +4868,7 @@ function SettlementPreviewRow({
 }) {
   return (
     <tr
-      className="cursor-pointer transition hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+      className="cursor-pointer transition hover:bg-[#fcfdf7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c7f94b]"
       data-testid="settlement-row"
       onClick={() => onSelectParticipant(participant.participantId)}
       onKeyDown={(event) => {
@@ -4555,44 +4880,48 @@ function SettlementPreviewRow({
       role="button"
       tabIndex={0}
     >
-      <td className="px-4 py-3">
-        <p className="font-medium text-zinc-950">{participant.displayName}</p>
-        <p className="mt-1 text-xs text-zinc-500">
-          {participantTypeLabels[participant.participantType]} ·{" "}
-          {participant.saleLineCount}건
+      <td className="px-5 py-3">
+        <p className="text-[14.5px] font-semibold text-[#1a1b12]">
+          {participant.displayName}
+        </p>
+        <p className="mt-1 flex items-center gap-1.5">
+          <ParticipantTypeBadge type={participant.participantType} />
+          <span className="font-mono text-[10.5px] text-[#a8a593]">
+            {participant.saleLineCount}건
+          </span>
         </p>
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.cashSalesAmount)}
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.cardSalesAmount)}
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.transferSalesAmount)}
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.otherSalesAmount)}
       </td>
-      <td className="px-4 py-3 text-right font-medium text-zinc-950">
+      <td className="px-5 py-3 text-right font-display text-[14.5px] font-bold text-[#1a1b12]">
         {formatWon(participant.netSalesAmount)}
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] font-semibold text-[#1a1b12]">
         {formatWon(participant.salesCommissionAmount)}
-        <span className="ml-1 text-xs text-zinc-400">
+        <span className="ml-1 font-mono text-[10px] text-[#a8a593]">
           {formatPercent(participant.salesCommissionRate)}
         </span>
       </td>
-      <td className="px-4 py-3 text-right text-zinc-700">
+      <td className="px-5 py-3 text-right font-display text-[13.5px] font-semibold text-[#2d6fe0]">
         {formatWon(participant.cardFeeAmount)}
-        <span className="ml-1 text-xs text-zinc-400">
+        <span className="ml-1 font-mono text-[10px] text-[#a8a593]">
           {formatPercent(participant.cardFeeRate)}
         </span>
-        <span className="ml-1 text-xs text-zinc-400">
+        <span className="ml-1 font-mono text-[10px] text-[#a8a593]">
           {participant.cardFeePayer === "participant" ? "참가부스" : "마켓"}
         </span>
       </td>
-      <td className="px-4 py-3 text-right font-semibold text-zinc-950">
+      <td className="px-5 py-3 text-right font-display text-[15px] font-bold text-[#1f8a4d]">
         {formatWon(participant.payoutAmount)}
       </td>
     </tr>

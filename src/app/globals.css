@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e9e5d8;
+  --foreground: #1a1b12;
 }
 
 @theme inline {
@@ -10,13 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-space-grotesk);
 }
 
 html,
@@ -27,7 +21,21 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family:
+    "Pretendard Variable",
+    var(--font-geist-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
 }
 
 .scrollbar-hidden {
@@ -36,4 +44,48 @@ body {
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cdc8b6;
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 6px;
+}
+
+.font-display,
+.dsp {
+  font-family:
+    var(--font-space-grotesk),
+    "Pretendard Variable",
+    var(--font-geist-sans),
+    sans-serif;
+}
+
+.mono {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.num {
+  font-family:
+    var(--font-space-grotesk),
+    var(--font-geist-mono),
+    monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+@keyframes okpulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(31, 138, 77, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(31, 138, 77, 0.1);
+  }
 }
