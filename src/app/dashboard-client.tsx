@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 import {
   useCreateMarket,
@@ -73,15 +72,12 @@ import { HomeView } from "@/features/dashboard/components/home-view";
 import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
 import { SettingsView } from "@/features/fees/components/settings-view";
 import { FeeStatusView } from "@/features/fees/components/fee-status-view";
-import {
-  ParticipantDialog,
-  ParticipantMasterDialog,
-} from "@/features/participants/components/participant-dialogs";
+import { ParticipantDialog } from "@/features/participants/components/participant-dialogs";
 import { MarketManagementView } from "@/features/markets/components/market-management-view";
 import { MarketDialog } from "@/features/markets/components/market-dialog";
 import { marketStatusLabels } from "@/features/markets/lib/market-display";
 import { BoothProductManagementView } from "@/features/participants/components/booth-product-management-view";
-import { ParticipantMasterTable } from "@/features/participants/components/participant-master-table";
+import { BoothMasterManagementView } from "@/features/participants/components/booth-master-management-view";
 import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
 import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
 import {
@@ -90,14 +86,7 @@ import {
 } from "@/features/receipts/lib/receipt-date-time";
 import { SettlementPreviewPanel } from "@/features/settlements/components/settlement-preview-panel";
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
-import { cn } from "@/lib/utils";
-import {
-  buttonVariants,
-  panelVariants,
-  sectionDescriptionClass,
-  sectionHeaderClass,
-  sectionTitleClass,
-} from "@/lib/design-system";
+import { panelVariants } from "@/lib/design-system";
 import { formatDateRange } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
 import {
@@ -926,54 +915,22 @@ export function DashboardClient({
         )}
 
         {view === "boothMasters" && (
-          <section className={panelVariants()}>
-            <div
-              className={cn(
-                sectionHeaderClass,
-                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-              )}
-            >
-              <div>
-                <h2 className={sectionTitleClass}>부스</h2>
-                <p className={sectionDescriptionClass}>
-                  플리마켓에 연결하기 전의 부스 기본 정보를 관리합니다.
-                </p>
-              </div>
-              <button
-                className={buttonVariants()}
-                disabled={createParticipantMaster.isPending}
-                onClick={openCreateParticipantMasterDialog}
-                type="button"
-              >
-                <Plus aria-hidden className="mr-2 h-4 w-4" />
-                부스 추가
-              </button>
-            </div>
-            {participantMasterMessage && (
-              <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                {participantMasterMessage}
-              </p>
-            )}
-            <ParticipantMasterTable
-              participants={participantMasters.data ?? []}
-              showLinkStatus={false}
-              onEditParticipant={openEditParticipantMasterDialog}
-            />
-            {participantMasterDialogMode && (
-              <ParticipantMasterDialog
-                editingParticipant={editingParticipantMaster}
-                isSubmitting={
-                  createParticipantMaster.isPending ||
-                  updateParticipantMaster.isPending
-                }
-                message={participantMasterMessage}
-                mode={participantMasterDialogMode}
-                onClose={closeParticipantMasterDialog}
-                onCreateSubmit={handleCreateParticipantMaster}
-                onUpdateSubmit={handleUpdateParticipantMaster}
-              />
-            )}
-          </section>
+          <BoothMasterManagementView
+            createDisabled={createParticipantMaster.isPending}
+            dialogMode={participantMasterDialogMode}
+            editingParticipant={editingParticipantMaster}
+            isSubmitting={
+              createParticipantMaster.isPending ||
+              updateParticipantMaster.isPending
+            }
+            message={participantMasterMessage}
+            participants={participantMasters.data ?? []}
+            onCloseDialog={closeParticipantMasterDialog}
+            onCreate={openCreateParticipantMasterDialog}
+            onCreateSubmit={handleCreateParticipantMaster}
+            onEditParticipant={openEditParticipantMasterDialog}
+            onUpdateSubmit={handleUpdateParticipantMaster}
+          />
         )}
 
         {view === "booths" && (
