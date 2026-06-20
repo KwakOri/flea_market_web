@@ -89,6 +89,7 @@ import type {
   SettlementStatus,
 } from "@/services/settlements.service";
 import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
+import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import { cn } from "@/lib/utils";
 import {
   appShellClass,
@@ -102,6 +103,13 @@ import {
   sectionTitleClass,
   selectClass,
 } from "@/lib/design-system";
+import { formatMoneyAmount } from "@/lib/money";
+import {
+  parseOptionalReceiptAmount,
+  parseReceiptAmountInput,
+  paymentMethods,
+  sumReceiptAmounts,
+} from "@/lib/receipt-matrix";
 
 const marketStatusLabels: Record<MarketStatus, string> = {
   draft: "예정",
@@ -134,8 +142,6 @@ const paymentMethodIcons: Record<PaymentMethod, LucideIcon> = {
   transfer: Landmark,
   other: CircleDollarSign,
 };
-
-const paymentMethods: PaymentMethod[] = ["cash", "card", "transfer", "other"];
 
 const cardFeePayerLabels: Record<CardFeePayer, string> = {
   market: "마켓 부담",
@@ -283,22 +289,43 @@ export function DashboardClient({
   const [requestedParticipantId, setRequestedParticipantId] = useState<
     string | null
   >(null);
-  const [matrixReceiptAmounts, setMatrixReceiptAmounts] = useState<
-    Record<string, string>
-  >({});
-  const [matrixReceiptDateTimeDraft, setMatrixReceiptDateTimeDraft] = useState<{
-    enabled: boolean;
-    marketId: string | null;
-    value: string;
-  } | null>(null);
-  const [matrixPaymentMode, setMatrixPaymentMode] = useState<
-    "single" | "split"
-  >("single");
-  const [matrixSinglePaymentMethod, setMatrixSinglePaymentMethod] =
-    useState<PaymentMethod>("cash");
-  const [matrixPaymentSplits, setMatrixPaymentSplits] = useState<
-    Record<PaymentMethod, string>
-  >(getEmptyPaymentSplitAmounts);
+  const matrixReceiptAmounts = useReceiptMatrixStore(
+    (state) => state.receiptAmounts,
+  );
+  const matrixReceiptDateTimeDraft = useReceiptMatrixStore(
+    (state) => state.receiptDateTimeDraft,
+  );
+  const matrixPaymentMode = useReceiptMatrixStore((state) => state.paymentMode);
+  const matrixSinglePaymentMethod = useReceiptMatrixStore(
+    (state) => state.singlePaymentMethod,
+  );
+  const matrixPaymentSplits = useReceiptMatrixStore(
+    (state) => state.paymentSplits,
+  );
+  const handleMatrixReceiptAmountChange = useReceiptMatrixStore(
+    (state) => state.setReceiptAmount,
+  );
+  const setMatrixReceiptDateTimeDraft = useReceiptMatrixStore(
+    (state) => state.setReceiptDateTimeDraft,
+  );
+  const clearMatrixReceiptDateTimeDraft = useReceiptMatrixStore(
+    (state) => state.clearReceiptDateTimeDraft,
+  );
+  const handleMatrixPaymentModeChange = useReceiptMatrixStore(
+    (state) => state.setPaymentMode,
+  );
+  const setMatrixSinglePaymentMethod = useReceiptMatrixStore(
+    (state) => state.setSinglePaymentMethod,
+  );
+  const handleMatrixPaymentSplitChange = useReceiptMatrixStore(
+    (state) => state.setPaymentSplit,
+  );
+  const handleMatrixPaymentFillRemaining = useReceiptMatrixStore(
+    (state) => state.fillPaymentSplitRemaining,
+  );
+  const resetMatrixReceiptDraft = useReceiptMatrixStore(
+    (state) => state.resetReceiptDraft,
+  );
   const [marketDialogMode, setMarketDialogMode] =
     useState<MarketDialogMode | null>(null);
   const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
@@ -409,14 +436,8 @@ export function DashboardClient({
           selectedMarket?.startsOn ?? null,
           selectedMarket?.endsOn ?? null,
         );
-  const matrixReceiptTotal = useMemo(
-    () => sumReceiptAmounts(matrixReceiptAmounts),
-    [matrixReceiptAmounts],
-  );
-  const matrixPaymentSplitTotal = useMemo(
-    () => sumReceiptAmounts(matrixPaymentSplits),
-    [matrixPaymentSplits],
-  );
+  const matrixReceiptTotal = sumReceiptAmounts(matrixReceiptAmounts);
+  const matrixPaymentSplitTotal = sumReceiptAmounts(matrixPaymentSplits);
   const matrixPaymentRemaining = Math.max(
     matrixReceiptTotal - matrixPaymentSplitTotal,
     0,
@@ -489,6 +510,10 @@ export function DashboardClient({
 
     router.replace(`/login?next=${encodeURIComponent(currentPath)}`);
   }, [currentUser.isFetched, pathname, router, user]);
+
+  useEffect(() => {
+    resetMatrixReceiptDraft();
+  }, [resetMatrixReceiptDraft, selectedMarketId]);
 
   function showToast(title: string, message: string) {
     toastIdRef.current += 1;
@@ -918,9 +943,7 @@ export function DashboardClient({
         }),
       );
 
-      setMatrixReceiptAmounts({});
-      setMatrixReceiptDateTimeDraft(null);
-      setMatrixPaymentSplits(getEmptyPaymentSplitAmounts());
+      resetMatrixReceiptDraft();
       form.reset();
       showToast(
         "영수증 저장 완료",
@@ -929,72 +952,6 @@ export function DashboardClient({
     } catch (error) {
       setReceiptMessage(getErrorMessage(error));
     }
-  }
-
-  function handleMatrixReceiptAmountChange(
-    participantId: string,
-    amount: string,
-  ) {
-    const nextAmounts = {
-      ...matrixReceiptAmounts,
-      [participantId]: formatMoneyInput(amount),
-    };
-    const nextTotal = sumReceiptAmounts(nextAmounts);
-
-    setMatrixReceiptAmounts(nextAmounts);
-    setMatrixPaymentSplits((currentSplits) =>
-      clampPaymentSplitAmounts(currentSplits, nextTotal),
-    );
-  }
-
-  function handleMatrixPaymentModeChange(mode: "single" | "split") {
-    setMatrixPaymentMode(mode);
-    setMatrixPaymentSplits(getEmptyPaymentSplitAmounts());
-  }
-
-  function handleMatrixPaymentSplitChange(
-    paymentMethod: PaymentMethod,
-    amount: string,
-  ) {
-    setMatrixPaymentSplits((current) => {
-      const nextAmount = parseOptionalReceiptAmount(amount) ?? 0;
-      const otherTotal = paymentMethods.reduce(
-        (sum, currentPaymentMethod) =>
-          currentPaymentMethod === paymentMethod
-            ? sum
-            : sum +
-              (parseOptionalReceiptAmount(current[currentPaymentMethod]) ?? 0),
-        0,
-      );
-      const allowedAmount = Math.max(matrixReceiptTotal - otherTotal, 0);
-      const clampedAmount = Math.min(nextAmount, allowedAmount);
-
-      return {
-        ...current,
-        [paymentMethod]:
-          clampedAmount > 0 ? formatMoneyAmount(clampedAmount) : "",
-      };
-    });
-  }
-
-  function handleMatrixPaymentFillRemaining(paymentMethod: PaymentMethod) {
-    setMatrixPaymentSplits((current) => {
-      const otherTotal = paymentMethods.reduce(
-        (sum, currentPaymentMethod) =>
-          currentPaymentMethod === paymentMethod
-            ? sum
-            : sum +
-              (parseOptionalReceiptAmount(current[currentPaymentMethod]) ?? 0),
-        0,
-      );
-      const remainingAmount = Math.max(matrixReceiptTotal - otherTotal, 0);
-
-      return {
-        ...current,
-        [paymentMethod]:
-          remainingAmount > 0 ? formatMoneyAmount(remainingAmount) : "",
-      };
-    });
   }
 
   async function handleConfirmSettlement(event: FormEvent<HTMLFormElement>) {
@@ -1671,7 +1628,7 @@ export function DashboardClient({
                             "w-fit",
                           )}
                           onClick={() => {
-                            setMatrixReceiptDateTimeDraft(null);
+                            clearMatrixReceiptDateTimeDraft();
                           }}
                           type="button"
                         >
@@ -5220,85 +5177,6 @@ function buildReceiptPayload({
     })),
     soldAt,
   };
-}
-
-function parseReceiptAmountInput(value: string): number | null {
-  const amount = parseMoneyInputAmount(value);
-
-  if (amount === null) {
-    return null;
-  }
-
-  if (amount <= 0) {
-    throw new Error("금액은 0보다 큰 원 단위 숫자로 입력해주세요.");
-  }
-
-  return amount;
-}
-
-function parseOptionalReceiptAmount(value: string): number | null {
-  try {
-    return parseReceiptAmountInput(value);
-  } catch {
-    return null;
-  }
-}
-
-function sumReceiptAmounts(amounts: Record<string, string>): number {
-  return Object.values(amounts).reduce(
-    (sum, value) => sum + (parseOptionalReceiptAmount(value) ?? 0),
-    0,
-  );
-}
-
-function parseMoneyInputAmount(value: string): number | null {
-  const digits = value.replace(/\D/g, "");
-
-  if (!digits) {
-    return null;
-  }
-
-  const amount = Number(digits);
-  return Number.isSafeInteger(amount) ? amount : null;
-}
-
-function formatMoneyInput(value: string): string {
-  const amount = parseMoneyInputAmount(value);
-  return amount === null ? "" : formatMoneyAmount(amount);
-}
-
-function formatMoneyAmount(value: number): string {
-  return new Intl.NumberFormat("ko-KR").format(value);
-}
-
-function getEmptyPaymentSplitAmounts(): Record<PaymentMethod, string> {
-  return {
-    cash: "",
-    card: "",
-    transfer: "",
-    other: "",
-  };
-}
-
-function clampPaymentSplitAmounts(
-  amounts: Record<PaymentMethod, string>,
-  totalAmount: number,
-): Record<PaymentMethod, string> {
-  const clampedAmounts = getEmptyPaymentSplitAmounts();
-  let usedAmount = 0;
-
-  for (const paymentMethod of paymentMethods) {
-    const amount = parseOptionalReceiptAmount(amounts[paymentMethod]) ?? 0;
-    const allowedAmount = Math.max(totalAmount - usedAmount, 0);
-    const clampedAmount = Math.min(amount, allowedAmount);
-
-    if (clampedAmount > 0) {
-      clampedAmounts[paymentMethod] = formatMoneyAmount(clampedAmount);
-      usedAmount += clampedAmount;
-    }
-  }
-
-  return clampedAmounts;
 }
 
 function getErrorMessage(error: unknown): string {
