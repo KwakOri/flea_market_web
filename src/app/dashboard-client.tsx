@@ -36,13 +36,10 @@ import {
 import {
   useGlobalSettlementSettings,
   useMarketSettlementSettings,
-  useUpdateGlobalSettlementSettings,
   useUpdateMarketSettlementSettings,
 } from "@/hooks/use-settlement-settings";
-import { ApiError } from "@/services/api-client";
 import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
-  CardFeePayer,
   Participant,
   ParticipantStatus,
   ParticipantType,
@@ -53,9 +50,6 @@ import type {
   CreateReceiptPaymentSplitPayload,
   PaymentMethod,
 } from "@/services/receipts.service";
-import type {
-  UpdateSettlementFeeSettingsPayload,
-} from "@/services/settlement-settings.service";
 import { useDashboardDialogStore } from "@/stores/dashboard-dialog.store";
 import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
@@ -70,8 +64,9 @@ import {
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
 import { HomeView } from "@/features/dashboard/components/home-view";
 import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
-import { SettingsView } from "@/features/fees/components/settings-view";
+import { SettingsScreen } from "@/features/fees/components/settings-screen";
 import { FeeStatusView } from "@/features/fees/components/fee-status-view";
+import { getFeeSettingsPayload } from "@/features/fees/lib/fee-settings-payload";
 import { ParticipantDialog } from "@/features/participants/components/participant-dialogs";
 import { MarketManagementView } from "@/features/markets/components/market-management-view";
 import { MarketDialog } from "@/features/markets/components/market-dialog";
@@ -88,6 +83,7 @@ import { SettlementPreviewPanel } from "@/features/settlements/components/settle
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { panelVariants } from "@/lib/design-system";
 import { formatDateRange } from "@/lib/date-format";
+import { getErrorMessage } from "@/lib/error-message";
 import { formatWon } from "@/lib/money";
 import {
   parseReceiptAmountInput,
@@ -136,9 +132,6 @@ export function DashboardClient({
   const [settlementMessage, setSettlementMessage] = useState<string | null>(
     null,
   );
-  const [globalFeeSettingsMessage, setGlobalFeeSettingsMessage] = useState<
-    string | null
-  >(null);
   const [marketFeeSettingsMessage, setMarketFeeSettingsMessage] = useState<
     string | null
   >(null);
@@ -246,7 +239,6 @@ export function DashboardClient({
   const downloadSettlementPdfArchive =
     useDownloadSettlementPdfArchive(selectedMarketId);
   const globalFeeSettings = useGlobalSettlementSettings(Boolean(user));
-  const updateGlobalFeeSettings = useUpdateGlobalSettlementSettings();
   const marketFeeSettings = useMarketSettlementSettings(selectedMarketId);
   const updateMarketFeeSettings =
     useUpdateMarketSettlementSettings(selectedMarketId);
@@ -446,25 +438,6 @@ export function DashboardClient({
   function closeMarketDialog() {
     closeMarketDialogState();
     setMarketMessage(null);
-  }
-
-  async function handleUpdateGlobalFeeSettings(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-    setGlobalFeeSettingsMessage(null);
-
-    try {
-      await updateGlobalFeeSettings.mutateAsync(
-        getFeeSettingsPayload(new FormData(event.currentTarget)),
-      );
-      showToast(
-        "전체 수수료 저장 완료",
-        "전체 수수료 기본값을 저장했습니다.",
-      );
-    } catch (error) {
-      setGlobalFeeSettingsMessage(getErrorMessage(error));
-    }
   }
 
   async function handleUpdateMarketFeeSettings(
@@ -866,16 +839,7 @@ export function DashboardClient({
         )}
 
         {view === "settings" && (
-          <SettingsView
-            defaultValues={globalFeeSettings.data}
-            disabled={
-              globalFeeSettings.isLoading ||
-              updateGlobalFeeSettings.isPending
-            }
-            message={globalFeeSettingsMessage}
-            submitLabel={updateGlobalFeeSettings.isPending ? "저장 중" : "저장"}
-            onSubmit={handleUpdateGlobalFeeSettings}
-          />
+          <SettingsScreen enabled={Boolean(user)} onSaved={showToast} />
         )}
 
         {view === "management" && (
@@ -1123,23 +1087,6 @@ function getRequiredNumber(
   return value;
 }
 
-function getPercentRate(formData: FormData, name: string): number | undefined {
-  const value = getNumber(formData, name);
-  return value === undefined ? undefined : value / 100;
-}
-
-function getFeeSettingsPayload(
-  formData: FormData,
-): UpdateSettlementFeeSettingsPayload {
-  return {
-    settlementType: "commission",
-    salesCommissionRate: getPercentRate(formData, "salesCommissionPercent") ?? 0,
-    cardFeeRate: getPercentRate(formData, "cardFeePercent") ?? 0,
-    cardFeePayer: getFormString(formData, "cardFeePayer") as CardFeePayer,
-    participationFeeAmount: getNumber(formData, "participationFeeAmount") ?? 0,
-  };
-}
-
 function getReceiptLinesFromAmounts(
   amounts: Record<string, string>,
   participants: Participant[],
@@ -1234,18 +1181,6 @@ function buildReceiptPayload({
     })),
     soldAt,
   };
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "요청을 처리하지 못했습니다.";
 }
 
 function downloadBlob(blob: Blob, filename: string) {
