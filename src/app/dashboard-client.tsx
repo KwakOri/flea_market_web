@@ -62,6 +62,7 @@ import type {
   UpdateSettlementFeeSettingsPayload,
 } from "@/services/settlement-settings.service";
 import { useDashboardDialogStore } from "@/stores/dashboard-dialog.store";
+import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import {
   DashboardShell,
@@ -165,11 +166,20 @@ export function DashboardClient({
     string | null
   >(null);
   const toastIdRef = useRef(0);
-  const [requestedParticipantId, setRequestedParticipantId] = useState<
-    string | null
-  >(null);
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
+  );
+  const marketLifecycleFilter = useDashboardUiStore(
+    (state) => state.marketLifecycleFilter,
+  );
+  const requestedParticipantId = useDashboardUiStore(
+    (state) => state.requestedParticipantId,
+  );
+  const setMarketLifecycleFilter = useDashboardUiStore(
+    (state) => state.setMarketLifecycleFilter,
+  );
+  const setRequestedParticipantId = useDashboardUiStore(
+    (state) => state.setRequestedParticipantId,
   );
   const marketDialogMode = useDashboardDialogStore(
     (state) => state.marketDialogMode,
@@ -222,8 +232,6 @@ export function DashboardClient({
   const setParticipantFeeOverrideEnabled = useDashboardDialogStore(
     (state) => state.setParticipantFeeOverrideEnabled,
   );
-  const [marketLifecycleFilter, setMarketLifecycleFilter] =
-    useState<MarketLifecycleFilter>("active");
   const currentUser = useCurrentUser();
   const user = currentUser.data ?? null;
   const markets = useMarkets(Boolean(user));
