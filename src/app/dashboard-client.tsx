@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
-  CircleDollarSign,
   Download,
   Pencil,
   Plus,
@@ -88,6 +87,16 @@ import {
   type DashboardView,
 } from "@/features/dashboard/components/dashboard-shell";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
+import { FeeStatusView } from "@/features/fees/components/fee-status-view";
+import {
+  defaultFeeSettings,
+  feeSettingScopeLabels,
+  formatParticipantFeeFieldDisplay,
+  formatPercent,
+  getParticipantFeePolicySource,
+  getParticipantFeeSettingsDefaults,
+  type FeeSettingScope,
+} from "@/features/fees/lib/fee-policy";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
 import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
@@ -128,49 +137,18 @@ const productStatusLabels: Record<ProductStatus, string> = {
   inactive: "중지",
 };
 
-const cardFeePayerLabels: Record<CardFeePayer, string> = {
-  market: "마켓 부담",
-  participant: "참가부스 부담",
-};
-
 const settlementStatusLabels: Record<SettlementStatus, string> = {
   confirmed: "확정",
   superseded: "이전 회차",
   voided: "무효",
 };
 
-type FeeSettingFieldKey = keyof SettlementFeeSettings;
-type FeeSettingScope = "global" | "market" | "booth";
 type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
 type ToastState = {
   id: number;
   message: string;
   title: string;
 };
-
-const feeSettingScopeLabels: Record<FeeSettingScope, string> = {
-  global: "전체 설정",
-  market: "플리마켓 설정",
-  booth: "부스 설정",
-};
-
-const defaultFeeSettings: SettlementFeeSettings = {
-  settlementType: "commission",
-  salesCommissionRate: 0,
-  cardFeeRate: 0,
-  cardFeePayer: "market",
-  participationFeeAmount: 0,
-};
-
-const feeSettingFields: Array<{
-  key: FeeSettingFieldKey;
-  label: string;
-}> = [
-  { key: "salesCommissionRate", label: "판매" },
-  { key: "cardFeeRate", label: "카드" },
-  { key: "cardFeePayer", label: "카드 부담" },
-  { key: "participationFeeAmount", label: "참가비" },
-];
 
 const marketLifecycleFilters: Array<{
   label: string;
@@ -1310,39 +1288,18 @@ export function DashboardClient({
         )}
 
         {view === "feeStatus" && (
-          <div>
-            <DashboardPageTitle
-              subtitle="전체 → 플리마켓 → 부스 우선순위로 적용되는 정책입니다."
-              title="수수료 정책 현황"
-            />
-            <div className="mb-[22px] flex flex-wrap gap-2">
-              <Link
-                className={buttonVariants({ intent: "secondary" })}
-                href="/settings"
-              >
-                전체 설정
-              </Link>
-              <Link
-                className={buttonVariants({ intent: "secondary" })}
-                href={`/markets/${marketId}/management`}
-              >
-                플리마켓 설정
-              </Link>
-            </div>
-            <section className={panelVariants()}>
-              <FeeApplicationMatrix
-                globalSettings={globalFeeSettings.data ?? null}
-                isLoading={
-                  globalFeeSettings.isLoading ||
-                  marketFeeSettings.isLoading ||
-                  participants.isLoading
-                }
-                marketSettings={marketFeeSettings.data ?? null}
-                participants={participants.data ?? []}
-                onEditParticipant={openEditParticipantDialog}
-              />
-            </section>
-          </div>
+          <FeeStatusView
+            globalSettings={globalFeeSettings.data ?? null}
+            isLoading={
+              globalFeeSettings.isLoading ||
+              marketFeeSettings.isLoading ||
+              participants.isLoading
+            }
+            marketId={marketId ?? null}
+            marketSettings={marketFeeSettings.data ?? null}
+            participants={participants.data ?? []}
+            onEditParticipant={openEditParticipantDialog}
+          />
         )}
 
         {view === "salesMatrix" && (
@@ -2148,214 +2105,6 @@ function ParticipantTypeSelect({
       <option value="staff">운영진</option>
       <option value="special_booth">특수 부스</option>
     </select>
-  );
-}
-
-function FeeApplicationMatrix({
-  globalSettings,
-  isLoading,
-  marketSettings,
-  onEditParticipant,
-  participants,
-}: {
-  globalSettings: SettlementDefaultSettings | null;
-  isLoading: boolean;
-  marketSettings: SettlementDefaultSettings | null;
-  onEditParticipant: (participant: Participant) => void;
-  participants: Participant[];
-}) {
-  if (isLoading) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
-        수수료 적용 현황을 불러오는 중입니다.
-      </div>
-    );
-  }
-
-  if (participants.length === 0) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
-        연결된 참가부스가 없습니다.
-      </div>
-    );
-  }
-
-  const resolvedGlobalSettings = globalSettings ?? {
-    ...defaultFeeSettings,
-    id: null,
-    scope: "global" as const,
-    marketId: null,
-    createdBy: null,
-    createdAt: null,
-    updatedAt: null,
-  };
-  const hasMarketSettings = Boolean(marketSettings?.id);
-
-  return (
-    <div className="overflow-hidden rounded-[18px] bg-white">
-      <div className="min-w-0 max-w-full overflow-x-auto">
-        <div className="min-w-[1120px]">
-          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] bg-[#16170f] px-[22px] py-[13px] font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
-            <span>참가 부스</span>
-            <span>전체 기본값</span>
-            <span>플리마켓 기본값</span>
-            <span className="text-[#c7f94b]">이 부스 설정</span>
-          </div>
-          <div className="divide-y divide-[#f1eee2]">
-            {participants.map((participant) => {
-              const activeScope = getParticipantFeePolicySource(
-                participant,
-                hasMarketSettings,
-              );
-              const hasBoothSettings =
-                participant.settings?.feeSettingOverrideEnabled === true;
-
-              return (
-                <div
-                  className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-stretch gap-3.5 px-[22px] py-4"
-                  data-testid="fee-status-row"
-                  key={participant.id}
-                >
-                  <div className="pt-1">
-                    <p className="text-[14.5px] font-semibold text-[#1a1b12]">
-                      {participant.displayName}
-                    </p>
-                    <p className="mt-2">
-                      <ParticipantTypeBadge
-                        type={participant.participantType}
-                      />
-                    </p>
-                  </div>
-                  <FeeApplicationCell
-                    isActive={activeScope === "global"}
-                    scope="global"
-                    settings={resolvedGlobalSettings}
-                    title="전체 기본값"
-                  />
-                  <FeeApplicationCell
-                    isActive={activeScope === "market"}
-                    scope="market"
-                    settings={hasMarketSettings ? marketSettings : null}
-                    title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
-                    unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
-                  />
-                  <FeeApplicationCell
-                    action={
-                      <button
-                        aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#d8d3c2] bg-white text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
-                        onClick={() => onEditParticipant(participant)}
-                        title="부스별 수수료 설정"
-                        type="button"
-                      >
-                        <CircleDollarSign aria-hidden className="h-3.5 w-3.5" />
-                      </button>
-                    }
-                    fallbackScope={hasMarketSettings ? "market" : "global"}
-                    isActive={activeScope === "booth"}
-                    scope="booth"
-                    settings={hasBoothSettings ? participant.settings : null}
-                    title={hasBoothSettings ? "부스 설정" : "부스 설정 없음"}
-                    unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FeeApplicationCell({
-  action,
-  fallbackScope,
-  isActive,
-  scope,
-  settings,
-  title,
-  unavailableMessage,
-}: {
-  action?: ReactNode;
-  fallbackScope?: FeeSettingScope;
-  isActive: boolean;
-  scope: FeeSettingScope;
-  settings:
-    | SettlementDefaultSettings
-    | Participant["settings"]
-    | null
-    | undefined;
-  title: string;
-  unavailableMessage?: string;
-}) {
-  const isUnavailable = !settings;
-
-  return (
-    <div
-      className={cn(
-        "grid h-full min-h-[154px] content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity",
-        isActive && "border-[#1f8a4d] bg-[#e6f4ec]",
-        !isActive && "opacity-50 hover:opacity-75",
-      )}
-    >
-      <div className="flex min-w-0 items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-xs font-semibold text-[#56564a]">
-          {title}
-        </p>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <span
-            className={cn(
-              "font-mono text-[9.5px] font-bold",
-              isActive
-                ? "text-[#1f8a4d]"
-                : isUnavailable
-                  ? "text-[#bdb9a8]"
-                  : "text-[#bdb9a8]",
-            )}
-          >
-            {isActive ? "적용 중" : isUnavailable ? "미설정" : "대기"}
-          </span>
-          {action}
-        </div>
-      </div>
-      {isUnavailable ? (
-        <p className="grid min-h-[94px] place-items-center rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm leading-relaxed text-[#8a8775]">
-          {unavailableMessage ?? "설정이 없습니다."}
-        </p>
-      ) : (
-        <dl className="grid gap-1.5">
-          {feeSettingFields.map((field) => {
-            return (
-              <div
-                className={cn(
-                  "grid min-h-7 grid-cols-[76px_minmax(0,1fr)_38px] items-center gap-2 rounded-md px-2 py-1",
-                  isActive && "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
-                )}
-                key={field.key}
-              >
-                <dt className="text-xs text-[#8a8775]">{field.label}</dt>
-                <dd className="truncate font-display font-semibold text-[#1a1b12]">
-                  {formatFeeFieldValue(
-                    field.key,
-                    getScopedFeeFieldValue(scope, settings, field.key),
-                    fallbackScope,
-                  )}
-                </dd>
-                <span
-                  className={cn(
-                    "text-right font-mono text-[11px] font-semibold",
-                    isActive ? "text-[#1f8a4d]" : "text-[#c4c0ae]",
-                  )}
-                >
-                  {isActive ? "적용" : "-"}
-                </span>
-              </div>
-            );
-          })}
-        </dl>
-      )}
-    </div>
   );
 }
 
@@ -3977,119 +3726,6 @@ function getPercentRate(formData: FormData, name: string): number | undefined {
   return value === undefined ? undefined : value / 100;
 }
 
-function getParticipantFeePolicySource(
-  participant: Participant,
-  hasMarketSettings: boolean,
-): FeeSettingScope {
-  if (participant.settings?.feeSettingOverrideEnabled) {
-    return "booth";
-  }
-
-  return hasMarketSettings ? "market" : "global";
-}
-
-function getParticipantFeeFieldPolicySource(
-  participant: Participant,
-  marketSettings: SettlementDefaultSettings | null | undefined,
-  field: FeeSettingFieldKey,
-): FeeSettingScope {
-  const fieldValue = participant.settings?.[field];
-
-  if (
-    participant.settings?.feeSettingOverrideEnabled &&
-    fieldValue !== null &&
-    fieldValue !== undefined
-  ) {
-    return "booth";
-  }
-
-  return marketSettings?.id ? "market" : "global";
-}
-
-function formatParticipantFeeFieldDisplay(
-  participant: Participant,
-  globalSettings: SettlementDefaultSettings | null | undefined,
-  marketSettings: SettlementDefaultSettings | null | undefined,
-  field: FeeSettingFieldKey,
-): string {
-  const source = getParticipantFeeFieldPolicySource(
-    participant,
-    marketSettings,
-    field,
-  );
-  const value = getParticipantFeeFieldValue(
-    participant,
-    globalSettings,
-    marketSettings,
-    field,
-    source,
-  );
-
-  return `${feeSettingScopeLabels[source]} ${formatFeeFieldValue(field, value)}`;
-}
-
-function getParticipantFeeFieldValue(
-  participant: Participant,
-  globalSettings: SettlementDefaultSettings | null | undefined,
-  marketSettings: SettlementDefaultSettings | null | undefined,
-  field: FeeSettingFieldKey,
-  source: FeeSettingScope,
-): SettlementFeeSettings[FeeSettingFieldKey] | null {
-  if (source === "booth") {
-    return participant.settings?.[field] ?? null;
-  }
-
-  if (source === "market") {
-    return getScopedFeeFieldValue("market", marketSettings, field);
-  }
-
-  return getScopedFeeFieldValue("global", globalSettings, field);
-}
-
-function getScopedFeeFieldValue(
-  scope: FeeSettingScope,
-  settings:
-    | SettlementDefaultSettings
-    | Participant["settings"]
-    | null
-    | undefined,
-  field: FeeSettingFieldKey,
-): SettlementFeeSettings[FeeSettingFieldKey] | null {
-  if (!settings) {
-    return null;
-  }
-
-  if (scope === "booth") {
-    return settings[field] ?? null;
-  }
-
-  return settings[field] ?? defaultFeeSettings[field];
-}
-
-function formatFeeFieldValue(
-  field: FeeSettingFieldKey,
-  value: SettlementFeeSettings[FeeSettingFieldKey] | null,
-  fallbackScope?: FeeSettingScope,
-): string {
-  if (value === null || value === undefined) {
-    return fallbackScope
-      ? `${feeSettingScopeLabels[fallbackScope]} 사용`
-      : "미설정";
-  }
-
-  switch (field) {
-    case "salesCommissionRate":
-    case "cardFeeRate":
-      return formatPercent(value as number);
-    case "cardFeePayer":
-      return cardFeePayerLabels[value as CardFeePayer];
-    case "participationFeeAmount":
-      return formatWon(value as number);
-    default:
-      return String(value);
-  }
-}
-
 function getFeeSettingsPayload(
   formData: FormData,
 ): UpdateSettlementFeeSettingsPayload {
@@ -4099,27 +3735,6 @@ function getFeeSettingsPayload(
     cardFeeRate: getPercentRate(formData, "cardFeePercent") ?? 0,
     cardFeePayer: getFormString(formData, "cardFeePayer") as CardFeePayer,
     participationFeeAmount: getNumber(formData, "participationFeeAmount") ?? 0,
-  };
-}
-
-function getParticipantFeeSettingsDefaults(
-  participant: Participant | null,
-): SettlementFeeSettings {
-  const settings = participant?.settings;
-
-  if (!settings?.feeSettingOverrideEnabled) {
-    return defaultFeeSettings;
-  }
-
-  return {
-    settlementType: "commission",
-    salesCommissionRate:
-      settings.salesCommissionRate ?? defaultFeeSettings.salesCommissionRate,
-    cardFeeRate: settings.cardFeeRate ?? defaultFeeSettings.cardFeeRate,
-    cardFeePayer: settings.cardFeePayer ?? defaultFeeSettings.cardFeePayer,
-    participationFeeAmount:
-      settings.participationFeeAmount ??
-      defaultFeeSettings.participationFeeAmount,
   };
 }
 
@@ -4483,10 +4098,6 @@ function formatCompactNumber(value: number): string {
 
 function truncateChartLabel(value: string): string {
   return value.length > 7 ? `${value.slice(0, 7)}...` : value;
-}
-
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(2).replace(/\\.00$/, "")}%`;
 }
 
 function formatRateInput(value: number | null | undefined): string {
