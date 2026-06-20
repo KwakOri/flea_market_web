@@ -7,11 +7,9 @@ import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 import { useMarkets } from "@/hooks/use-markets";
 import {
   useCreateParticipant,
-  useCreateParticipantMaster,
   useDeleteParticipantFromMarket,
   useParticipantMasters,
   useParticipants,
-  useUpdateParticipantMaster,
   useUpdateParticipantForMarket,
 } from "@/hooks/use-participants";
 import {
@@ -35,7 +33,6 @@ import {
 } from "@/hooks/use-settlement-settings";
 import type {
   Participant,
-  ParticipantStatus,
   ParticipantType,
 } from "@/services/participants.service";
 import type { ProductStatus } from "@/services/products.service";
@@ -65,7 +62,7 @@ import { ParticipantDialog } from "@/features/participants/components/participan
 import { MarketManagementScreen } from "@/features/markets/components/market-management-screen";
 import { marketStatusLabels } from "@/features/markets/lib/market-display";
 import { BoothProductManagementView } from "@/features/participants/components/booth-product-management-view";
-import { BoothMasterManagementView } from "@/features/participants/components/booth-master-management-view";
+import { BoothMasterManagementScreen } from "@/features/participants/components/booth-master-management-screen";
 import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
 import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
 import {
@@ -80,7 +77,6 @@ import { getErrorMessage } from "@/lib/error-message";
 import {
   getCheckboxValue,
   getFormString,
-  getNullableFormString,
   getOptionalFormString,
   getRequiredNumber,
 } from "@/lib/form-data";
@@ -119,9 +115,6 @@ export function DashboardClient({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [participantMasterMessage, setParticipantMasterMessage] = useState<
-    string | null
-  >(null);
   const [participantMessage, setParticipantMessage] = useState<string | null>(
     null,
   );
@@ -150,12 +143,6 @@ export function DashboardClient({
   const editingParticipantId = useDashboardDialogStore(
     (state) => state.editingParticipantId,
   );
-  const participantMasterDialogMode = useDashboardDialogStore(
-    (state) => state.participantMasterDialogMode,
-  );
-  const editingParticipantMasterId = useDashboardDialogStore(
-    (state) => state.editingParticipantMasterId,
-  );
   const openCreateParticipantDialogState = useDashboardDialogStore(
     (state) => state.openCreateParticipantDialog,
   );
@@ -164,15 +151,6 @@ export function DashboardClient({
   );
   const closeParticipantDialogState = useDashboardDialogStore(
     (state) => state.closeParticipantDialog,
-  );
-  const openCreateParticipantMasterDialogState = useDashboardDialogStore(
-    (state) => state.openCreateParticipantMasterDialog,
-  );
-  const openEditParticipantMasterDialogState = useDashboardDialogStore(
-    (state) => state.openEditParticipantMasterDialog,
-  );
-  const closeParticipantMasterDialogState = useDashboardDialogStore(
-    (state) => state.closeParticipantMasterDialog,
   );
   const setParticipantFeeOverrideEnabled = useDashboardDialogStore(
     (state) => state.setParticipantFeeOverrideEnabled,
@@ -194,8 +172,6 @@ export function DashboardClient({
 
     return requestedParticipant?.id ?? participants.data[0].id;
   }, [participants.data, requestedParticipantId]);
-  const createParticipantMaster = useCreateParticipantMaster();
-  const updateParticipantMaster = useUpdateParticipantMaster();
   const createParticipant = useCreateParticipant(selectedMarketId);
   const deleteParticipantFromMarket =
     useDeleteParticipantFromMarket(selectedMarketId);
@@ -239,13 +215,6 @@ export function DashboardClient({
         (participant) => participant.id === editingParticipantId,
       ) ?? null,
     [editingParticipantId, participants.data],
-  );
-  const editingParticipantMaster = useMemo(
-    () =>
-      participantMasters.data?.find(
-        (participant) => participant.id === editingParticipantMasterId,
-      ) ?? null,
-    [editingParticipantMasterId, participantMasters.data],
   );
   const marketSummaryItems = [
     { accent: false, label: "BOOTHS", value: String(participants.data?.length ?? 0) },
@@ -338,98 +307,6 @@ export function DashboardClient({
 
   if (!user) {
     return <PageStateMessage message="로그인 페이지로 이동하는 중입니다." />;
-  }
-
-  async function handleCreateParticipantMaster(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-    setParticipantMasterMessage(null);
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const displayName = getFormString(formData, "displayName");
-
-    if (!displayName.trim()) {
-      setParticipantMasterMessage("참가부스명을 입력해주세요.");
-      return;
-    }
-
-    try {
-      await createParticipantMaster.mutateAsync({
-        displayName,
-        participantType: getFormString(
-          formData,
-          "participantType",
-        ) as ParticipantType,
-        contactName: getOptionalFormString(formData, "contactName"),
-        phone: getOptionalFormString(formData, "phone"),
-        email: getOptionalFormString(formData, "email"),
-        memo: getOptionalFormString(formData, "memo"),
-      });
-
-      form.reset();
-      closeParticipantMasterDialog();
-    } catch (error) {
-      setParticipantMasterMessage(getErrorMessage(error));
-    }
-  }
-
-  async function handleUpdateParticipantMaster(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-    setParticipantMasterMessage(null);
-
-    if (!editingParticipantMaster) {
-      setParticipantMasterMessage("수정할 부스를 선택해주세요.");
-      return;
-    }
-
-    const formData = new FormData(event.currentTarget);
-    const displayName = getFormString(formData, "displayName");
-
-    if (!displayName.trim()) {
-      setParticipantMasterMessage("부스명을 입력해주세요.");
-      return;
-    }
-
-    try {
-      await updateParticipantMaster.mutateAsync({
-        participantId: editingParticipantMaster.id,
-        payload: {
-          displayName,
-          participantType: getFormString(
-            formData,
-            "participantType",
-          ) as ParticipantType,
-          contactName: getNullableFormString(formData, "contactName"),
-          phone: getNullableFormString(formData, "phone"),
-          email: getNullableFormString(formData, "email"),
-          memo: getNullableFormString(formData, "memo"),
-          status: getFormString(formData, "status") as ParticipantStatus,
-        },
-      });
-
-      closeParticipantMasterDialog();
-    } catch (error) {
-      setParticipantMasterMessage(getErrorMessage(error));
-    }
-  }
-
-  function openCreateParticipantMasterDialog() {
-    setParticipantMasterMessage(null);
-    openCreateParticipantMasterDialogState();
-  }
-
-  function openEditParticipantMasterDialog(participant: Participant) {
-    setParticipantMasterMessage(null);
-    openEditParticipantMasterDialogState(participant.id);
-  }
-
-  function closeParticipantMasterDialog() {
-    closeParticipantMasterDialogState();
-    setParticipantMasterMessage(null);
   }
 
   async function handleCreateParticipant(event: FormEvent<HTMLFormElement>) {
@@ -732,22 +609,7 @@ export function DashboardClient({
         )}
 
         {view === "boothMasters" && (
-          <BoothMasterManagementView
-            createDisabled={createParticipantMaster.isPending}
-            dialogMode={participantMasterDialogMode}
-            editingParticipant={editingParticipantMaster}
-            isSubmitting={
-              createParticipantMaster.isPending ||
-              updateParticipantMaster.isPending
-            }
-            message={participantMasterMessage}
-            participants={participantMasters.data ?? []}
-            onCloseDialog={closeParticipantMasterDialog}
-            onCreate={openCreateParticipantMasterDialog}
-            onCreateSubmit={handleCreateParticipantMaster}
-            onEditParticipant={openEditParticipantMasterDialog}
-            onUpdateSubmit={handleUpdateParticipantMaster}
-          />
+          <BoothMasterManagementScreen enabled={Boolean(user)} />
         )}
 
         {view === "booths" && (
