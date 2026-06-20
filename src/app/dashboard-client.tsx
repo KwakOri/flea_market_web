@@ -80,6 +80,12 @@ import type {
   SettlementListItem,
   SettlementStatus,
 } from "@/services/settlements.service";
+import {
+  useDashboardDialogStore,
+  type MarketDialogMode,
+  type ParticipantDialogMode,
+  type ParticipantMasterDialogMode,
+} from "@/stores/dashboard-dialog.store";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import {
   DashboardShell,
@@ -152,9 +158,6 @@ const settlementStatusLabels: Record<SettlementStatus, string> = {
 type FeeSettingFieldKey = keyof SettlementFeeSettings;
 type FeeSettingScope = "global" | "market" | "booth";
 type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
-type MarketDialogMode = "create" | "edit";
-type ParticipantDialogMode = "create" | "edit";
-type ParticipantMasterDialogMode = "create" | "edit";
 type ToastState = {
   id: number;
   message: string;
@@ -284,21 +287,57 @@ export function DashboardClient({
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
   );
-  const [marketDialogMode, setMarketDialogMode] =
-    useState<MarketDialogMode | null>(null);
-  const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
-  const [participantFeeOverrideEnabled, setParticipantFeeOverrideEnabled] =
-    useState(false);
-  const [participantDialogMode, setParticipantDialogMode] =
-    useState<ParticipantDialogMode | null>(null);
-  const [editingParticipantId, setEditingParticipantId] = useState<
-    string | null
-  >(null);
-  const [participantMasterDialogMode, setParticipantMasterDialogMode] =
-    useState<ParticipantMasterDialogMode | null>(null);
-  const [editingParticipantMasterId, setEditingParticipantMasterId] = useState<
-    string | null
-  >(null);
+  const marketDialogMode = useDashboardDialogStore(
+    (state) => state.marketDialogMode,
+  );
+  const editingMarketId = useDashboardDialogStore(
+    (state) => state.editingMarketId,
+  );
+  const participantFeeOverrideEnabled = useDashboardDialogStore(
+    (state) => state.participantFeeOverrideEnabled,
+  );
+  const participantDialogMode = useDashboardDialogStore(
+    (state) => state.participantDialogMode,
+  );
+  const editingParticipantId = useDashboardDialogStore(
+    (state) => state.editingParticipantId,
+  );
+  const participantMasterDialogMode = useDashboardDialogStore(
+    (state) => state.participantMasterDialogMode,
+  );
+  const editingParticipantMasterId = useDashboardDialogStore(
+    (state) => state.editingParticipantMasterId,
+  );
+  const openCreateMarketDialogState = useDashboardDialogStore(
+    (state) => state.openCreateMarketDialog,
+  );
+  const openEditMarketDialogState = useDashboardDialogStore(
+    (state) => state.openEditMarketDialog,
+  );
+  const closeMarketDialogState = useDashboardDialogStore(
+    (state) => state.closeMarketDialog,
+  );
+  const openCreateParticipantDialogState = useDashboardDialogStore(
+    (state) => state.openCreateParticipantDialog,
+  );
+  const openEditParticipantDialogState = useDashboardDialogStore(
+    (state) => state.openEditParticipantDialog,
+  );
+  const closeParticipantDialogState = useDashboardDialogStore(
+    (state) => state.closeParticipantDialog,
+  );
+  const openCreateParticipantMasterDialogState = useDashboardDialogStore(
+    (state) => state.openCreateParticipantMasterDialog,
+  );
+  const openEditParticipantMasterDialogState = useDashboardDialogStore(
+    (state) => state.openEditParticipantMasterDialog,
+  );
+  const closeParticipantMasterDialogState = useDashboardDialogStore(
+    (state) => state.closeParticipantMasterDialog,
+  );
+  const setParticipantFeeOverrideEnabled = useDashboardDialogStore(
+    (state) => state.setParticipantFeeOverrideEnabled,
+  );
   const [marketLifecycleFilter, setMarketLifecycleFilter] =
     useState<MarketLifecycleFilter>("active");
   const currentUser = useCurrentUser();
@@ -556,19 +595,16 @@ export function DashboardClient({
 
   function openCreateMarketDialog() {
     setMarketMessage(null);
-    setEditingMarketId(null);
-    setMarketDialogMode("create");
+    openCreateMarketDialogState();
   }
 
   function openEditMarketDialog(market: Market) {
     setMarketMessage(null);
-    setEditingMarketId(market.id);
-    setMarketDialogMode("edit");
+    openEditMarketDialogState(market.id);
   }
 
   function closeMarketDialog() {
-    setMarketDialogMode(null);
-    setEditingMarketId(null);
+    closeMarketDialogState();
     setMarketMessage(null);
   }
 
@@ -689,19 +725,16 @@ export function DashboardClient({
 
   function openCreateParticipantMasterDialog() {
     setParticipantMasterMessage(null);
-    setEditingParticipantMasterId(null);
-    setParticipantMasterDialogMode("create");
+    openCreateParticipantMasterDialogState();
   }
 
   function openEditParticipantMasterDialog(participant: Participant) {
     setParticipantMasterMessage(null);
-    setEditingParticipantMasterId(participant.id);
-    setParticipantMasterDialogMode("edit");
+    openEditParticipantMasterDialogState(participant.id);
   }
 
   function closeParticipantMasterDialog() {
-    setParticipantMasterDialogMode(null);
-    setEditingParticipantMasterId(null);
+    closeParticipantMasterDialogState();
     setParticipantMasterMessage(null);
   }
 
@@ -800,25 +833,20 @@ export function DashboardClient({
 
   function openCreateParticipantDialog() {
     setParticipantMessage(null);
-    setEditingParticipantId(null);
-    setParticipantFeeOverrideEnabled(false);
-    setParticipantDialogMode("create");
+    openCreateParticipantDialogState();
   }
 
   function openEditParticipantDialog(participant: Participant) {
     setParticipantMessage(null);
     setRequestedParticipantId(participant.id);
-    setEditingParticipantId(participant.id);
-    setParticipantFeeOverrideEnabled(
+    openEditParticipantDialogState(
+      participant.id,
       participant.settings?.feeSettingOverrideEnabled === true,
     );
-    setParticipantDialogMode("edit");
   }
 
   function closeParticipantDialog() {
-    setParticipantDialogMode(null);
-    setEditingParticipantId(null);
-    setParticipantFeeOverrideEnabled(false);
+    closeParticipantDialogState();
     setParticipantMessage(null);
   }
 
