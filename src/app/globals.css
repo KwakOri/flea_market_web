@@ -1,14 +1,87 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 100;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 200;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 300;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 400;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 500;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 600;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 700;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 800;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Paperozi";
+  font-display: swap;
+  font-weight: 900;
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2")
+    format("woff2");
+}
+
 :root {
   --background: #e9e5d8;
   --foreground: #1a1b12;
+  --font-paperozi: "Paperozi";
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-paperozi);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-space-grotesk);
 }
@@ -22,7 +95,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family:
-    "Pretendard Variable",
+    "Paperozi",
     var(--font-geist-sans),
     -apple-system,
     BlinkMacSystemFont,
@@ -62,7 +135,7 @@ select {
 .dsp {
   font-family:
     var(--font-space-grotesk),
-    "Pretendard Variable",
+    "Paperozi",
     var(--font-geist-sans),
     sans-serif;
 }
