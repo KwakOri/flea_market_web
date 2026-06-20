@@ -84,6 +84,13 @@ import { settlementStatusLabels } from "@/features/settlements/lib/settlement-di
 import { panelVariants } from "@/lib/design-system";
 import { formatDateRange } from "@/lib/date-format";
 import { getErrorMessage } from "@/lib/error-message";
+import {
+  getCheckboxValue,
+  getFormString,
+  getNullableFormString,
+  getOptionalFormString,
+  getRequiredNumber,
+} from "@/lib/form-data";
 import { formatWon } from "@/lib/money";
 import {
   parseReceiptAmountInput,
@@ -1035,56 +1042,6 @@ export function DashboardClient({
         />
     </DashboardShell>
   );
-}
-
-function getFormString(formData: FormData, name: string): string {
-  const value = formData.get(name);
-  return typeof value === "string" ? value : "";
-}
-
-function getCheckboxValue(formData: FormData, name: string): boolean {
-  return formData.get(name) === "on";
-}
-
-function getOptionalFormString(
-  formData: FormData,
-  name: string,
-): string | undefined {
-  const value = getFormString(formData, name).trim();
-  return value || undefined;
-}
-
-function getNullableFormString(
-  formData: FormData,
-  name: string,
-): string | null {
-  const value = getFormString(formData, name).trim();
-  return value || null;
-}
-
-function getNumber(formData: FormData, name: string): number | undefined {
-  const value = getOptionalFormString(formData, name);
-
-  if (!value) {
-    return undefined;
-  }
-
-  const numberValue = Number(value);
-  return Number.isFinite(numberValue) ? numberValue : undefined;
-}
-
-function getRequiredNumber(
-  formData: FormData,
-  name: string,
-  message: string,
-): number {
-  const value = getNumber(formData, name);
-
-  if (value === undefined) {
-    throw new Error(message);
-  }
-
-  return value;
 }
 
 function getReceiptLinesFromAmounts(
