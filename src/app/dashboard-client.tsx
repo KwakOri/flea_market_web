@@ -5,10 +5,8 @@ import type { FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  CheckCircle2,
   Pencil,
   Plus,
-  X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 import {
@@ -69,7 +67,13 @@ import {
   DashboardShell,
   type DashboardView,
 } from "@/features/dashboard/components/dashboard-shell";
+import {
+  DashboardToast,
+  type ToastState,
+} from "@/features/dashboard/components/dashboard-toast";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
+import { HomeActionCard } from "@/features/dashboard/components/home-action-card";
+import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
 import { FeeSettingsForm } from "@/features/fees/components/fee-settings-form";
 import { FeeStatusView } from "@/features/fees/components/fee-status-view";
 import {
@@ -97,10 +101,8 @@ import { SettlementPreviewPanel } from "@/features/settlements/components/settle
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { cn } from "@/lib/utils";
 import {
-  appShellClass,
   buttonVariants,
   inputClass,
-  pageShellClass,
   panelVariants,
   sectionDescriptionClass,
   sectionHeaderClass,
@@ -113,12 +115,6 @@ import {
   parseReceiptAmountInput,
   paymentMethods,
 } from "@/lib/receipt-matrix";
-
-type ToastState = {
-  id: number;
-  message: string;
-  title: string;
-};
 
 type ReceiptLineDraft = {
   participantId: string;
@@ -1348,92 +1344,13 @@ export function DashboardClient({
             onUpdateSubmit={handleUpdateParticipant}
           />
         )}
-        <Toast
+        <DashboardToast
           toast={toast}
           onDismiss={() => {
             setToast(null);
           }}
         />
     </DashboardShell>
-  );
-}
-
-function PageStateMessage({ message }: { message: string }) {
-  return (
-    <main className={pageShellClass}>
-      <div className={appShellClass}>
-        <section className={panelVariants()}>
-          <div className="px-4 py-12 text-center text-sm text-zinc-500">
-            {message}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function Toast({
-  onDismiss,
-  toast,
-}: {
-  onDismiss: () => void;
-  toast: ToastState | null;
-}) {
-  if (!toast) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-live="polite"
-      className="fixed bottom-4 right-4 z-[60] w-[calc(100%-2rem)] max-w-sm"
-      role="status"
-    >
-      <div className="flex items-start gap-3 rounded-md border border-emerald-700 bg-zinc-950 px-4 py-3 text-white shadow-lg">
-        <CheckCircle2
-          aria-hidden
-          className="mt-0.5 h-5 w-5 flex-none text-emerald-300"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{toast.title}</p>
-          <p className="mt-1 text-sm text-zinc-200">{toast.message}</p>
-        </div>
-        <button
-          aria-label="토스트 닫기"
-          className="rounded p-1 text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-          onClick={onDismiss}
-          type="button"
-        >
-          <X aria-hidden className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function HomeActionCard({
-  description,
-  href,
-  label,
-}: {
-  description: string;
-  href: string;
-  label: string;
-}) {
-  return (
-    <Link
-      className="group flex min-h-[180px] flex-col justify-between rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
-      href={href}
-    >
-      <div>
-        <p className="text-xs font-semibold text-emerald-700">업무 선택</p>
-        <h2 className="mt-2 text-xl font-semibold text-zinc-950">{label}</h2>
-        <p className="mt-3 text-sm leading-6 text-zinc-600">{description}</p>
-      </div>
-      <span className="mt-5 inline-flex h-10 w-fit items-center justify-center rounded-md border border-zinc-300 px-4 text-sm font-medium text-zinc-800 transition group-hover:border-emerald-600 group-hover:bg-emerald-600 group-hover:text-white">
-        열기
-      </span>
-    </Link>
   );
 }
 
