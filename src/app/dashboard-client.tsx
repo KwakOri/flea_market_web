@@ -2,12 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 import {
   useCreateMarket,
@@ -73,25 +69,19 @@ import {
   type ToastState,
 } from "@/features/dashboard/components/dashboard-toast";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
-import { HomeActionCard } from "@/features/dashboard/components/home-action-card";
+import { HomeView } from "@/features/dashboard/components/home-view";
 import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
-import { FeeSettingsForm } from "@/features/fees/components/fee-settings-form";
+import { SettingsView } from "@/features/fees/components/settings-view";
 import { FeeStatusView } from "@/features/fees/components/fee-status-view";
 import {
   ParticipantDialog,
   ParticipantMasterDialog,
 } from "@/features/participants/components/participant-dialogs";
-import { MarketDetailPanel } from "@/features/markets/components/market-detail-panel";
+import { MarketManagementView } from "@/features/markets/components/market-management-view";
 import { MarketDialog } from "@/features/markets/components/market-dialog";
-import { MarketLifecycleFilterControl } from "@/features/markets/components/market-lifecycle-filter-control";
-import { MarketSelectionCards } from "@/features/markets/components/market-selection-cards";
-import {
-  marketStatusLabels,
-  type MarketLifecycleFilter,
-} from "@/features/markets/lib/market-display";
-import { ParticipantList } from "@/features/participants/components/participant-list";
+import { marketStatusLabels } from "@/features/markets/lib/market-display";
+import { BoothProductManagementView } from "@/features/participants/components/booth-product-management-view";
 import { ParticipantMasterTable } from "@/features/participants/components/participant-master-table";
-import { ProductTable } from "@/features/products/components/product-table";
 import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
 import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
 import {
@@ -103,12 +93,10 @@ import { settlementStatusLabels } from "@/features/settlements/lib/settlement-di
 import { cn } from "@/lib/utils";
 import {
   buttonVariants,
-  inputClass,
   panelVariants,
   sectionDescriptionClass,
   sectionHeaderClass,
   sectionTitleClass,
-  selectClass,
 } from "@/lib/design-system";
 import { formatDateRange } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
@@ -169,14 +157,8 @@ export function DashboardClient({
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
   );
-  const marketLifecycleFilter = useDashboardUiStore(
-    (state) => state.marketLifecycleFilter,
-  );
   const requestedParticipantId = useDashboardUiStore(
     (state) => state.requestedParticipantId,
-  );
-  const setMarketLifecycleFilter = useDashboardUiStore(
-    (state) => state.setMarketLifecycleFilter,
   );
   const setRequestedParticipantId = useDashboardUiStore(
     (state) => state.setRequestedParticipantId,
@@ -344,13 +326,6 @@ export function DashboardClient({
       (participant) => !linkedParticipantIds.has(participant.id),
     );
   }, [linkedParticipantIds, participantMasters.data]);
-  const filteredMarkets = useMemo(
-    () =>
-      sortMarketsByNewest(
-        filterMarketsByLifecycle(markets.data ?? [], marketLifecycleFilter),
-      ),
-    [marketLifecycleFilter, markets.data],
-  );
   const backHref = getDashboardBackHref(pathname);
 
   useEffect(() => {
@@ -898,166 +873,44 @@ export function DashboardClient({
     >
 
         {view === "home" && (
-          <>
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <HomeActionCard
-                description="플리마켓을 만들고 선택한 뒤 해당 마켓의 참가부스 연결, 영수증, 정산을 관리합니다."
-                href="/markets"
-                label="마켓 관리"
-              />
-              <HomeActionCard
-                description="마켓에 연결하기 전의 부스 기본 정보와 연락처를 관리합니다."
-                href="/booths"
-                label="부스 관리"
-              />
-              <HomeActionCard
-                description="전체 수수료 기본값처럼 모든 플리마켓에 적용되는 기본 정책을 관리합니다."
-                href="/settings"
-                label="설정"
-              />
-            </section>
-          </>
+          <HomeView />
         )}
 
         {view === "settings" && (
-          <section className={panelVariants()}>
-            <div className={sectionHeaderClass}>
-              <h2 className={sectionTitleClass}>전체 수수료 기본 설정</h2>
-              <p className={sectionDescriptionClass}>
-                플리마켓별 설정이나 현재 플리마켓 안의 부스별 예외값이
-                없으면 이 값이 적용됩니다.
-              </p>
-            </div>
-            <FeeSettingsForm
-              defaultValues={globalFeeSettings.data}
-              disabled={
-                globalFeeSettings.isLoading ||
-                updateGlobalFeeSettings.isPending
-              }
-              message={globalFeeSettingsMessage}
-              submitLabel={
-                updateGlobalFeeSettings.isPending ? "저장 중" : "저장"
-              }
-              onSubmit={handleUpdateGlobalFeeSettings}
-            />
-          </section>
+          <SettingsView
+            defaultValues={globalFeeSettings.data}
+            disabled={
+              globalFeeSettings.isLoading ||
+              updateGlobalFeeSettings.isPending
+            }
+            message={globalFeeSettingsMessage}
+            submitLabel={updateGlobalFeeSettings.isPending ? "저장 중" : "저장"}
+            onSubmit={handleUpdateGlobalFeeSettings}
+          />
         )}
 
         {view === "management" && (
-          <>
-            {marketId ? (
-              <section className={panelVariants()}>
-                <div
-                  className={cn(
-                    sectionHeaderClass,
-                    "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
-                  )}
-                >
-                  <div>
-                    <h2 className={sectionTitleClass}>마켓 정보</h2>
-                    <p className={sectionDescriptionClass}>
-                      선택한 플리마켓의 기본 정보를 확인합니다.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      className={buttonVariants({ intent: "secondary" })}
-                      disabled={!selectedMarket}
-                      onClick={() =>
-                        selectedMarket && openEditMarketDialog(selectedMarket)
-                      }
-                      type="button"
-                    >
-                      <Pencil aria-hidden className="mr-2 h-4 w-4" />
-                      정보 수정
-                    </button>
-                    <Link
-                      className={buttonVariants({ intent: "secondary" })}
-                      href="/markets"
-                    >
-                      마켓 선택
-                    </Link>
-                  </div>
-                </div>
-                {marketMessage && (
-                  <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                    {marketMessage}
-                  </p>
-                )}
-                <MarketDetailPanel market={selectedMarket} />
-                <div className="border-t border-zinc-200">
-                  <div className={sectionHeaderClass}>
-                    <h2 className={sectionTitleClass}>
-                      플리마켓 수수료 기본 설정
-                    </h2>
-                    <p className={sectionDescriptionClass}>
-                      현재 플리마켓 안의 부스별 예외값이 없으면 이 값이 전체
-                      설정보다 우선 적용됩니다.
-                    </p>
-                  </div>
-                  <FeeSettingsForm
-                    defaultValues={marketFeeSettings.data}
-                    disabled={
-                      marketFeeSettings.isLoading ||
-                      updateMarketFeeSettings.isPending
-                    }
-                    message={marketFeeSettingsMessage}
-                    submitLabel={
-                      updateMarketFeeSettings.isPending ? "저장 중" : "저장"
-                    }
-                    onSubmit={handleUpdateMarketFeeSettings}
-                  />
-                </div>
-              </section>
-            ) : (
-              <>
-                <section className={panelVariants()}>
-                  <div
-                    className={cn(
-                      sectionHeaderClass,
-                      "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
-                    )}
-                  >
-                    <div>
-                      <h2 className={sectionTitleClass}>플리마켓 선택</h2>
-                      <p className={sectionDescriptionClass}>
-                        작업할 플리마켓을 먼저 선택합니다.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <MarketLifecycleFilterControl
-                        selectedFilter={marketLifecycleFilter}
-                        onSelectFilter={setMarketLifecycleFilter}
-                      />
-                      <button
-                        className={buttonVariants()}
-                        disabled={createMarket.isPending}
-                        onClick={openCreateMarketDialog}
-                        type="button"
-                      >
-                        <Plus aria-hidden className="mr-2 h-4 w-4" />
-                        플리마켓 추가
-                      </button>
-                    </div>
-                  </div>
-                  {marketMessage && (
-                    <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                      {marketMessage}
-                    </p>
-                  )}
-                  <MarketSelectionCards
-                    emptyMessage="조건에 맞는 플리마켓이 없습니다."
-                    markets={filteredMarkets}
-                    selectedMarketId={null}
-                    onManageMarket={openEditMarketDialog}
-                    onSelectMarket={(selectedId) =>
-                      router.push(`/markets/${selectedId}/management`)
-                    }
-                  />
-                </section>
-              </>
-            )}
-          </>
+          <MarketManagementView
+            createMarketDisabled={createMarket.isPending}
+            marketFeeSettings={marketFeeSettings.data}
+            marketFeeSettingsDisabled={
+              marketFeeSettings.isLoading || updateMarketFeeSettings.isPending
+            }
+            marketFeeSettingsMessage={marketFeeSettingsMessage}
+            marketFeeSettingsSubmitLabel={
+              updateMarketFeeSettings.isPending ? "저장 중" : "저장"
+            }
+            marketId={marketId ?? null}
+            marketMessage={marketMessage}
+            markets={markets.data ?? []}
+            selectedMarket={selectedMarket}
+            onCreateMarket={openCreateMarketDialog}
+            onEditMarket={openEditMarketDialog}
+            onSelectMarket={(selectedId) =>
+              router.push(`/markets/${selectedId}/management`)
+            }
+            onUpdateMarketFeeSettings={handleUpdateMarketFeeSettings}
+          />
         )}
 
         {marketDialogMode && (
@@ -1124,131 +977,32 @@ export function DashboardClient({
         )}
 
         {view === "booths" && (
-          <>
-            <section className={panelVariants()}>
-              <div
-                className={cn(
-                  sectionHeaderClass,
-                  "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
-                )}
-              >
-	                <div>
-	                  <h2 className={sectionTitleClass}>마켓 참가 설정</h2>
-	                  <p className={sectionDescriptionClass}>
-	                    {selectedMarket?.name ?? "마켓 미선택"}
-	                  </p>
-	                </div>
-	                <div className="flex flex-wrap gap-2">
-	                  <button
-	                    className={buttonVariants()}
-	                    disabled={
-	                      !selectedMarket ||
-	                      !unlinkedParticipantMasters.length ||
-	                      createParticipant.isPending
-	                    }
-	                    onClick={openCreateParticipantDialog}
-	                    type="button"
-	                  >
-	                    <Plus aria-hidden className="mr-2 h-4 w-4" />
-	                    참가부스 추가
-	                  </button>
-	                </div>
-	              </div>
-                  {participantMessage && !participantDialogMode && (
-                    <p className="border-t border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                      {participantMessage}
-                    </p>
-                  )}
-	              <ParticipantList
-                    deleteDisabled={deleteParticipantFromMarket.isPending}
-	                emptyMessage="연결된 참가부스가 없습니다."
-                    globalSettings={globalFeeSettings.data ?? null}
-                    marketSettings={marketFeeSettings.data ?? null}
-	                participants={participants.data ?? []}
-                    onDeleteParticipant={handleDeleteParticipantFromMarket}
-	                selectedParticipantId={selectedParticipantId}
-	                onEditParticipant={openEditParticipantDialog}
-	                onSelectParticipant={setRequestedParticipantId}
-	              />
-	            </section>
-	            <section className={panelVariants()}>
-              <div
-                className={cn(
-                  sectionHeaderClass,
-                  "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
-                )}
-              >
-                <div>
-                  <h2 className={sectionTitleClass}>상품</h2>
-                  <p className={sectionDescriptionClass}>
-                    {selectedParticipant
-                      ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
-                      : "참가부스 미선택"}
-                  </p>
-                </div>
-                <form
-                  className="grid gap-2 xl:grid-cols-[200px_220px_160px_140px_auto]"
-                  data-testid="product-form"
-                  onSubmit={handleCreateProduct}
-                >
-                  <select
-                    className={selectClass}
-                    disabled={!participants.data?.length}
-                    onChange={(event) =>
-                      setRequestedParticipantId(event.target.value || null)
-                    }
-                    value={selectedParticipantId ?? ""}
-                  >
-                    <option value="">참가부스 선택</option>
-                    {(participants.data ?? []).map((participant) => (
-                      <option key={participant.id} value={participant.id}>
-                        {participant.displayName}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    className={inputClass}
-                    disabled={!selectedParticipant}
-                    name="name"
-                    placeholder="상품명"
-                    type="text"
-                  />
-                  <input
-                    className={inputClass}
-                    disabled={!selectedParticipant}
-                    name="sku"
-                    placeholder="SKU"
-                    type="text"
-                  />
-                  <input
-                    className={inputClass}
-                    disabled={!selectedParticipant}
-                    min="0"
-                    name="priceAmount"
-                    placeholder="가격"
-                    step="1"
-                    type="number"
-                  />
-                  <button
-                    className={buttonVariants()}
-                    disabled={!selectedParticipant || createProduct.isPending}
-                    type="submit"
-                  >
-                    상품 추가
-                  </button>
-                </form>
-              </div>
-              {productMessage && (
-                <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                  {productMessage}
-                </p>
-              )}
-              <ProductTable
-                products={products.data ?? []}
-                onStatusChange={handleProductStatusChange}
-              />
-            </section>
-          </>
+          <BoothProductManagementView
+            createParticipantDisabled={
+              !selectedMarket ||
+              !unlinkedParticipantMasters.length ||
+              createParticipant.isPending
+            }
+            createProductDisabled={
+              !selectedParticipant || createProduct.isPending
+            }
+            deleteParticipantDisabled={deleteParticipantFromMarket.isPending}
+            globalSettings={globalFeeSettings.data ?? null}
+            marketSettings={marketFeeSettings.data ?? null}
+            participants={participants.data ?? []}
+            participantDialogOpen={Boolean(participantDialogMode)}
+            participantMessage={participantMessage}
+            products={products.data ?? []}
+            productMessage={productMessage}
+            selectedMarket={selectedMarket}
+            selectedParticipant={selectedParticipant}
+            selectedParticipantId={selectedParticipantId}
+            onCreateParticipant={openCreateParticipantDialog}
+            onCreateProductSubmit={handleCreateProduct}
+            onDeleteParticipant={handleDeleteParticipantFromMarket}
+            onEditParticipant={openEditParticipantDialog}
+            onProductStatusChange={handleProductStatusChange}
+          />
         )}
 
         {view === "feeStatus" && (
@@ -1552,40 +1306,4 @@ function downloadBlob(blob: Blob, filename: string) {
   window.setTimeout(() => {
     window.URL.revokeObjectURL(objectUrl);
   }, 1000);
-}
-
-function filterMarketsByLifecycle(
-  markets: Market[],
-  filter: MarketLifecycleFilter,
-): Market[] {
-  if (filter === "all") {
-    return markets;
-  }
-
-  return markets.filter((market) => getMarketLifecycle(market.status) === filter);
-}
-
-function sortMarketsByNewest(markets: Market[]): Market[] {
-  return [...markets].sort(
-    (left, right) => getMarketSortTime(right) - getMarketSortTime(left),
-  );
-}
-
-function getMarketSortTime(market: Market): number {
-  const time = Date.parse(market.startsOn ?? market.endsOn ?? market.createdAt);
-
-  return Number.isNaN(time) ? 0 : time;
-}
-
-function getMarketLifecycle(status: MarketStatus): Exclude<MarketLifecycleFilter, "all"> {
-  switch (status) {
-    case "draft":
-      return "upcoming";
-    case "active":
-      return "active";
-    case "closed":
-    case "archived":
-    default:
-      return "ended";
-  }
 }

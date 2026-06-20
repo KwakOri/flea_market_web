@@ -1,4 +1,4 @@
-import type { MarketStatus } from "@/services/markets.service";
+import type { Market, MarketStatus } from "@/services/markets.service";
 
 export type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
 
@@ -30,5 +30,43 @@ export function getMarketStatusBadgeClass(status: MarketStatus): string {
     case "draft":
     default:
       return "bg-amber-100 text-amber-800";
+  }
+}
+
+export function filterMarketsByLifecycle(
+  markets: Market[],
+  filter: MarketLifecycleFilter,
+): Market[] {
+  if (filter === "all") {
+    return markets;
+  }
+
+  return markets.filter((market) => getMarketLifecycle(market.status) === filter);
+}
+
+export function sortMarketsByNewest(markets: Market[]): Market[] {
+  return [...markets].sort(
+    (left, right) => getMarketSortTime(right) - getMarketSortTime(left),
+  );
+}
+
+function getMarketSortTime(market: Market): number {
+  const time = Date.parse(market.startsOn ?? market.endsOn ?? market.createdAt);
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function getMarketLifecycle(
+  status: MarketStatus,
+): Exclude<MarketLifecycleFilter, "all"> {
+  switch (status) {
+    case "draft":
+      return "upcoming";
+    case "active":
+      return "active";
+    case "closed":
+    case "archived":
+    default:
+      return "ended";
   }
 }
