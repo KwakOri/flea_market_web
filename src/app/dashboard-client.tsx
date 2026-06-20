@@ -10,10 +10,6 @@ import {
   useSettlementPreview,
   useSettlements,
 } from "@/hooks/use-settlement-preview";
-import {
-  useGlobalSettlementSettings,
-  useMarketSettlementSettings,
-} from "@/hooks/use-settlement-settings";
 import type { Participant } from "@/services/participants.service";
 import { useDashboardDialogStore } from "@/stores/dashboard-dialog.store";
 import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
@@ -28,13 +24,13 @@ import {
 import { HomeView } from "@/features/dashboard/components/home-view";
 import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
 import { SettingsScreen } from "@/features/fees/components/settings-screen";
-import { FeeStatusView } from "@/features/fees/components/fee-status-view";
+import { FeeStatusScreen } from "@/features/fees/components/fee-status-screen";
 import { MarketManagementScreen } from "@/features/markets/components/market-management-screen";
 import { marketStatusLabels } from "@/features/markets/lib/market-display";
 import { BoothProductManagementScreen } from "@/features/participants/components/booth-product-management-screen";
 import { BoothMasterManagementScreen } from "@/features/participants/components/booth-master-management-screen";
 import { MarketParticipantDialogController } from "@/features/participants/components/market-participant-dialog-controller";
-import { ReceiptLookupView } from "@/features/receipts/components/receipt-lookup-view";
+import { ReceiptLookupScreen } from "@/features/receipts/components/receipt-lookup-screen";
 import { SalesMatrixScreen } from "@/features/receipts/components/sales-matrix-screen";
 import { SettlementScreen } from "@/features/settlements/components/settlement-screen";
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
@@ -80,8 +76,6 @@ export function DashboardClient({
   const receipts = useReceipts(selectedMarketId);
   const settlementPreview = useSettlementPreview(selectedMarketId);
   const settlementHistory = useSettlements(selectedMarketId);
-  const globalFeeSettings = useGlobalSettlementSettings(Boolean(user));
-  const marketFeeSettings = useMarketSettlementSettings(selectedMarketId);
   const logout = useLogout();
 
   const selectedMarket = useMemo(
@@ -227,16 +221,8 @@ export function DashboardClient({
         )}
 
         {view === "feeStatus" && (
-          <FeeStatusView
-            globalSettings={globalFeeSettings.data ?? null}
-            isLoading={
-              globalFeeSettings.isLoading ||
-              marketFeeSettings.isLoading ||
-              participants.isLoading
-            }
-            marketId={marketId ?? null}
-            marketSettings={marketFeeSettings.data ?? null}
-            participants={participants.data ?? []}
+          <FeeStatusScreen
+            marketId={selectedMarketId}
             onEditParticipant={openParticipantSettingsDialog}
           />
         )}
@@ -250,14 +236,9 @@ export function DashboardClient({
         )}
 
         {view === "receiptLookup" && (
-          <ReceiptLookupView
-            dateRangeLabel={formatDateRange(
-              selectedMarket?.startsOn ?? null,
-              selectedMarket?.endsOn ?? null,
-            )}
-            isLoading={participants.isLoading || receipts.isLoading}
-            participants={participants.data ?? []}
-            receipts={receipts.data ?? []}
+          <ReceiptLookupScreen
+            market={selectedMarket}
+            marketId={selectedMarketId}
           />
         )}
 
