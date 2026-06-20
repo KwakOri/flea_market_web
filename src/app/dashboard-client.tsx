@@ -4,11 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
-import {
-  useCreateMarket,
-  useMarkets,
-  useUpdateMarket,
-} from "@/hooks/use-markets";
+import { useMarkets } from "@/hooks/use-markets";
 import {
   useCreateParticipant,
   useCreateParticipantMaster,
@@ -36,9 +32,7 @@ import {
 import {
   useGlobalSettlementSettings,
   useMarketSettlementSettings,
-  useUpdateMarketSettlementSettings,
 } from "@/hooks/use-settlement-settings";
-import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
   Participant,
   ParticipantStatus,
@@ -68,8 +62,7 @@ import { SettingsScreen } from "@/features/fees/components/settings-screen";
 import { FeeStatusView } from "@/features/fees/components/fee-status-view";
 import { getFeeSettingsPayload } from "@/features/fees/lib/fee-settings-payload";
 import { ParticipantDialog } from "@/features/participants/components/participant-dialogs";
-import { MarketManagementView } from "@/features/markets/components/market-management-view";
-import { MarketDialog } from "@/features/markets/components/market-dialog";
+import { MarketManagementScreen } from "@/features/markets/components/market-management-screen";
 import { marketStatusLabels } from "@/features/markets/lib/market-display";
 import { BoothProductManagementView } from "@/features/participants/components/booth-product-management-view";
 import { BoothMasterManagementView } from "@/features/participants/components/booth-master-management-view";
@@ -126,7 +119,6 @@ export function DashboardClient({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [marketMessage, setMarketMessage] = useState<string | null>(null);
   const [participantMasterMessage, setParticipantMasterMessage] = useState<
     string | null
   >(null);
@@ -139,9 +131,6 @@ export function DashboardClient({
   const [settlementMessage, setSettlementMessage] = useState<string | null>(
     null,
   );
-  const [marketFeeSettingsMessage, setMarketFeeSettingsMessage] = useState<
-    string | null
-  >(null);
   const toastIdRef = useRef(0);
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
@@ -151,12 +140,6 @@ export function DashboardClient({
   );
   const setRequestedParticipantId = useDashboardUiStore(
     (state) => state.setRequestedParticipantId,
-  );
-  const marketDialogMode = useDashboardDialogStore(
-    (state) => state.marketDialogMode,
-  );
-  const editingMarketId = useDashboardDialogStore(
-    (state) => state.editingMarketId,
   );
   const participantFeeOverrideEnabled = useDashboardDialogStore(
     (state) => state.participantFeeOverrideEnabled,
@@ -172,15 +155,6 @@ export function DashboardClient({
   );
   const editingParticipantMasterId = useDashboardDialogStore(
     (state) => state.editingParticipantMasterId,
-  );
-  const openCreateMarketDialogState = useDashboardDialogStore(
-    (state) => state.openCreateMarketDialog,
-  );
-  const openEditMarketDialogState = useDashboardDialogStore(
-    (state) => state.openEditMarketDialog,
-  );
-  const closeMarketDialogState = useDashboardDialogStore(
-    (state) => state.closeMarketDialog,
   );
   const openCreateParticipantDialogState = useDashboardDialogStore(
     (state) => state.openCreateParticipantDialog,
@@ -207,8 +181,6 @@ export function DashboardClient({
   const user = currentUser.data ?? null;
   const markets = useMarkets(Boolean(user));
   const selectedMarketId = marketId ?? null;
-  const createMarket = useCreateMarket();
-  const updateMarket = useUpdateMarket();
   const participants = useParticipants(selectedMarketId);
   const participantMasters = useParticipantMasters(Boolean(user));
   const selectedParticipantId = useMemo(() => {
@@ -247,18 +219,12 @@ export function DashboardClient({
     useDownloadSettlementPdfArchive(selectedMarketId);
   const globalFeeSettings = useGlobalSettlementSettings(Boolean(user));
   const marketFeeSettings = useMarketSettlementSettings(selectedMarketId);
-  const updateMarketFeeSettings =
-    useUpdateMarketSettlementSettings(selectedMarketId);
   const logout = useLogout();
 
   const selectedMarket = useMemo(
     () =>
       markets.data?.find((market) => market.id === selectedMarketId) ?? null,
     [markets.data, selectedMarketId],
-  );
-  const editingMarket = useMemo(
-    () => markets.data?.find((market) => market.id === editingMarketId) ?? null,
-    [editingMarketId, markets.data],
   );
   const selectedParticipant = useMemo(
     () =>
@@ -372,98 +338,6 @@ export function DashboardClient({
 
   if (!user) {
     return <PageStateMessage message="로그인 페이지로 이동하는 중입니다." />;
-  }
-
-  async function handleCreateMarket(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMarketMessage(null);
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      const market = await createMarket.mutateAsync({
-        name: getFormString(formData, "name"),
-        description: getOptionalFormString(formData, "description"),
-        startsOn: getOptionalFormString(formData, "startsOn"),
-        endsOn: getOptionalFormString(formData, "endsOn"),
-      });
-
-      setRequestedParticipantId(null);
-      form.reset();
-      closeMarketDialog();
-      router.push(`/markets/${market.id}/management`);
-    } catch (error) {
-      setMarketMessage(getErrorMessage(error));
-    }
-  }
-
-  async function handleUpdateMarket(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMarketMessage(null);
-
-    if (!editingMarket) {
-      setMarketMessage("수정할 플리마켓을 선택해주세요.");
-      return;
-    }
-
-    const formData = new FormData(event.currentTarget);
-    const name = getFormString(formData, "name");
-
-    if (!name.trim()) {
-      setMarketMessage("마켓명을 입력해주세요.");
-      return;
-    }
-
-    try {
-      await updateMarket.mutateAsync({
-        marketId: editingMarket.id,
-        payload: {
-          name,
-          description: getFormString(formData, "description").trim(),
-          status: getFormString(formData, "status") as MarketStatus,
-          startsOn: getOptionalFormString(formData, "startsOn"),
-          endsOn: getOptionalFormString(formData, "endsOn"),
-        },
-      });
-      closeMarketDialog();
-    } catch (error) {
-      setMarketMessage(getErrorMessage(error));
-    }
-  }
-
-  function openCreateMarketDialog() {
-    setMarketMessage(null);
-    openCreateMarketDialogState();
-  }
-
-  function openEditMarketDialog(market: Market) {
-    setMarketMessage(null);
-    openEditMarketDialogState(market.id);
-  }
-
-  function closeMarketDialog() {
-    closeMarketDialogState();
-    setMarketMessage(null);
-  }
-
-  async function handleUpdateMarketFeeSettings(
-    event: FormEvent<HTMLFormElement>,
-  ) {
-    event.preventDefault();
-    setMarketFeeSettingsMessage(null);
-
-    try {
-      await updateMarketFeeSettings.mutateAsync(
-        getFeeSettingsPayload(new FormData(event.currentTarget)),
-      );
-      showToast(
-        "플리마켓 수수료 저장 완료",
-        "플리마켓 수수료 기본값을 저장했습니다.",
-      );
-    } catch (error) {
-      setMarketFeeSettingsMessage(getErrorMessage(error));
-    }
   }
 
   async function handleCreateParticipantMaster(
@@ -850,38 +724,10 @@ export function DashboardClient({
         )}
 
         {view === "management" && (
-          <MarketManagementView
-            createMarketDisabled={createMarket.isPending}
-            marketFeeSettings={marketFeeSettings.data}
-            marketFeeSettingsDisabled={
-              marketFeeSettings.isLoading || updateMarketFeeSettings.isPending
-            }
-            marketFeeSettingsMessage={marketFeeSettingsMessage}
-            marketFeeSettingsSubmitLabel={
-              updateMarketFeeSettings.isPending ? "저장 중" : "저장"
-            }
+          <MarketManagementScreen
+            enabled={Boolean(user)}
             marketId={marketId ?? null}
-            marketMessage={marketMessage}
-            markets={markets.data ?? []}
-            selectedMarket={selectedMarket}
-            onCreateMarket={openCreateMarketDialog}
-            onEditMarket={openEditMarketDialog}
-            onSelectMarket={(selectedId) =>
-              router.push(`/markets/${selectedId}/management`)
-            }
-            onUpdateMarketFeeSettings={handleUpdateMarketFeeSettings}
-          />
-        )}
-
-        {marketDialogMode && (
-          <MarketDialog
-            editingMarket={editingMarket}
-            isSubmitting={createMarket.isPending || updateMarket.isPending}
-            message={marketMessage}
-            mode={marketDialogMode}
-            onClose={closeMarketDialog}
-            onCreateSubmit={handleCreateMarket}
-            onUpdateSubmit={handleUpdateMarket}
+            onSaved={showToast}
           />
         )}
 
