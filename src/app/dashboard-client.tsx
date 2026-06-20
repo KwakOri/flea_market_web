@@ -88,6 +88,7 @@ import type {
   SettlementListItem,
   SettlementStatus,
 } from "@/services/settlements.service";
+import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
 import { cn } from "@/lib/utils";
 import {
   appShellClass,
@@ -315,7 +316,9 @@ export function DashboardClient({
   >(null);
   const [marketLifecycleFilter, setMarketLifecycleFilter] =
     useState<MarketLifecycleFilter>("active");
-  const [railOpen, setRailOpen] = useState(false);
+  const railOpen = useDashboardUiStore((state) => state.railOpen);
+  const openRail = useDashboardUiStore((state) => state.openRail);
+  const closeRail = useDashboardUiStore((state) => state.closeRail);
 
   const currentUser = useCurrentUser();
   const user = currentUser.data ?? null;
@@ -1045,8 +1048,8 @@ export function DashboardClient({
     <main className={pageShellClass}>
       <aside
         className="fixed bottom-3 left-3 top-3 z-[60] flex flex-col gap-1 overflow-hidden rounded-[18px] bg-[#16170f] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out"
-        onMouseEnter={() => setRailOpen(true)}
-        onMouseLeave={() => setRailOpen(false)}
+        onMouseEnter={openRail}
+        onMouseLeave={closeRail}
         style={{ width: railOpen ? 248 : 76 }}
       >
         <Link
