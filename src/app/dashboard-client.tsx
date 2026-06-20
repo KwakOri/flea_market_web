@@ -1044,7 +1044,7 @@ export function DashboardClient({
   return (
     <main className={pageShellClass}>
       <aside
-        className="fixed bottom-0 left-0 top-0 z-[60] flex flex-col gap-1 overflow-hidden bg-[#16170f] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out"
+        className="fixed bottom-3 left-3 top-3 z-[60] flex flex-col gap-1 overflow-hidden rounded-[18px] bg-[#16170f] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out"
         onMouseEnter={() => setRailOpen(true)}
         onMouseLeave={() => setRailOpen(false)}
         style={{ width: railOpen ? 248 : 76 }}
@@ -1144,8 +1144,8 @@ export function DashboardClient({
         </button>
       </aside>
 
-      <div className="min-h-screen min-w-0 pl-[76px]">
-        <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 px-5 py-[18px] backdrop-blur-md sm:px-8">
+      <div className="min-h-screen w-full min-w-0">
+        <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 py-[18px] pl-[calc(76px+1.5rem)] pr-5 backdrop-blur-md sm:pl-[calc(76px+2rem)] sm:pr-8 lg:pl-[calc(76px+2.5rem)] lg:pr-10">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="flex min-w-0 flex-wrap items-center gap-4">
               {backHref && (
@@ -1229,7 +1229,7 @@ export function DashboardClient({
           </div>
         </header>
 
-        <div className="px-5 py-[30px] pb-14 sm:px-8">
+        <div className="min-w-0 py-[30px] pb-14 pl-[calc(76px+1.5rem)] pr-5 sm:pl-[calc(76px+2rem)] sm:pr-8 lg:pl-[calc(76px+2.5rem)] lg:pr-10">
 
         {view === "home" && (
           <>
@@ -2898,7 +2898,7 @@ function FeeApplicationMatrix({
 
   return (
     <div className="overflow-hidden rounded-[18px] bg-white">
-      <div className="overflow-x-auto">
+      <div className="min-w-0 max-w-full overflow-x-auto">
         <div className="min-w-[1120px]">
           <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] bg-[#16170f] px-[22px] py-[13px] font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
             <span>참가 부스</span>
@@ -3427,7 +3427,7 @@ function ParticipantMasterTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="min-w-0 max-w-full overflow-x-auto">
       <table className="w-full min-w-[980px] border-collapse text-sm">
         <thead className="bg-zinc-50 text-left text-zinc-500">
           <tr>
@@ -3667,7 +3667,7 @@ function ProductTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="min-w-0 max-w-full overflow-x-auto">
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead className="bg-zinc-50 text-left text-zinc-500">
           <tr>
@@ -3731,7 +3731,7 @@ function ReceiptMatrixInputTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="min-w-0 max-w-full overflow-x-auto">
       <div className="min-w-[640px]">
         <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-3">
           <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
@@ -3864,8 +3864,8 @@ function ReceiptMatrixTable({
   }
 
   return (
-    <div>
-      <div className="grid h-[calc(100vh-260px)] min-h-[320px] max-h-[720px] overflow-hidden grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)]">
+    <div className="min-w-0 max-w-full overflow-x-auto">
+      <div className="grid h-[calc(100vh-260px)] min-h-[320px] min-w-[1040px] max-h-[720px] overflow-hidden grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)]">
         <div
           className="z-20 grid items-center border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
           style={{ gridTemplateColumns: fixedGridTemplate }}
@@ -4150,7 +4150,7 @@ function SettlementPreviewPanel({
       )}
       {!selectedParticipantId && (
         <>
-          <div className="overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+          <div className="min-w-0 max-w-full overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
             <table className="w-full min-w-[1240px] border-collapse text-sm">
               <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
                 <tr>
@@ -4217,7 +4217,7 @@ function SettlementHistoryPanel({
       <div className="px-4 py-3">
         <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="min-w-0 max-w-full overflow-x-auto">
         <table className="w-full min-w-[1000px] border-collapse text-sm">
           <thead className="bg-zinc-50 text-left text-zinc-500">
             <tr>
@@ -4406,7 +4406,7 @@ function ParticipantSettlementDualChart({
           </span>
         </div>
       </div>
-      <div className="overflow-x-auto pt-5">
+      <div className="min-w-0 max-w-full overflow-x-auto pt-5">
         <svg
           aria-label="상점별 판매 금액과 판매 건수 그래프"
           className="block"
@@ -4699,7 +4699,7 @@ function ParticipantDailySalesChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="overflow-x-auto pt-5">
+    <div className="min-w-0 max-w-full overflow-x-auto pt-5">
       <svg
         aria-label="날짜별 판매 금액과 판매 건수 그래프"
         className="block"

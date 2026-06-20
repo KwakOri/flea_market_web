@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 
 export const pageShellClass =
-  "min-h-screen min-w-0 bg-[#e9e5d8] text-[#1a1b12]";
+  "relative min-h-screen w-full min-w-0 overflow-x-clip bg-[#e9e5d8] text-[#1a1b12]";
 
 export const appShellClass =
   "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";

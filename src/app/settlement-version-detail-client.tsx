@@ -480,7 +480,7 @@ function SettlementParticipantSnapshots({
           저장된 부스별 정산 데이터가 없습니다.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="min-w-0 max-w-full overflow-x-auto">
           <table className="w-full min-w-[1120px] border-collapse text-sm">
             <thead className="bg-zinc-50 text-left text-zinc-500">
               <tr>

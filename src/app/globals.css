@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 @font-face {
   font-family: "Paperozi";
   font-display: swap;
@@ -89,6 +95,9 @@
 html,
 body {
   max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  width: 100%;
 }
 
 body {
