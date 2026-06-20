@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent, UIEvent } from "react";
+import type { FormEvent, ReactNode, UIEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -177,8 +177,8 @@ const feeSettingFields: Array<{
   key: FeeSettingFieldKey;
   label: string;
 }> = [
-  { key: "salesCommissionRate", label: "판매 수수료" },
-  { key: "cardFeeRate", label: "카드 수수료" },
+  { key: "salesCommissionRate", label: "판매" },
+  { key: "cardFeeRate", label: "카드" },
   { key: "cardFeePayer", label: "카드 부담" },
   { key: "participationFeeAmount", label: "참가비" },
 ];
@@ -2897,94 +2897,84 @@ function FeeApplicationMatrix({
   const hasMarketSettings = Boolean(marketSettings?.id);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-[1240px] border-collapse text-sm">
-        <thead className="bg-[#16170f] text-left font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]">
-          <tr>
-            <th className="sticky left-0 z-20 w-[220px] border-r border-[#2c2d22] bg-[#16170f] px-5 py-3 font-semibold">
-              참가부스
-            </th>
-            <th className="w-[300px] px-5 py-3 font-semibold">전체 설정</th>
-            <th className="w-[300px] px-5 py-3 font-semibold">
-              플리마켓 설정
-            </th>
-            <th className="w-[300px] px-5 py-3 font-semibold text-[#c7f94b]">
-              이 플리마켓 부스 설정
-            </th>
-            <th className="sticky right-0 z-20 w-[120px] border-l border-[#2c2d22] bg-[#16170f] px-5 py-3 text-center font-semibold">
-              설정
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#f1eee2]">
-          {participants.map((participant) => {
-            const activeScope = getParticipantFeePolicySource(
-              participant,
-              hasMarketSettings,
-            );
-            const hasBoothSettings =
-              participant.settings?.feeSettingOverrideEnabled === true;
+    <div className="overflow-hidden rounded-[18px] bg-white">
+      <div className="overflow-x-auto">
+        <div className="min-w-[1120px]">
+          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] bg-[#16170f] px-[22px] py-[13px] font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
+            <span>참가 부스</span>
+            <span>전체 기본값</span>
+            <span>플리마켓 기본값</span>
+            <span className="text-[#c7f94b]">이 부스 설정</span>
+          </div>
+          <div className="divide-y divide-[#f1eee2]">
+            {participants.map((participant) => {
+              const activeScope = getParticipantFeePolicySource(
+                participant,
+                hasMarketSettings,
+              );
+              const hasBoothSettings =
+                participant.settings?.feeSettingOverrideEnabled === true;
 
-            return (
-              <tr data-testid="fee-status-row" key={participant.id}>
-                <td className="sticky left-0 z-10 border-r border-[#f1eee2] bg-white px-5 py-4 align-top">
-                  <p className="text-[14.5px] font-semibold text-[#1a1b12]">
-                    {participant.displayName}
-                  </p>
-                  <p className="mt-2">
-                    <ParticipantTypeBadge type={participant.participantType} />
-                  </p>
-                </td>
-                <FeeApplicationCell
-                  isActive={activeScope === "global"}
-                  scope="global"
-                  settings={resolvedGlobalSettings}
-                  title="전체 기본값"
-                />
-                <FeeApplicationCell
-                  isActive={activeScope === "market"}
-                  scope="market"
-                  settings={hasMarketSettings ? marketSettings : null}
-                  title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
-                  unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
-                />
-                <FeeApplicationCell
-                  fallbackScope={hasMarketSettings ? "market" : "global"}
-                  isActive={activeScope === "booth"}
-                  scope="booth"
-                  settings={hasBoothSettings ? participant.settings : null}
-                  title="부스 설정"
-                  unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
-                />
-                <td className="sticky right-0 z-10 border-l border-[#f1eee2] bg-white px-5 py-4">
-                  <div className="flex min-h-[190px] items-center justify-center">
-                  <button
-                    aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                    className={cn(
-                      buttonVariants({
-                        intent: "secondary",
-                        size: "sm",
-                      }),
-                      "h-10 w-10 px-0",
-                    )}
-                    onClick={() => onEditParticipant(participant)}
-                    title="부스별 수수료 설정"
-                    type="button"
-                  >
-                    <CircleDollarSign aria-hidden className="h-4 w-4" />
-                  </button>
+              return (
+                <div
+                  className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-stretch gap-3.5 px-[22px] py-4"
+                  data-testid="fee-status-row"
+                  key={participant.id}
+                >
+                  <div className="pt-1">
+                    <p className="text-[14.5px] font-semibold text-[#1a1b12]">
+                      {participant.displayName}
+                    </p>
+                    <p className="mt-2">
+                      <ParticipantTypeBadge
+                        type={participant.participantType}
+                      />
+                    </p>
                   </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <FeeApplicationCell
+                    isActive={activeScope === "global"}
+                    scope="global"
+                    settings={resolvedGlobalSettings}
+                    title="전체 기본값"
+                  />
+                  <FeeApplicationCell
+                    isActive={activeScope === "market"}
+                    scope="market"
+                    settings={hasMarketSettings ? marketSettings : null}
+                    title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
+                    unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
+                  />
+                  <FeeApplicationCell
+                    action={
+                      <button
+                        aria-label={`${participant.displayName} 부스별 수수료 설정`}
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#d8d3c2] bg-white text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                        onClick={() => onEditParticipant(participant)}
+                        title="부스별 수수료 설정"
+                        type="button"
+                      >
+                        <CircleDollarSign aria-hidden className="h-3.5 w-3.5" />
+                      </button>
+                    }
+                    fallbackScope={hasMarketSettings ? "market" : "global"}
+                    isActive={activeScope === "booth"}
+                    scope="booth"
+                    settings={hasBoothSettings ? participant.settings : null}
+                    title={hasBoothSettings ? "부스 설정" : "부스 설정 없음"}
+                    unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 function FeeApplicationCell({
+  action,
   fallbackScope,
   isActive,
   scope,
@@ -2992,6 +2982,7 @@ function FeeApplicationCell({
   title,
   unavailableMessage,
 }: {
+  action?: ReactNode;
   fallbackScope?: FeeSettingScope;
   isActive: boolean;
   scope: FeeSettingScope;
@@ -3006,16 +2997,18 @@ function FeeApplicationCell({
   const isUnavailable = !settings;
 
   return (
-    <td className="px-5 py-4 align-top">
-      <div
-        className={cn(
-          "grid min-h-[190px] gap-2 rounded-xl border border-[#ece7d8] bg-white p-3 transition-opacity",
-          isActive && "border-[#1f8a4d] bg-[#e6f4ec]",
-          !isActive && "opacity-50 hover:opacity-75",
-        )}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-[#56564a]">{title}</p>
+    <div
+      className={cn(
+        "grid h-full min-h-[154px] content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity",
+        isActive && "border-[#1f8a4d] bg-[#e6f4ec]",
+        !isActive && "opacity-50 hover:opacity-75",
+      )}
+    >
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-xs font-semibold text-[#56564a]">
+          {title}
+        </p>
+        <div className="flex shrink-0 items-center gap-1.5">
           <span
             className={cn(
               "font-mono text-[9.5px] font-bold",
@@ -3028,45 +3021,46 @@ function FeeApplicationCell({
           >
             {isActive ? "적용 중" : isUnavailable ? "미설정" : "대기"}
           </span>
+          {action}
         </div>
-        {isUnavailable ? (
-          <p className="mt-5 rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm text-[#8a8775]">
-            {unavailableMessage ?? "설정이 없습니다."}
-          </p>
-        ) : (
-          <dl className="grid gap-1.5">
-            {feeSettingFields.map((field) => {
-              return (
-                <div
-                  className={cn(
-                    "grid grid-cols-[92px_minmax(0,1fr)_44px] items-center gap-2 rounded-md px-2 py-1",
-                    isActive && "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
-                  )}
-                  key={field.key}
-                >
-                  <dt className="text-xs text-[#8a8775]">{field.label}</dt>
-                  <dd className="truncate font-display font-semibold text-[#1a1b12]">
-                    {formatFeeFieldValue(
-                      field.key,
-                      getScopedFeeFieldValue(scope, settings, field.key),
-                      fallbackScope,
-                    )}
-                  </dd>
-                  <span
-                    className={cn(
-                      "text-right font-mono text-[11px] font-semibold",
-                      isActive ? "text-[#1f8a4d]" : "text-[#c4c0ae]",
-                    )}
-                  >
-                    {isActive ? "적용" : "-"}
-                  </span>
-                </div>
-              );
-            })}
-          </dl>
-        )}
       </div>
-    </td>
+      {isUnavailable ? (
+        <p className="grid min-h-[94px] place-items-center rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm leading-relaxed text-[#8a8775]">
+          {unavailableMessage ?? "설정이 없습니다."}
+        </p>
+      ) : (
+        <dl className="grid gap-1.5">
+          {feeSettingFields.map((field) => {
+            return (
+              <div
+                className={cn(
+                  "grid min-h-7 grid-cols-[76px_minmax(0,1fr)_38px] items-center gap-2 rounded-md px-2 py-1",
+                  isActive && "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
+                )}
+                key={field.key}
+              >
+                <dt className="text-xs text-[#8a8775]">{field.label}</dt>
+                <dd className="truncate font-display font-semibold text-[#1a1b12]">
+                  {formatFeeFieldValue(
+                    field.key,
+                    getScopedFeeFieldValue(scope, settings, field.key),
+                    fallbackScope,
+                  )}
+                </dd>
+                <span
+                  className={cn(
+                    "text-right font-mono text-[11px] font-semibold",
+                    isActive ? "text-[#1f8a4d]" : "text-[#c4c0ae]",
+                  )}
+                >
+                  {isActive ? "적용" : "-"}
+                </span>
+              </div>
+            );
+          })}
+        </dl>
+      )}
+    </div>
   );
 }
 
@@ -4157,18 +4151,18 @@ function SettlementPreviewPanel({
       {!selectedParticipantId && (
         <>
           <div className="overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-            <table className="w-full min-w-[1120px] border-collapse text-sm">
+            <table className="w-full min-w-[1240px] border-collapse text-sm">
               <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">참가 부스</th>
-                  <th className="px-5 py-3 text-right font-semibold">현금</th>
-                  <th className="px-5 py-3 text-right font-semibold">카드</th>
-                  <th className="px-5 py-3 text-right font-semibold">계좌이체</th>
-                  <th className="px-5 py-3 text-right font-semibold">기타</th>
-                  <th className="px-5 py-3 text-right font-semibold">총매출</th>
-                  <th className="px-5 py-3 text-right font-semibold">판매 수수료</th>
-                  <th className="px-5 py-3 text-right font-semibold">카드 수수료</th>
-                  <th className="px-5 py-3 text-right font-semibold text-[#c7f94b]">지급 예정</th>
+                  <th className="px-6 py-3.5 font-semibold">참가 부스</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">현금</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">카드</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">계좌이체</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">기타</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">총매출</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">판매 수수료</th>
+                  <th className="px-6 py-3.5 text-right font-semibold">카드 수수료</th>
+                  <th className="px-6 py-3.5 text-right font-semibold text-[#c7f94b]">지급 예정</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1eee2]">
@@ -4353,18 +4347,18 @@ function ParticipantSettlementDualChart({
 
   if (!hasSales) {
     return (
-      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
         상점별 판매 데이터가 없습니다.
       </section>
     );
   }
 
-  const chartWidth = Math.max(920, participants.length * 116 + 128);
-  const chartHeight = 320;
-  const chartTop = 34;
-  const chartBottom = 82;
-  const chartLeft = 72;
-  const chartRight = 72;
+  const chartWidth = Math.max(980, participants.length * 124 + 184);
+  const chartHeight = 360;
+  const chartTop = 48;
+  const chartBottom = 98;
+  const chartLeft = 92;
+  const chartRight = 92;
   const plotWidth = chartWidth - chartLeft - chartRight;
   const plotHeight = chartHeight - chartTop - chartBottom;
   const baselineY = chartTop + plotHeight;
@@ -4391,28 +4385,28 @@ function ParticipantSettlementDualChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <section className="border-b border-zinc-200">
-      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-6 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-950">
+          <h3 className="text-sm font-semibold text-[#1a1b12]">
             상점별 판매 현황
           </h3>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-[#8a8775]">
             플리마켓 기간 내 판매 금액과 판매 건수를 함께 확인합니다.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs font-medium text-zinc-600">
+        <div className="flex flex-wrap gap-3 text-xs font-medium text-[#56564a]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />
             판매 금액
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-zinc-900" />
+            <span className="h-0.5 w-4 rounded-full bg-[#18181b]" />
             판매 건수
           </span>
         </div>
       </div>
-      <div className="overflow-x-auto px-4 pb-4">
+      <div className="overflow-x-auto pt-5">
         <svg
           aria-label="상점별 판매 금액과 판매 건수 그래프"
           className="block"
@@ -4422,7 +4416,7 @@ function ParticipantSettlementDualChart({
           width={chartWidth}
         >
           <line
-            stroke="#d4d4d8"
+            stroke="#d8d3c2"
             strokeWidth="1"
             x1={chartLeft}
             x2={chartWidth - chartRight}
@@ -4437,7 +4431,7 @@ function ParticipantSettlementDualChart({
             return (
               <g key={tick}>
                 <line
-                  stroke="#f4f4f5"
+                  stroke="#f1eee2"
                   strokeWidth="1"
                   x1={chartLeft}
                   x2={chartWidth - chartRight}
@@ -4445,7 +4439,7 @@ function ParticipantSettlementDualChart({
                   y2={y}
                 />
                 <text
-                  fill="#71717a"
+                  fill="#8a8775"
                   fontSize="11"
                   textAnchor="end"
                   x={chartLeft - 10}
@@ -4454,7 +4448,7 @@ function ParticipantSettlementDualChart({
                   {formatCompactWon(amountValue)}
                 </text>
                 <text
-                  fill="#71717a"
+                  fill="#8a8775"
                   fontSize="11"
                   textAnchor="start"
                   x={chartWidth - chartRight + 10}
@@ -4466,7 +4460,7 @@ function ParticipantSettlementDualChart({
             );
           })}
           <text
-            fill="#52525b"
+            fill="#56564a"
             fontSize="12"
             fontWeight="600"
             textAnchor="start"
@@ -4476,7 +4470,7 @@ function ParticipantSettlementDualChart({
             금액
           </text>
           <text
-            fill="#52525b"
+            fill="#56564a"
             fontSize="12"
             fontWeight="600"
             textAnchor="end"
@@ -4506,7 +4500,7 @@ function ParticipantSettlementDualChart({
                   y={y}
                 />
                 <text
-                  fill="#3f3f46"
+                  fill="#56564a"
                   fontSize="11"
                   fontWeight="600"
                   textAnchor="middle"
@@ -4516,7 +4510,7 @@ function ParticipantSettlementDualChart({
                   {truncateChartLabel(participant.displayName)}
                 </text>
                 <text
-                  fill="#71717a"
+                  fill="#8a8775"
                   fontSize="10"
                   textAnchor="middle"
                   x={x}
@@ -4591,7 +4585,7 @@ function ParticipantDailySalesDetail({
 }) {
   if (!participant) {
     return (
-      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
         선택한 참가부스 정산 데이터를 찾을 수 없습니다.
       </section>
     );
@@ -4599,7 +4593,7 @@ function ParticipantDailySalesDetail({
 
   if (isReceiptsLoading) {
     return (
-      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
         날짜별 판매 데이터를 불러오는 중입니다.
       </section>
     );
@@ -4613,13 +4607,13 @@ function ParticipantDailySalesDetail({
   );
 
   return (
-    <section className="border-b border-zinc-200">
-      <div className="grid gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+    <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-6 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-950">
+          <h3 className="text-sm font-semibold text-[#1a1b12]">
             {participant.displayName} 날짜별 판매
           </h3>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-[#8a8775]">
             {participantTypeLabels[participant.participantType]} ·{" "}
             {formatMarketDuration(market?.startsOn ?? null, market?.endsOn ?? null)}
           </p>
@@ -4634,21 +4628,21 @@ function ParticipantDailySalesDetail({
             목록
           </button>
           <dl className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-md border border-zinc-200 px-3 py-2">
-              <dt className="text-xs font-medium text-zinc-500">총매출</dt>
-              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+              <dt className="text-xs font-medium text-[#8a8775]">총매출</dt>
+              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
                 {formatWon(participant.netSalesAmount)}
               </dd>
             </div>
-            <div className="rounded-md border border-zinc-200 px-3 py-2">
-              <dt className="text-xs font-medium text-zinc-500">판매 건수</dt>
-              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+              <dt className="text-xs font-medium text-[#8a8775]">판매 건수</dt>
+              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
                 {participant.saleLineCount}건
               </dd>
             </div>
-            <div className="rounded-md border border-zinc-200 px-3 py-2">
-              <dt className="text-xs font-medium text-zinc-500">평균 판매</dt>
-              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+              <dt className="text-xs font-medium text-[#8a8775]">평균 판매</dt>
+              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
                 {formatWon(
                   participant.saleLineCount > 0
                     ? Math.round(
@@ -4675,18 +4669,18 @@ function ParticipantDailySalesChart({
 
   if (!hasSales) {
     return (
-      <div className="px-4 pb-10 pt-4 text-center text-sm text-zinc-500">
+      <div className="py-10 text-center text-sm text-[#8a8775]">
         날짜별 판매 데이터가 없습니다.
       </div>
     );
   }
 
-  const chartWidth = Math.max(720, points.length * 104 + 128);
-  const chartHeight = 300;
-  const chartTop = 34;
-  const chartBottom = 74;
-  const chartLeft = 72;
-  const chartRight = 72;
+  const chartWidth = Math.max(820, points.length * 112 + 184);
+  const chartHeight = 340;
+  const chartTop = 48;
+  const chartBottom = 92;
+  const chartLeft = 92;
+  const chartRight = 92;
   const plotWidth = chartWidth - chartLeft - chartRight;
   const plotHeight = chartHeight - chartTop - chartBottom;
   const baselineY = chartTop + plotHeight;
@@ -4705,7 +4699,7 @@ function ParticipantDailySalesChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="overflow-x-auto px-4 pb-4">
+    <div className="overflow-x-auto pt-5">
       <svg
         aria-label="날짜별 판매 금액과 판매 건수 그래프"
         className="block"
@@ -4715,7 +4709,7 @@ function ParticipantDailySalesChart({
         width={chartWidth}
       >
         <line
-          stroke="#d4d4d8"
+          stroke="#d8d3c2"
           strokeWidth="1"
           x1={chartLeft}
           x2={chartWidth - chartRight}
@@ -4730,7 +4724,7 @@ function ParticipantDailySalesChart({
           return (
             <g key={tick}>
               <line
-                stroke="#f4f4f5"
+                stroke="#f1eee2"
                 strokeWidth="1"
                 x1={chartLeft}
                 x2={chartWidth - chartRight}
@@ -4738,7 +4732,7 @@ function ParticipantDailySalesChart({
                 y2={y}
               />
               <text
-                fill="#71717a"
+                fill="#8a8775"
                 fontSize="11"
                 textAnchor="end"
                 x={chartLeft - 10}
@@ -4747,7 +4741,7 @@ function ParticipantDailySalesChart({
                 {formatCompactWon(amountValue)}
               </text>
               <text
-                fill="#71717a"
+                fill="#8a8775"
                 fontSize="11"
                 textAnchor="start"
                 x={chartWidth - chartRight + 10}
@@ -4759,7 +4753,7 @@ function ParticipantDailySalesChart({
           );
         })}
         <text
-          fill="#52525b"
+          fill="#56564a"
           fontSize="12"
           fontWeight="600"
           textAnchor="start"
@@ -4769,7 +4763,7 @@ function ParticipantDailySalesChart({
           금액
         </text>
         <text
-          fill="#52525b"
+          fill="#56564a"
           fontSize="12"
           fontWeight="600"
           textAnchor="end"
@@ -4798,7 +4792,7 @@ function ParticipantDailySalesChart({
                 y={y}
               />
               <text
-                fill="#3f3f46"
+                fill="#56564a"
                 fontSize="11"
                 fontWeight="600"
                 textAnchor="middle"
@@ -4808,7 +4802,7 @@ function ParticipantDailySalesChart({
                 {formatChartDateLabel(point.date)}
               </text>
               <text
-                fill="#71717a"
+                fill="#8a8775"
                 fontSize="10"
                 textAnchor="middle"
                 x={x}
@@ -4880,7 +4874,7 @@ function SettlementPreviewRow({
       role="button"
       tabIndex={0}
     >
-      <td className="px-5 py-3">
+      <td className="px-6 py-4">
         <p className="text-[14.5px] font-semibold text-[#1a1b12]">
           {participant.displayName}
         </p>
@@ -4891,28 +4885,28 @@ function SettlementPreviewRow({
           </span>
         </p>
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.cashSalesAmount)}
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.cardSalesAmount)}
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.transferSalesAmount)}
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] text-[#56564a]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] text-[#56564a]">
         {formatWon(participant.otherSalesAmount)}
       </td>
-      <td className="px-5 py-3 text-right font-display text-[14.5px] font-bold text-[#1a1b12]">
+      <td className="px-6 py-4 text-right font-display text-[14.5px] font-bold text-[#1a1b12]">
         {formatWon(participant.netSalesAmount)}
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] font-semibold text-[#1a1b12]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] font-semibold text-[#1a1b12]">
         {formatWon(participant.salesCommissionAmount)}
         <span className="ml-1 font-mono text-[10px] text-[#a8a593]">
           {formatPercent(participant.salesCommissionRate)}
         </span>
       </td>
-      <td className="px-5 py-3 text-right font-display text-[13.5px] font-semibold text-[#2d6fe0]">
+      <td className="px-6 py-4 text-right font-display text-[13.5px] font-semibold text-[#2d6fe0]">
         {formatWon(participant.cardFeeAmount)}
         <span className="ml-1 font-mono text-[10px] text-[#a8a593]">
           {formatPercent(participant.cardFeeRate)}
@@ -4921,7 +4915,7 @@ function SettlementPreviewRow({
           {participant.cardFeePayer === "participant" ? "참가부스" : "마켓"}
         </span>
       </td>
-      <td className="px-5 py-3 text-right font-display text-[15px] font-bold text-[#1f8a4d]">
+      <td className="px-6 py-4 text-right font-display text-[15px] font-bold text-[#1f8a4d]">
         {formatWon(participant.payoutAmount)}
       </td>
     </tr>
