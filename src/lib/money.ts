@@ -13,6 +13,10 @@ export function formatMoneyAmount(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
 
+export function formatWon(value: number): string {
+  return `${formatMoneyAmount(value)}원`;
+}
+
 export function formatMoneyInput(value: string): string {
   const amount = parseMoneyInputAmount(value);
   return amount === null ? "" : formatMoneyAmount(amount);

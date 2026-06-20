@@ -6,16 +6,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Banknote,
   CheckCircle2,
   CircleDollarSign,
-  CreditCard,
   Download,
-  Landmark,
   Pencil,
   Plus,
   Trash2,
-  type LucideIcon,
   X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
@@ -91,6 +87,19 @@ import {
   DashboardShell,
   type DashboardView,
 } from "@/features/dashboard/components/dashboard-shell";
+import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
+import { participantTypeLabels } from "@/features/participants/lib/participant-display";
+import { SalesMatrixView } from "@/features/receipts/components/sales-matrix-view";
+import {
+  buildReceiptSoldAtFromDateTimeInput,
+  getDateOnlyKey,
+  getDefaultReceiptDateTimeInputValue,
+  parseDateOnly,
+} from "@/features/receipts/lib/receipt-date-time";
+import {
+  paymentMethodIcons,
+  paymentMethodLabels,
+} from "@/features/receipts/lib/payment-method-display";
 import { cn } from "@/lib/utils";
 import {
   appShellClass,
@@ -106,10 +115,8 @@ import {
 } from "@/lib/design-system";
 import { formatMoneyAmount } from "@/lib/money";
 import {
-  parseOptionalReceiptAmount,
   parseReceiptAmountInput,
   paymentMethods,
-  sumReceiptAmounts,
 } from "@/lib/receipt-matrix";
 
 const marketStatusLabels: Record<MarketStatus, string> = {
@@ -119,29 +126,9 @@ const marketStatusLabels: Record<MarketStatus, string> = {
   archived: "보관",
 };
 
-const participantTypeLabels: Record<ParticipantType, string> = {
-  staff: "운영진",
-  seller: "셀러",
-  special_booth: "특수 부스",
-};
-
 const productStatusLabels: Record<ProductStatus, string> = {
   active: "판매",
   inactive: "중지",
-};
-
-const paymentMethodLabels: Record<PaymentMethod, string> = {
-  cash: "현금",
-  card: "카드",
-  transfer: "계좌이체",
-  other: "기타",
-};
-
-const paymentMethodIcons: Record<PaymentMethod, LucideIcon> = {
-  cash: Banknote,
-  card: CreditCard,
-  transfer: Landmark,
-  other: CircleDollarSign,
 };
 
 const cardFeePayerLabels: Record<CardFeePayer, string> = {
@@ -250,40 +237,6 @@ export function DashboardClient({
   const [requestedParticipantId, setRequestedParticipantId] = useState<
     string | null
   >(null);
-  const matrixReceiptAmounts = useReceiptMatrixStore(
-    (state) => state.receiptAmounts,
-  );
-  const matrixReceiptDateTimeDraft = useReceiptMatrixStore(
-    (state) => state.receiptDateTimeDraft,
-  );
-  const matrixPaymentMode = useReceiptMatrixStore((state) => state.paymentMode);
-  const matrixSinglePaymentMethod = useReceiptMatrixStore(
-    (state) => state.singlePaymentMethod,
-  );
-  const matrixPaymentSplits = useReceiptMatrixStore(
-    (state) => state.paymentSplits,
-  );
-  const handleMatrixReceiptAmountChange = useReceiptMatrixStore(
-    (state) => state.setReceiptAmount,
-  );
-  const setMatrixReceiptDateTimeDraft = useReceiptMatrixStore(
-    (state) => state.setReceiptDateTimeDraft,
-  );
-  const clearMatrixReceiptDateTimeDraft = useReceiptMatrixStore(
-    (state) => state.clearReceiptDateTimeDraft,
-  );
-  const handleMatrixPaymentModeChange = useReceiptMatrixStore(
-    (state) => state.setPaymentMode,
-  );
-  const setMatrixSinglePaymentMethod = useReceiptMatrixStore(
-    (state) => state.setSinglePaymentMethod,
-  );
-  const handleMatrixPaymentSplitChange = useReceiptMatrixStore(
-    (state) => state.setPaymentSplit,
-  );
-  const handleMatrixPaymentFillRemaining = useReceiptMatrixStore(
-    (state) => state.fillPaymentSplitRemaining,
-  );
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
   );
@@ -418,22 +371,6 @@ export function DashboardClient({
         (participant) => participant.id === editingParticipantMasterId,
       ) ?? null,
     [editingParticipantMasterId, participantMasters.data],
-  );
-  const matrixReceiptDateTimeEnabled =
-    matrixReceiptDateTimeDraft?.marketId === selectedMarketId &&
-    matrixReceiptDateTimeDraft.enabled;
-  const matrixReceiptDateTimeValue =
-    matrixReceiptDateTimeEnabled && matrixReceiptDateTimeDraft?.value
-      ? matrixReceiptDateTimeDraft.value
-      : getDefaultReceiptDateTimeInputValue(
-          selectedMarket?.startsOn ?? null,
-          selectedMarket?.endsOn ?? null,
-        );
-  const matrixReceiptTotal = sumReceiptAmounts(matrixReceiptAmounts);
-  const matrixPaymentSplitTotal = sumReceiptAmounts(matrixPaymentSplits);
-  const matrixPaymentRemaining = Math.max(
-    matrixReceiptTotal - matrixPaymentSplitTotal,
-    0,
   );
   const marketSummaryItems = [
     { accent: false, label: "BOOTHS", value: String(participants.data?.length ?? 0) },
@@ -898,15 +835,26 @@ export function DashboardClient({
     const formData = new FormData(form);
 
     try {
-      const soldAt = matrixReceiptDateTimeEnabled
+      const receiptMatrixState = useReceiptMatrixStore.getState();
+      const receiptDateTimeEnabled =
+        receiptMatrixState.receiptDateTimeDraft?.marketId === selectedMarketId &&
+        receiptMatrixState.receiptDateTimeDraft.enabled;
+      const receiptDateTimeValue =
+        receiptDateTimeEnabled && receiptMatrixState.receiptDateTimeDraft?.value
+          ? receiptMatrixState.receiptDateTimeDraft.value
+          : getDefaultReceiptDateTimeInputValue(
+              selectedMarket?.startsOn ?? null,
+              selectedMarket?.endsOn ?? null,
+            );
+      const soldAt = receiptDateTimeEnabled
         ? buildReceiptSoldAtFromDateTimeInput(
-            matrixReceiptDateTimeValue,
+            receiptDateTimeValue,
             selectedMarket?.startsOn ?? null,
             selectedMarket?.endsOn ?? null,
           )
         : new Date().toISOString();
       const saleLines = getReceiptLinesFromAmounts(
-        matrixReceiptAmounts,
+        receiptMatrixState.receiptAmounts,
         participants.data ?? [],
       );
 
@@ -915,10 +863,12 @@ export function DashboardClient({
           customerLabel: getOptionalFormString(formData, "customerLabel"),
           memo: getOptionalFormString(formData, "memo"),
           paymentMethod:
-            matrixPaymentMode === "single" ? matrixSinglePaymentMethod : "",
+            receiptMatrixState.paymentMode === "single"
+              ? receiptMatrixState.singlePaymentMethod
+              : "",
           paymentSplits:
-            matrixPaymentMode === "split"
-              ? getPaymentSplitsFromAmounts(matrixPaymentSplits)
+            receiptMatrixState.paymentMode === "split"
+              ? getPaymentSplitsFromAmounts(receiptMatrixState.paymentSplits)
               : undefined,
           saleLines,
           soldAt,
@@ -1399,333 +1349,14 @@ export function DashboardClient({
         )}
 
         {view === "salesMatrix" && (
-          <div>
-            <DashboardPageTitle
-              eyebrow={selectedMarket?.name ?? "마켓 미선택"}
-              subtitle="한 결제 묶음에서 여러 부스 판매 라인을 한 번에 기록합니다."
-              title="영수증 입력"
-            />
-            <form
-              className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
-              data-testid="receipt-matrix-form"
-              onSubmit={handleCreateMatrixReceipt}
-            >
-              <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-                <div className="grid gap-4 border-b border-dashed border-[#e0dbca] bg-[#fcfbf6] px-6 py-5 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
-                  <div className="min-w-0">
-                    <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
-                      판매 시각
-                    </div>
-                    {matrixReceiptDateTimeEnabled ? (
-                      <div className="grid gap-2">
-                        <input
-                          className={inputClass}
-                          disabled={!selectedMarket}
-                          id="receipt-sold-at"
-                          max={getReceiptDateTimeMax(
-                            selectedMarket?.endsOn ?? null,
-                          )}
-                          min={getReceiptDateTimeMin(
-                            selectedMarket?.startsOn ?? null,
-                          )}
-                          onChange={(event) =>
-                            setMatrixReceiptDateTimeDraft({
-                              enabled: true,
-                              marketId: selectedMarketId,
-                              value: event.target.value,
-                            })
-                          }
-                          required
-                          type="datetime-local"
-                          value={matrixReceiptDateTimeValue}
-                        />
-                        <button
-                          className={cn(
-                            buttonVariants({ intent: "secondary", size: "sm" }),
-                            "w-fit",
-                          )}
-                          onClick={() => {
-                            clearMatrixReceiptDateTimeDraft();
-                          }}
-                          type="button"
-                        >
-                          현재 시간 사용
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className={buttonVariants({ intent: "secondary" })}
-                        disabled={!selectedMarket}
-                        onClick={() => {
-                          setMatrixReceiptDateTimeDraft({
-                            enabled: true,
-                            marketId: selectedMarketId,
-                            value: getDefaultReceiptDateTimeInputValue(
-                              selectedMarket?.startsOn ?? null,
-                              selectedMarket?.endsOn ?? null,
-                            ),
-                          });
-                        }}
-                        type="button"
-                      >
-                        날짜 직접 설정
-                      </button>
-                    )}
-                  </div>
-                  <label className="min-w-0">
-                    <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
-                      구매자
-                    </span>
-                    <input
-                      className={inputClass}
-                      disabled={!participants.data?.length}
-                      name="customerLabel"
-                      placeholder="현장 고객"
-                      type="text"
-                    />
-                  </label>
-                  <label className="min-w-0">
-                    <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
-                      메모
-                    </span>
-                    <input
-                      className={inputClass}
-                      disabled={!participants.data?.length}
-                      name="memo"
-                      placeholder="묶음 결제 · 요청사항"
-                      type="text"
-                    />
-                  </label>
-                </div>
-
-                {receiptMessage && (
-                  <p className="border-b border-[#f1eee2] px-6 py-3 text-sm font-semibold text-[#cf3d3d]">
-                    {receiptMessage}
-                  </p>
-                )}
-
-                <ReceiptMatrixInputTable
-                  amounts={matrixReceiptAmounts}
-                  onAmountChange={handleMatrixReceiptAmountChange}
-                  participants={participants.data ?? []}
-                />
-
-                <div className="grid gap-px border-t border-[#e6e2d4] bg-[#e6e2d4] md:grid-cols-3">
-                  <ReceiptTotalCell
-                    label="종합 금액"
-                    testId="receipt-matrix-total"
-                    value={formatWon(matrixReceiptTotal)}
-                  />
-                  <ReceiptTotalCell
-                    label="결제 입력"
-                    value={formatWon(
-                      matrixPaymentMode === "split"
-                        ? matrixPaymentSplitTotal
-                        : matrixReceiptTotal,
-                    )}
-                  />
-                  <ReceiptTotalCell
-                    accent
-                    label="남은 금액"
-                    testId="receipt-matrix-payment-remaining"
-                    value={formatWon(
-                      matrixPaymentMode === "split"
-                        ? matrixPaymentRemaining
-                        : 0,
-                    )}
-                  />
-                </div>
-              </section>
-
-              <aside className="grid gap-5">
-                <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-5 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-                  <div className="mb-3.5 flex items-center justify-between gap-3">
-                    <h3 className="font-display text-[15px] font-bold">
-                      결제수단 분할
-                    </h3>
-                    <div className="inline-flex rounded-[9px] bg-[#f1eee2] p-[3px]">
-                      <button
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-bold transition",
-                          matrixPaymentMode === "single"
-                            ? "bg-[#c7f94b] text-[#16170f]"
-                            : "text-[#8a8775]",
-                        )}
-                        onClick={() =>
-                          handleMatrixPaymentModeChange("single")
-                        }
-                        type="button"
-                      >
-                        단일
-                      </button>
-                      <button
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-bold transition",
-                          matrixPaymentMode === "split"
-                            ? "bg-[#c7f94b] text-[#16170f]"
-                            : "text-[#8a8775]",
-                        )}
-                        onClick={() => handleMatrixPaymentModeChange("split")}
-                        type="button"
-                      >
-                        분할
-                      </button>
-                    </div>
-                  </div>
-
-                  {matrixPaymentMode === "single" ? (
-                    <div className="grid gap-2">
-                      {paymentMethods.map((paymentMethod) => {
-                        const Icon = paymentMethodIcons[paymentMethod];
-                        const isActive =
-                          matrixSinglePaymentMethod === paymentMethod;
-
-                        return (
-                          <button
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-[11px] border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
-                              isActive
-                                ? "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f6e40]"
-                                : "border-[#eee9da] bg-[#fcfbf6] text-[#8a8775] hover:bg-[#f1eee2]",
-                            )}
-                            disabled={!participants.data?.length}
-                            key={paymentMethod}
-                            onClick={() =>
-                              setMatrixSinglePaymentMethod(paymentMethod)
-                            }
-                            type="button"
-                          >
-                            <Icon aria-hidden className="h-4 w-4 flex-none" />
-                            <span className="flex-1">
-                              {paymentMethodLabels[paymentMethod]}
-                            </span>
-                            <span className="font-display text-[15px] font-bold">
-                              {isActive ? formatWon(matrixReceiptTotal) : "0원"}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="grid gap-2">
-                      {paymentMethods.map((paymentMethod) => {
-                        const Icon = paymentMethodIcons[paymentMethod];
-
-                        return (
-                          <div
-                            className="grid gap-2 rounded-[11px] border border-[#eee9da] bg-[#fcfbf6] p-3"
-                            key={paymentMethod}
-                          >
-                            <label
-                              className="flex items-center gap-2 text-sm font-semibold text-[#56564a]"
-                              htmlFor={`matrix-payment-${paymentMethod}`}
-                            >
-                              <Icon
-                                aria-hidden="true"
-                                className="h-4 w-4 text-[#8a8775]"
-                              />
-                              {paymentMethodLabels[paymentMethod]}
-                            </label>
-                            <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
-                              <input
-                                className={cn(inputClass, "text-right")}
-                                disabled={
-                                  !participants.data?.length ||
-                                  matrixReceiptTotal <= 0
-                                }
-                                id={`matrix-payment-${paymentMethod}`}
-                                inputMode="numeric"
-                                onChange={(event) =>
-                                  handleMatrixPaymentSplitChange(
-                                    paymentMethod,
-                                    event.target.value,
-                                  )
-                                }
-                                placeholder="0"
-                                type="text"
-                                value={matrixPaymentSplits[paymentMethod]}
-                              />
-                              <button
-                                className={cn(
-                                  buttonVariants({
-                                    intent: "secondary",
-                                    size: "sm",
-                                  }),
-                                  "h-10 min-w-16 whitespace-nowrap px-3 text-sm",
-                                )}
-                                disabled={
-                                  !participants.data?.length ||
-                                  matrixReceiptTotal <= 0
-                                }
-                                onClick={() =>
-                                  handleMatrixPaymentFillRemaining(
-                                    paymentMethod,
-                                  )
-                                }
-                                type="button"
-                              >
-                                잔액
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-
-                <section className="rounded-[18px] bg-[#16170f] p-[22px] text-[#f3f0e2]">
-                  <div className="mb-3.5 flex items-center gap-2.5">
-                    <span
-                      className={cn(
-                        "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full",
-                        matrixPaymentMode === "split" &&
-                          matrixPaymentRemaining !== 0
-                          ? "bg-[#c47d12]"
-                          : "bg-[#1f8a4d]",
-                      )}
-                    >
-                      <CheckCircle2 aria-hidden className="h-[18px] w-[18px]" strokeWidth={3} />
-                    </span>
-                    <div>
-                      <div className="font-display text-base font-bold">
-                        {matrixPaymentMode === "split" &&
-                        matrixPaymentRemaining !== 0
-                          ? "검증 대기"
-                          : "검증 완료"}
-                      </div>
-                      <div className="font-mono text-[10.5px] tracking-[0.04em] text-[#8d8c79]">
-                        입력 합계 = 결제 합계
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between border-t border-[#2c2d22] py-1.5 text-[12.5px]">
-                    <span className="text-[#9b9a86]">남은 금액</span>
-                    <span className="font-display font-bold text-[#c7f94b]">
-                      {formatWon(
-                        matrixPaymentMode === "split"
-                          ? matrixPaymentRemaining
-                          : 0,
-                      )}
-                    </span>
-                  </div>
-                  <button
-                    className="mt-3.5 w-full rounded-xl border-0 bg-[#c7f94b] p-3 text-[15px] font-bold text-[#16170f] transition hover:bg-[#d4ff5e] disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={
-                      !participants.data?.length ||
-                      createReceipt.isPending ||
-                      matrixReceiptTotal <= 0 ||
-                      (matrixPaymentMode === "split" &&
-                        matrixPaymentRemaining !== 0)
-                    }
-                    type="submit"
-                  >
-                    영수증 저장
-                  </button>
-                </section>
-              </aside>
-            </form>
-          </div>
+          <SalesMatrixView
+            isSubmitting={createReceipt.isPending}
+            participants={participants.data ?? []}
+            receiptMessage={receiptMessage}
+            selectedMarket={selectedMarket}
+            selectedMarketId={selectedMarketId}
+            onSubmit={handleCreateMatrixReceipt}
+          />
         )}
 
         {view === "receiptLookup" && (
@@ -1823,66 +1454,6 @@ export function DashboardClient({
           }}
         />
     </DashboardShell>
-  );
-}
-
-function DashboardPageTitle({
-  eyebrow,
-  subtitle,
-  title,
-}: {
-  eyebrow?: string;
-  subtitle?: string;
-  title: string;
-}) {
-  return (
-    <div className="mb-[22px] flex flex-wrap items-baseline gap-3.5">
-      <h2 className="m-0 font-display text-[30px] font-bold tracking-[-0.025em] text-[#1a1b12]">
-        {title}
-      </h2>
-      {subtitle ? (
-        <span className="font-mono text-xs text-[#8a8775]">{subtitle}</span>
-      ) : null}
-      {eyebrow ? (
-        <span className="font-mono text-[11px] text-[#a8a593]">{eyebrow}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function ReceiptTotalCell({
-  accent = false,
-  label,
-  testId,
-  value,
-}: {
-  accent?: boolean;
-  label: string;
-  testId?: string;
-  value: string;
-}) {
-  return (
-    <div
-      className={cn("px-6 py-4", accent ? "bg-[#e6f4ec]" : "bg-[#fcfbf6]")}
-      data-testid={testId}
-    >
-      <div
-        className={cn(
-          "font-mono text-[10.5px] tracking-[0.06em]",
-          accent ? "text-[#1f8a4d]" : "text-[#8a8775]",
-        )}
-      >
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-1 font-display text-[22px] font-bold",
-          accent ? "text-[#1f8a4d]" : "text-[#1a1b12]",
-        )}
-      >
-        {value}
-      </div>
-    </div>
   );
 }
 
@@ -3453,94 +3024,6 @@ function ProductTable({
   );
 }
 
-function ReceiptMatrixInputTable({
-  amounts,
-  onAmountChange,
-  participants,
-}: {
-  amounts: Record<string, string>;
-  onAmountChange: (participantId: string, amount: string) => void;
-  participants: Participant[];
-}) {
-  if (participants.length === 0) {
-    return (
-      <div className="px-6 py-12 text-center text-sm text-[#8a8775]">
-        마켓에 연결된 참가부스가 없습니다.
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-w-0 max-w-full overflow-x-auto">
-      <div className="min-w-[640px]">
-        <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-3">
-          <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
-            참가 부스
-          </span>
-          <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
-            구매 금액
-          </span>
-          <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
-            유형
-          </span>
-        </div>
-        <div>
-          {participants.map((participant) => {
-            const hasAmount =
-              (parseOptionalReceiptAmount(amounts[participant.id] ?? "") ?? 0) >
-              0;
-
-            return (
-              <div
-                className={cn(
-                  "grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] items-center border-b border-[#f1eee2] px-6 py-2.5",
-                  hasAmount ? "bg-[#fcfdf7]" : "bg-white",
-                )}
-                key={participant.id}
-              >
-                <div
-                  className={cn(
-                    "text-[14.5px] font-semibold",
-                    hasAmount ? "text-[#16170f]" : "text-[#56564a]",
-                  )}
-                >
-                {participant.displayName}
-                </div>
-                <div className="flex justify-end">
-                  <div
-                    className={cn(
-                      "flex w-[150px] items-center gap-1 rounded-[9px] border px-3 py-2",
-                      hasAmount
-                        ? "border-[#16170f] bg-[#f7fbe9]"
-                        : "border-[#e6e2d4] bg-[#fcfbf6]",
-                    )}
-                  >
-                    <input
-                      className="min-w-0 flex-1 bg-transparent text-right font-display text-[15px] font-bold text-[#16170f] outline-none placeholder:text-[#c4c0ae]"
-                      inputMode="numeric"
-                      name={`amount-${participant.id}`}
-                      onChange={(event) =>
-                        onAmountChange(participant.id, event.target.value)
-                      }
-                      placeholder="0"
-                      type="text"
-                      value={amounts[participant.id] ?? ""}
-                    />
-                    <span className="text-xs text-[#a8a593]">원</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <ParticipantTypeBadge type={participant.participantType} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ReceiptMatrixTable({
   receipts,
   participants,
@@ -5046,109 +4529,6 @@ function formatDate(value: string | null): string {
   }
 }
 
-function getDefaultReceiptDateTimeInputValue(
-  startsOn: string | null,
-  endsOn: string | null,
-): string {
-  const now = new Date();
-
-  if (isDateTimeWithinReceiptPeriod(now, startsOn, endsOn)) {
-    return formatDateTimeInputValue(now);
-  }
-
-  const endDate = parseDateOnly(endsOn ?? "");
-  if (endDate) {
-    endDate.setHours(23, 59, 0, 0);
-    return formatDateTimeInputValue(endDate);
-  }
-
-  const startDate = parseDateOnly(startsOn ?? "");
-  if (startDate) {
-    startDate.setHours(0, 0, 0, 0);
-    return formatDateTimeInputValue(startDate);
-  }
-
-  return formatDateTimeInputValue(now);
-}
-
-function buildReceiptSoldAtFromDateTimeInput(
-  value: string,
-  startsOn: string | null,
-  endsOn: string | null,
-): string {
-  const date = parseLocalDateTimeInput(value);
-
-  if (!date) {
-    throw new Error("구매 날짜와 시간을 입력해주세요.");
-  }
-
-  if (!isDateTimeWithinReceiptPeriod(date, startsOn, endsOn)) {
-    throw new Error("구매 날짜와 시간은 플리마켓 기간 내로 설정해주세요.");
-  }
-
-  return date.toISOString();
-}
-
-function getReceiptDateTimeMin(startsOn: string | null): string | undefined {
-  return startsOn ? `${startsOn}T00:00` : undefined;
-}
-
-function getReceiptDateTimeMax(endsOn: string | null): string | undefined {
-  return endsOn ? `${endsOn}T23:59` : undefined;
-}
-
-function isDateTimeWithinReceiptPeriod(
-  date: Date,
-  startsOn: string | null,
-  endsOn: string | null,
-): boolean {
-  const startDate = parseDateOnly(startsOn ?? "");
-  const endDate = parseDateOnly(endsOn ?? "");
-
-  if (startDate && date.getTime() < startDate.getTime()) {
-    return false;
-  }
-
-  if (endDate) {
-    endDate.setHours(23, 59, 59, 999);
-    if (date.getTime() > endDate.getTime()) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-function parseLocalDateTimeInput(value: string): Date | null {
-  const [datePart, timePart] = value.split("T");
-  const date = parseDateOnly(datePart ?? "");
-
-  if (!date || !timePart) {
-    return null;
-  }
-
-  const [hours, minutes] = timePart.split(":").map(Number);
-
-  if (
-    hours === undefined ||
-    minutes === undefined ||
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes)
-  ) {
-    return null;
-  }
-
-  date.setHours(hours, minutes, 0, 0);
-  return date;
-}
-
-function formatDateTimeInputValue(date: Date): string {
-  return `${getDateOnlyKey(date)}T${String(date.getHours()).padStart(
-    2,
-    "0",
-  )}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
-
 function formatChartDateLabel(value: string): string {
   const [, month, day] = value.split("-");
 
@@ -5230,20 +4610,6 @@ function buildDateRange(
   return dates;
 }
 
-function parseDateOnly(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(year, month - 1, day);
-}
-
 function getLocalDateKey(value: string): string {
   const date = new Date(value);
 
@@ -5252,14 +4618,6 @@ function getLocalDateKey(value: string): string {
   }
 
   return getDateOnlyKey(date);
-}
-
-function getDateOnlyKey(date: Date): string {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
 }
 
 function getFirstSalesDate(
