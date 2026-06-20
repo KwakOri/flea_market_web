@@ -22,8 +22,6 @@ import {
   useReceipts,
 } from "@/hooks/use-receipts";
 import {
-  useCreateSettlement,
-  useDownloadSettlementPdfArchive,
   useSettlementPreview,
   useSettlements,
 } from "@/hooks/use-settlement-preview";
@@ -52,7 +50,6 @@ import {
   DashboardToast,
   type ToastState,
 } from "@/features/dashboard/components/dashboard-toast";
-import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
 import { HomeView } from "@/features/dashboard/components/home-view";
 import { PageStateMessage } from "@/features/dashboard/components/page-state-message";
 import { SettingsScreen } from "@/features/fees/components/settings-screen";
@@ -69,9 +66,8 @@ import {
   buildReceiptSoldAtFromDateTimeInput,
   getDefaultReceiptDateTimeInputValue,
 } from "@/features/receipts/lib/receipt-date-time";
-import { SettlementPreviewPanel } from "@/features/settlements/components/settlement-preview-panel";
+import { SettlementScreen } from "@/features/settlements/components/settlement-screen";
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
-import { panelVariants } from "@/lib/design-system";
 import { formatDateRange } from "@/lib/date-format";
 import { getErrorMessage } from "@/lib/error-message";
 import {
@@ -121,9 +117,6 @@ export function DashboardClient({
   const [productMessage, setProductMessage] = useState<string | null>(null);
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [settlementMessage, setSettlementMessage] = useState<string | null>(
-    null,
-  );
   const toastIdRef = useRef(0);
   const resetMatrixReceiptDraft = useReceiptMatrixStore(
     (state) => state.resetReceiptDraft,
@@ -190,9 +183,6 @@ export function DashboardClient({
   const createReceipt = useCreateReceipt(selectedMarketId);
   const settlementPreview = useSettlementPreview(selectedMarketId);
   const settlementHistory = useSettlements(selectedMarketId);
-  const createSettlementSnapshot = useCreateSettlement(selectedMarketId);
-  const downloadSettlementPdfArchive =
-    useDownloadSettlementPdfArchive(selectedMarketId);
   const globalFeeSettings = useGlobalSettlementSettings(Boolean(user));
   const marketFeeSettings = useMarketSettlementSettings(selectedMarketId);
   const logout = useLogout();
@@ -520,53 +510,6 @@ export function DashboardClient({
     }
   }
 
-  async function handleConfirmSettlement(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSettlementMessage(null);
-
-    if (!settlementPreview.data || settlementPreview.data.receiptCount === 0) {
-      setSettlementMessage("확정할 영수증이 없습니다.");
-      return;
-    }
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      const settlement = await createSettlementSnapshot.mutateAsync({
-        memo: getOptionalFormString(formData, "memo"),
-      });
-
-      showToast(
-        "정산 확정 완료",
-        `v${settlement.versionNo} 정산이 확정되었습니다.`,
-      );
-      form.reset();
-    } catch (error) {
-      setSettlementMessage(getErrorMessage(error));
-    }
-  }
-
-  async function handleDownloadSettlementPdfs() {
-    setSettlementMessage(null);
-
-    if (!settlementPreview.data || settlementPreview.data.receiptCount === 0) {
-      setSettlementMessage("저장할 영수증이 없습니다.");
-      return;
-    }
-
-    try {
-      const result = await downloadSettlementPdfArchive.mutateAsync();
-      downloadBlob(result.blob, result.filename);
-      showToast(
-        "PDF 다운로드 완료",
-        "부스별 정산 PDF를 다운로드했습니다.",
-      );
-    } catch (error) {
-      setSettlementMessage(getErrorMessage(error));
-    }
-  }
-
   return (
     <DashboardShell
       backHref={backHref}
@@ -680,49 +623,12 @@ export function DashboardClient({
         )}
 
         {view === "settlements" && (
-          <div>
-            <DashboardPageTitle
-              eyebrow={selectedMarket?.name ?? "마켓 미선택"}
-              subtitle="확정 시 현재 정산 결과가 회차 스냅샷으로 저장됩니다."
-              title="정산 프리뷰 / 확정"
-            />
-            <section className={panelVariants()}>
-                <SettlementPreviewPanel
-                  history={settlementHistory.data ?? []}
-                  isConfirming={createSettlementSnapshot.isPending}
-                  isDownloading={downloadSettlementPdfArchive.isPending}
-                  isHistoryLoading={settlementHistory.isLoading}
-                  isLoading={settlementPreview.isLoading}
-                  isReceiptsLoading={receipts.isLoading}
-                  market={selectedMarket}
-                  message={settlementMessage}
-                  preview={settlementPreview.data ?? null}
-                  receipts={receipts.data ?? []}
-                  selectedParticipantId={settlementParticipantId ?? null}
-                  onConfirm={handleConfirmSettlement}
-                  onDownloadPdfs={handleDownloadSettlementPdfs}
-                  onBackToParticipantList={() => {
-                    if (selectedMarketId) {
-                      router.push(`/markets/${selectedMarketId}/settlements`);
-                    }
-                  }}
-                  onOpenParticipantDetail={(participantId) => {
-                    if (selectedMarketId) {
-                      router.push(
-                        `/markets/${selectedMarketId}/settlements/${participantId}`,
-                      );
-                    }
-                  }}
-                  onOpenSettlementDetail={(settlementId) => {
-                    if (selectedMarketId) {
-                      router.push(
-                        `/markets/${selectedMarketId}/settlements/versions/${settlementId}`,
-                      );
-                    }
-                  }}
-                />
-            </section>
-          </div>
+          <SettlementScreen
+            market={selectedMarket}
+            marketId={selectedMarketId}
+            selectedParticipantId={settlementParticipantId ?? null}
+            onSaved={showToast}
+          />
         )}
         {participantDialogMode && (
           <ParticipantDialog
@@ -846,21 +752,4 @@ function buildReceiptPayload({
     })),
     soldAt,
   };
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const objectUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = objectUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => {
-    window.URL.revokeObjectURL(objectUrl);
-  }, 1000);
 }
