@@ -7,7 +7,9 @@ import {
   getSettlement,
   getSettlementPreview,
   listSettlements,
+  voidSettlement,
   type CreateSettlementPayload,
+  type VoidSettlementPayload,
 } from "@/services/settlements.service";
 
 export const settlementPreviewKeys = {
@@ -66,6 +68,28 @@ export function useCreateSettlement(marketId: string | null) {
 
       void queryClient.invalidateQueries({
         queryKey: settlementKeys.detail(settlement.id),
+      });
+    },
+  });
+}
+
+export function useVoidSettlement(settlementId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: VoidSettlementPayload) => {
+      if (!settlementId) {
+        throw new Error("Settlement is required");
+      }
+
+      return voidSettlement(settlementId, payload);
+    },
+    onSuccess: (settlement) => {
+      void queryClient.invalidateQueries({
+        queryKey: settlementKeys.detail(settlement.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: settlementKeys.byMarket(settlement.marketId),
       });
     },
   });

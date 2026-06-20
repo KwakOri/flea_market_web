@@ -5,12 +5,18 @@ import type { FormEvent, UIEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Banknote,
+  CheckCircle2,
   CircleDollarSign,
   CreditCard,
   Download,
   Landmark,
+  Pencil,
+  Plus,
+  Trash2,
   type LucideIcon,
+  X,
 } from "lucide-react";
 import { useCurrentUser, useLogout } from "@/hooks/use-auth";
 import {
@@ -21,8 +27,11 @@ import {
 import {
   useCreateParticipant,
   useCreateParticipantMaster,
+  useDeleteParticipantFromMarket,
   useParticipantMasters,
   useParticipants,
+  useUpdateParticipantMaster,
+  useUpdateParticipantForMarket,
 } from "@/hooks/use-participants";
 import {
   useCreateProduct,
@@ -50,8 +59,8 @@ import type { Market, MarketStatus } from "@/services/markets.service";
 import type {
   CardFeePayer,
   Participant,
+  ParticipantStatus,
   ParticipantType,
-  SettlementType,
 } from "@/services/participants.service";
 import type { Product, ProductStatus } from "@/services/products.service";
 import type {
@@ -89,8 +98,8 @@ import {
 } from "@/lib/design-system";
 
 const marketStatusLabels: Record<MarketStatus, string> = {
-  draft: "준비",
-  active: "운영",
+  draft: "예정",
+  active: "진행중",
   closed: "종료",
   archived: "보관",
 };
@@ -122,12 +131,6 @@ const paymentMethodIcons: Record<PaymentMethod, LucideIcon> = {
 
 const paymentMethods: PaymentMethod[] = ["cash", "card", "transfer", "other"];
 
-const settlementTypeLabels: Record<SettlementType, string> = {
-  commission: "수수료",
-  manual: "수기",
-  investment: "투자",
-};
-
 const cardFeePayerLabels: Record<CardFeePayer, string> = {
   market: "마켓 부담",
   participant: "참가부스 부담",
@@ -141,6 +144,21 @@ const settlementStatusLabels: Record<SettlementStatus, string> = {
 
 type FeeSettingFieldKey = keyof SettlementFeeSettings;
 type FeeSettingScope = "global" | "market" | "booth";
+type MarketLifecycleFilter = "all" | "upcoming" | "active" | "ended";
+type MarketDialogMode = "create" | "edit";
+type ParticipantDialogMode = "create" | "edit";
+type ParticipantMasterDialogMode = "create" | "edit";
+type ToastState = {
+  id: number;
+  message: string;
+  title: string;
+};
+
+const feeSettingScopeLabels: Record<FeeSettingScope, string> = {
+  global: "전체 설정",
+  market: "플리마켓 설정",
+  booth: "부스 설정",
+};
 
 const defaultFeeSettings: SettlementFeeSettings = {
   settlementType: "commission",
@@ -154,15 +172,25 @@ const feeSettingFields: Array<{
   key: FeeSettingFieldKey;
   label: string;
 }> = [
-  { key: "settlementType", label: "정산 방식" },
   { key: "salesCommissionRate", label: "판매 수수료" },
   { key: "cardFeeRate", label: "카드 수수료" },
   { key: "cardFeePayer", label: "카드 부담" },
   { key: "participationFeeAmount", label: "참가비" },
 ];
 
+const marketLifecycleFilters: Array<{
+  label: string;
+  value: MarketLifecycleFilter;
+}> = [
+  { label: "전체", value: "all" },
+  { label: "예정", value: "upcoming" },
+  { label: "진행중", value: "active" },
+  { label: "종료", value: "ended" },
+];
+
 type DashboardView =
   | "home"
+  | "settings"
   | "management"
   | "boothMasters"
   | "booths"
@@ -179,6 +207,7 @@ type ReceiptLineDraft = {
 
 const dashboardViewLabels: Record<DashboardView, string> = {
   home: "관리 홈",
+  settings: "설정",
   management: "마켓관리",
   boothMasters: "부스관리",
   booths: "참가부스관리",
@@ -201,11 +230,25 @@ const dashboardTabs: Array<{
   { label: "정산", segment: "settlements", view: "settlements" },
 ];
 
+function getDashboardBackHref(pathname: string): string | null {
+  if (pathname === "/" || pathname === "/management") {
+    return null;
+  }
+
+  if (pathname.startsWith("/markets/")) {
+    return "/markets";
+  }
+
+  return "/management";
+}
+
 export function DashboardClient({
   marketId,
+  settlementParticipantId,
   view = "home",
 }: {
   marketId?: string;
+  settlementParticipantId?: string;
   view?: DashboardView;
 }) {
   const router = useRouter();
@@ -219,6 +262,7 @@ export function DashboardClient({
   );
   const [productMessage, setProductMessage] = useState<string | null>(null);
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [settlementMessage, setSettlementMessage] = useState<string | null>(
     null,
   );
@@ -228,12 +272,18 @@ export function DashboardClient({
   const [marketFeeSettingsMessage, setMarketFeeSettingsMessage] = useState<
     string | null
   >(null);
+  const toastIdRef = useRef(0);
   const [requestedParticipantId, setRequestedParticipantId] = useState<
     string | null
   >(null);
   const [matrixReceiptAmounts, setMatrixReceiptAmounts] = useState<
     Record<string, string>
   >({});
+  const [matrixReceiptDateTimeDraft, setMatrixReceiptDateTimeDraft] = useState<{
+    enabled: boolean;
+    marketId: string | null;
+    value: string;
+  } | null>(null);
   const [matrixPaymentMode, setMatrixPaymentMode] = useState<
     "single" | "split"
   >("single");
@@ -242,6 +292,23 @@ export function DashboardClient({
   const [matrixPaymentSplits, setMatrixPaymentSplits] = useState<
     Record<PaymentMethod, string>
   >(getEmptyPaymentSplitAmounts);
+  const [marketDialogMode, setMarketDialogMode] =
+    useState<MarketDialogMode | null>(null);
+  const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
+  const [participantFeeOverrideEnabled, setParticipantFeeOverrideEnabled] =
+    useState(false);
+  const [participantDialogMode, setParticipantDialogMode] =
+    useState<ParticipantDialogMode | null>(null);
+  const [editingParticipantId, setEditingParticipantId] = useState<
+    string | null
+  >(null);
+  const [participantMasterDialogMode, setParticipantMasterDialogMode] =
+    useState<ParticipantMasterDialogMode | null>(null);
+  const [editingParticipantMasterId, setEditingParticipantMasterId] = useState<
+    string | null
+  >(null);
+  const [marketLifecycleFilter, setMarketLifecycleFilter] =
+    useState<MarketLifecycleFilter>("active");
 
   const currentUser = useCurrentUser();
   const user = currentUser.data ?? null;
@@ -263,7 +330,12 @@ export function DashboardClient({
     return requestedParticipant?.id ?? participants.data[0].id;
   }, [participants.data, requestedParticipantId]);
   const createParticipantMaster = useCreateParticipantMaster();
+  const updateParticipantMaster = useUpdateParticipantMaster();
   const createParticipant = useCreateParticipant(selectedMarketId);
+  const deleteParticipantFromMarket =
+    useDeleteParticipantFromMarket(selectedMarketId);
+  const updateParticipantForMarket =
+    useUpdateParticipantForMarket(selectedMarketId);
   const products = useProducts(selectedMarketId, selectedParticipantId);
   const createProduct = useCreateProduct(
     selectedMarketId,
@@ -292,6 +364,10 @@ export function DashboardClient({
       markets.data?.find((market) => market.id === selectedMarketId) ?? null,
     [markets.data, selectedMarketId],
   );
+  const editingMarket = useMemo(
+    () => markets.data?.find((market) => market.id === editingMarketId) ?? null,
+    [editingMarketId, markets.data],
+  );
   const selectedParticipant = useMemo(
     () =>
       participants.data?.find(
@@ -299,6 +375,30 @@ export function DashboardClient({
       ) ?? null,
     [participants.data, selectedParticipantId],
   );
+  const editingParticipant = useMemo(
+    () =>
+      participants.data?.find(
+        (participant) => participant.id === editingParticipantId,
+      ) ?? null,
+    [editingParticipantId, participants.data],
+  );
+  const editingParticipantMaster = useMemo(
+    () =>
+      participantMasters.data?.find(
+        (participant) => participant.id === editingParticipantMasterId,
+      ) ?? null,
+    [editingParticipantMasterId, participantMasters.data],
+  );
+  const matrixReceiptDateTimeEnabled =
+    matrixReceiptDateTimeDraft?.marketId === selectedMarketId &&
+    matrixReceiptDateTimeDraft.enabled;
+  const matrixReceiptDateTimeValue =
+    matrixReceiptDateTimeEnabled && matrixReceiptDateTimeDraft?.value
+      ? matrixReceiptDateTimeDraft.value
+      : getDefaultReceiptDateTimeInputValue(
+          selectedMarket?.startsOn ?? null,
+          selectedMarket?.endsOn ?? null,
+        );
   const matrixReceiptTotal = useMemo(
     () => sumReceiptAmounts(matrixReceiptAmounts),
     [matrixReceiptAmounts],
@@ -312,10 +412,7 @@ export function DashboardClient({
     0,
   );
   const summary = [
-    { label: "마켓", value: String(markets.data?.length ?? 0) },
-    { label: "참가부스", value: String(participantMasters.data?.length ?? 0) },
-    { label: "마켓 참가", value: String(participants.data?.length ?? 0) },
-    { label: "상품", value: String(products.data?.length ?? 0) },
+    { label: "참가부스", value: String(participants.data?.length ?? 0) },
     { label: "영수증", value: String(receipts.data?.length ?? 0) },
   ];
   const shouldShowSummary = Boolean(marketId) && view !== "receiptLookup";
@@ -331,6 +428,28 @@ export function DashboardClient({
       (participant) => !linkedParticipantIds.has(participant.id),
     );
   }, [linkedParticipantIds, participantMasters.data]);
+  const filteredMarkets = useMemo(
+    () =>
+      sortMarketsByNewest(
+        filterMarketsByLifecycle(markets.data ?? [], marketLifecycleFilter),
+      ),
+    [marketLifecycleFilter, markets.data],
+  );
+  const backHref = getDashboardBackHref(pathname);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setToast((currentToast) =>
+        currentToast?.id === toast.id ? null : currentToast,
+      );
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   useEffect(() => {
     if (!currentUser.isFetched || user) {
@@ -344,6 +463,15 @@ export function DashboardClient({
 
     router.replace(`/login?next=${encodeURIComponent(currentPath)}`);
   }, [currentUser.isFetched, pathname, router, user]);
+
+  function showToast(title: string, message: string) {
+    toastIdRef.current += 1;
+    setToast({
+      id: toastIdRef.current,
+      title,
+      message,
+    });
+  }
 
   async function handleLogout() {
     await logout.mutateAsync();
@@ -380,26 +508,63 @@ export function DashboardClient({
 
       setRequestedParticipantId(null);
       form.reset();
+      closeMarketDialog();
       router.push(`/markets/${market.id}/management`);
     } catch (error) {
       setMarketMessage(getErrorMessage(error));
     }
   }
 
-  async function handleMarketStatusChange(
-    marketId: string,
-    status: MarketStatus,
-  ) {
+  async function handleUpdateMarket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setMarketMessage(null);
+
+    if (!editingMarket) {
+      setMarketMessage("수정할 플리마켓을 선택해주세요.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const name = getFormString(formData, "name");
+
+    if (!name.trim()) {
+      setMarketMessage("마켓명을 입력해주세요.");
+      return;
+    }
 
     try {
       await updateMarket.mutateAsync({
-        marketId,
-        payload: { status },
+        marketId: editingMarket.id,
+        payload: {
+          name,
+          description: getFormString(formData, "description").trim(),
+          status: getFormString(formData, "status") as MarketStatus,
+          startsOn: getOptionalFormString(formData, "startsOn"),
+          endsOn: getOptionalFormString(formData, "endsOn"),
+        },
       });
+      closeMarketDialog();
     } catch (error) {
       setMarketMessage(getErrorMessage(error));
     }
+  }
+
+  function openCreateMarketDialog() {
+    setMarketMessage(null);
+    setEditingMarketId(null);
+    setMarketDialogMode("create");
+  }
+
+  function openEditMarketDialog(market: Market) {
+    setMarketMessage(null);
+    setEditingMarketId(market.id);
+    setMarketDialogMode("edit");
+  }
+
+  function closeMarketDialog() {
+    setMarketDialogMode(null);
+    setEditingMarketId(null);
+    setMarketMessage(null);
   }
 
   async function handleUpdateGlobalFeeSettings(
@@ -412,7 +577,10 @@ export function DashboardClient({
       await updateGlobalFeeSettings.mutateAsync(
         getFeeSettingsPayload(new FormData(event.currentTarget)),
       );
-      setGlobalFeeSettingsMessage("전체 수수료 기본값을 저장했습니다.");
+      showToast(
+        "전체 수수료 저장 완료",
+        "전체 수수료 기본값을 저장했습니다.",
+      );
     } catch (error) {
       setGlobalFeeSettingsMessage(getErrorMessage(error));
     }
@@ -428,7 +596,10 @@ export function DashboardClient({
       await updateMarketFeeSettings.mutateAsync(
         getFeeSettingsPayload(new FormData(event.currentTarget)),
       );
-      setMarketFeeSettingsMessage("플리마켓 수수료 기본값을 저장했습니다.");
+      showToast(
+        "플리마켓 수수료 저장 완료",
+        "플리마켓 수수료 기본값을 저장했습니다.",
+      );
     } catch (error) {
       setMarketFeeSettingsMessage(getErrorMessage(error));
     }
@@ -463,9 +634,70 @@ export function DashboardClient({
       });
 
       form.reset();
+      closeParticipantMasterDialog();
     } catch (error) {
       setParticipantMasterMessage(getErrorMessage(error));
     }
+  }
+
+  async function handleUpdateParticipantMaster(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+    setParticipantMasterMessage(null);
+
+    if (!editingParticipantMaster) {
+      setParticipantMasterMessage("수정할 부스를 선택해주세요.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const displayName = getFormString(formData, "displayName");
+
+    if (!displayName.trim()) {
+      setParticipantMasterMessage("부스명을 입력해주세요.");
+      return;
+    }
+
+    try {
+      await updateParticipantMaster.mutateAsync({
+        participantId: editingParticipantMaster.id,
+        payload: {
+          displayName,
+          participantType: getFormString(
+            formData,
+            "participantType",
+          ) as ParticipantType,
+          contactName: getNullableFormString(formData, "contactName"),
+          phone: getNullableFormString(formData, "phone"),
+          email: getNullableFormString(formData, "email"),
+          memo: getNullableFormString(formData, "memo"),
+          status: getFormString(formData, "status") as ParticipantStatus,
+        },
+      });
+
+      closeParticipantMasterDialog();
+    } catch (error) {
+      setParticipantMasterMessage(getErrorMessage(error));
+    }
+  }
+
+  function openCreateParticipantMasterDialog() {
+    setParticipantMasterMessage(null);
+    setEditingParticipantMasterId(null);
+    setParticipantMasterDialogMode("create");
+  }
+
+  function openEditParticipantMasterDialog(participant: Participant) {
+    setParticipantMasterMessage(null);
+    setEditingParticipantMasterId(participant.id);
+    setParticipantMasterDialogMode("edit");
+  }
+
+  function closeParticipantMasterDialog() {
+    setParticipantMasterDialogMode(null);
+    setEditingParticipantMasterId(null);
+    setParticipantMasterMessage(null);
   }
 
   async function handleCreateParticipant(event: FormEvent<HTMLFormElement>) {
@@ -482,20 +714,107 @@ export function DashboardClient({
     }
 
     try {
+      const feeSettingOverrideEnabled = getCheckboxValue(
+        formData,
+        "feeSettingOverrideEnabled",
+      );
       const participant = await createParticipant.mutateAsync({
         participantId,
         participantType: getFormString(
           formData,
           "participantType",
         ) as ParticipantType,
-        ...getOptionalFeeSettingsPayload(formData),
+        feeSettingOverrideEnabled,
+        ...(feeSettingOverrideEnabled ? getFeeSettingsPayload(formData) : {}),
       });
 
       setRequestedParticipantId(participant.id);
       form.reset();
+      closeParticipantDialog();
     } catch (error) {
       setParticipantMessage(getErrorMessage(error));
     }
+  }
+
+  async function handleUpdateParticipant(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setParticipantMessage(null);
+
+    if (!editingParticipant) {
+      setParticipantMessage("수정할 참가부스를 선택해주세요.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const feeSettingOverrideEnabled = getCheckboxValue(
+      formData,
+      "feeSettingOverrideEnabled",
+    );
+
+    try {
+      const participant = await updateParticipantForMarket.mutateAsync({
+        participantId: editingParticipant.id,
+        payload: {
+          participantType: getFormString(
+            formData,
+            "participantType",
+          ) as ParticipantType,
+          feeSettingOverrideEnabled,
+          ...(feeSettingOverrideEnabled ? getFeeSettingsPayload(formData) : {}),
+        },
+      });
+
+      setRequestedParticipantId(participant.id);
+      closeParticipantDialog();
+    } catch (error) {
+      setParticipantMessage(getErrorMessage(error));
+    }
+  }
+
+  async function handleDeleteParticipantFromMarket(participant: Participant) {
+    setParticipantMessage(null);
+
+    const confirmed = window.confirm(
+      `${participant.displayName} 참가부스를 이 플리마켓에서 삭제할까요? 전체 부스 정보는 유지됩니다.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteParticipantFromMarket.mutateAsync(participant.id);
+
+      setRequestedParticipantId((currentParticipantId) =>
+        currentParticipantId === participant.id ? null : currentParticipantId,
+      );
+    } catch (error) {
+      setParticipantMessage(getErrorMessage(error));
+    }
+  }
+
+  function openCreateParticipantDialog() {
+    setParticipantMessage(null);
+    setEditingParticipantId(null);
+    setParticipantFeeOverrideEnabled(false);
+    setParticipantDialogMode("create");
+  }
+
+  function openEditParticipantDialog(participant: Participant) {
+    setParticipantMessage(null);
+    setRequestedParticipantId(participant.id);
+    setEditingParticipantId(participant.id);
+    setParticipantFeeOverrideEnabled(
+      participant.settings?.feeSettingOverrideEnabled === true,
+    );
+    setParticipantDialogMode("edit");
+  }
+
+  function closeParticipantDialog() {
+    setParticipantDialogMode(null);
+    setEditingParticipantId(null);
+    setParticipantFeeOverrideEnabled(false);
+    setParticipantMessage(null);
   }
 
   async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
@@ -546,12 +865,19 @@ export function DashboardClient({
     const formData = new FormData(form);
 
     try {
+      const soldAt = matrixReceiptDateTimeEnabled
+        ? buildReceiptSoldAtFromDateTimeInput(
+            matrixReceiptDateTimeValue,
+            selectedMarket?.startsOn ?? null,
+            selectedMarket?.endsOn ?? null,
+          )
+        : new Date().toISOString();
       const saleLines = getReceiptLinesFromAmounts(
         matrixReceiptAmounts,
         participants.data ?? [],
       );
 
-      await createReceipt.mutateAsync(
+      const receipt = await createReceipt.mutateAsync(
         buildReceiptPayload({
           customerLabel: getOptionalFormString(formData, "customerLabel"),
           memo: getOptionalFormString(formData, "memo"),
@@ -562,12 +888,18 @@ export function DashboardClient({
               ? getPaymentSplitsFromAmounts(matrixPaymentSplits)
               : undefined,
           saleLines,
+          soldAt,
         }),
       );
 
       setMatrixReceiptAmounts({});
+      setMatrixReceiptDateTimeDraft(null);
       setMatrixPaymentSplits(getEmptyPaymentSplitAmounts());
       form.reset();
+      showToast(
+        "영수증 저장 완료",
+        `${formatWon(receipt.totalAmount)} 영수증을 저장했습니다.`,
+      );
     } catch (error) {
       setReceiptMessage(getErrorMessage(error));
     }
@@ -656,7 +988,10 @@ export function DashboardClient({
         memo: getOptionalFormString(formData, "memo"),
       });
 
-      setSettlementMessage(`v${settlement.versionNo} 정산이 확정되었습니다.`);
+      showToast(
+        "정산 확정 완료",
+        `v${settlement.versionNo} 정산이 확정되었습니다.`,
+      );
       form.reset();
     } catch (error) {
       setSettlementMessage(getErrorMessage(error));
@@ -674,7 +1009,10 @@ export function DashboardClient({
     try {
       const result = await downloadSettlementPdfArchive.mutateAsync();
       downloadBlob(result.blob, result.filename);
-      setSettlementMessage("부스별 정산 PDF를 다운로드했습니다.");
+      showToast(
+        "PDF 다운로드 완료",
+        "부스별 정산 PDF를 다운로드했습니다.",
+      );
     } catch (error) {
       setSettlementMessage(getErrorMessage(error));
     }
@@ -683,8 +1021,21 @@ export function DashboardClient({
   return (
     <main className={pageShellClass}>
       <div className={appShellClass}>
-        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+        <header className="grid min-w-0 gap-4 border-b border-zinc-200 pb-5 xl:grid-cols-[minmax(0,1fr)_520px] xl:items-start">
+          <div className="min-w-0">
+            {backHref && (
+              <button
+                className={cn(
+                  buttonVariants({ intent: "secondary", size: "sm" }),
+                  "mb-3 w-fit gap-1.5",
+                )}
+                onClick={() => router.push(backHref)}
+                type="button"
+              >
+                <ArrowLeft aria-hidden className="h-4 w-4" />
+                뒤로가기
+              </button>
+            )}
             <p className="text-[13px] font-semibold text-emerald-700">
               Flea Market Settlement
             </p>
@@ -697,36 +1048,37 @@ export function DashboardClient({
                 {formatDateRange(selectedMarket.startsOn, selectedMarket.endsOn)}
               </p>
             )}
-            {marketId && (
-              <nav
-                aria-label="업무 화면"
-                className={cn("mt-4", dashboardTabListClass)}
-                role="tablist"
-              >
-                {dashboardTabs.map((tab) => {
-                  const isActive = view === tab.view;
-
-                  return (
-                    <Link
-                      aria-current={isActive ? "page" : undefined}
-                      aria-selected={isActive}
-                      className={dashboardTabVariants({ active: isActive })}
-                      href={`/markets/${marketId}/${tab.segment}`}
-                      key={tab.view}
-                      role="tab"
-                    >
-                      {tab.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
           </div>
+
+          {marketId && (
+            <nav
+              aria-label="업무 화면"
+              className={cn("min-w-0 xl:col-span-2", dashboardTabListClass)}
+              role="tablist"
+            >
+              {dashboardTabs.map((tab) => {
+                const isActive = view === tab.view;
+
+                return (
+                  <Link
+                    aria-current={isActive ? "page" : undefined}
+                    aria-selected={isActive}
+                    className={dashboardTabVariants({ active: isActive })}
+                    href={`/markets/${marketId}/${tab.segment}`}
+                    key={tab.view}
+                    role="tab"
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           <section
             className={cn(
               panelVariants({ padding: "sm" }),
-              "lg:min-w-[520px]",
+              "w-full min-w-0 xl:col-start-2 xl:row-start-1 xl:w-auto",
             )}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -751,7 +1103,7 @@ export function DashboardClient({
         </header>
 
         {shouldShowSummary && (
-          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             {summary.map((item) => (
               <div className={statCardVariants()} key={item.label}>
                 <p className="text-sm font-medium text-zinc-500">
@@ -767,7 +1119,7 @@ export function DashboardClient({
 
         {view === "home" && (
           <>
-            <section className="grid gap-4 lg:grid-cols-2">
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <HomeActionCard
                 description="플리마켓을 만들고 선택한 뒤 해당 마켓의 참가부스 연결, 영수증, 정산을 관리합니다."
                 href="/markets"
@@ -778,117 +1130,89 @@ export function DashboardClient({
                 href="/booths"
                 label="부스 관리"
               />
-            </section>
-            <section className={panelVariants()}>
-              <div className={sectionHeaderClass}>
-                <h2 className={sectionTitleClass}>전체 수수료 기본 설정</h2>
-                <p className={sectionDescriptionClass}>
-                  플리마켓별 설정이나 부스별 설정이 비어 있으면 이 값이
-                  적용됩니다.
-                </p>
-              </div>
-              <FeeSettingsForm
-                defaultValues={globalFeeSettings.data}
-                disabled={
-                  globalFeeSettings.isLoading ||
-                  updateGlobalFeeSettings.isPending
-                }
-                message={globalFeeSettingsMessage}
-                submitLabel={
-                  updateGlobalFeeSettings.isPending ? "저장 중" : "저장"
-                }
-                onSubmit={handleUpdateGlobalFeeSettings}
+              <HomeActionCard
+                description="전체 수수료 기본값처럼 모든 플리마켓에 적용되는 기본 정책을 관리합니다."
+                href="/settings"
+                label="설정"
               />
             </section>
           </>
         )}
 
-        {view === "management" && (
+        {view === "settings" && (
           <section className={panelVariants()}>
-            <div
-              className={cn(
-                sectionHeaderClass,
-                "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
-              )}
-            >
-              <div>
-                <h2 className={sectionTitleClass}>
-                  {marketId ? "마켓 정보" : "플리마켓 선택"}
-                </h2>
-                <p className={sectionDescriptionClass}>
-                  {marketId
-                    ? "선택한 플리마켓의 기본 정보를 확인합니다."
-                    : "작업할 플리마켓을 먼저 선택합니다."}
-                </p>
-              </div>
-              {marketId ? (
-                <Link
-                  className={buttonVariants({ intent: "secondary" })}
-                  href="/markets"
-                >
-                  마켓 선택
-                </Link>
-              ) : (
-                <form
-                  className="grid gap-2 md:grid-cols-[180px_160px_160px_1fr_auto]"
-                  data-testid="market-form"
-                  onSubmit={handleCreateMarket}
-                >
-                  <input
-                    className={inputClass}
-                    disabled={!user}
-                    name="name"
-                    placeholder="마켓명"
-                    type="text"
-                  />
-                  <input
-                    className={inputClass}
-                    disabled={!user}
-                    name="startsOn"
-                    type="date"
-                  />
-                  <input
-                    className={inputClass}
-                    disabled={!user}
-                    name="endsOn"
-                    type="date"
-                  />
-                  <input
-                    className={inputClass}
-                    disabled={!user}
-                    name="description"
-                    placeholder="메모"
-                    type="text"
-                  />
-                  <button
-                    className={buttonVariants()}
-                    disabled={!user || createMarket.isPending}
-                    type="submit"
-                  >
-                    추가
-                  </button>
-                </form>
-              )}
-            </div>
-            {marketMessage && (
-              <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-                {marketMessage}
+            <div className={sectionHeaderClass}>
+              <h2 className={sectionTitleClass}>전체 수수료 기본 설정</h2>
+              <p className={sectionDescriptionClass}>
+                플리마켓별 설정이나 현재 플리마켓 안의 부스별 예외값이
+                없으면 이 값이 적용됩니다.
               </p>
-            )}
+            </div>
+            <FeeSettingsForm
+              defaultValues={globalFeeSettings.data}
+              disabled={
+                globalFeeSettings.isLoading ||
+                updateGlobalFeeSettings.isPending
+              }
+              message={globalFeeSettingsMessage}
+              submitLabel={
+                updateGlobalFeeSettings.isPending ? "저장 중" : "저장"
+              }
+              onSubmit={handleUpdateGlobalFeeSettings}
+            />
+          </section>
+        )}
+
+        {view === "management" && (
+          <>
             {marketId ? (
-              <>
-                <MarketDetailPanel
-                  market={selectedMarket}
-                  onStatusChange={handleMarketStatusChange}
-                />
+              <section className={panelVariants()}>
+                <div
+                  className={cn(
+                    sectionHeaderClass,
+                    "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
+                  )}
+                >
+                  <div>
+                    <h2 className={sectionTitleClass}>마켓 정보</h2>
+                    <p className={sectionDescriptionClass}>
+                      선택한 플리마켓의 기본 정보를 확인합니다.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className={buttonVariants({ intent: "secondary" })}
+                      disabled={!selectedMarket}
+                      onClick={() =>
+                        selectedMarket && openEditMarketDialog(selectedMarket)
+                      }
+                      type="button"
+                    >
+                      <Pencil aria-hidden className="mr-2 h-4 w-4" />
+                      정보 수정
+                    </button>
+                    <Link
+                      className={buttonVariants({ intent: "secondary" })}
+                      href="/markets"
+                    >
+                      마켓 선택
+                    </Link>
+                  </div>
+                </div>
+                {marketMessage && (
+                  <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                    {marketMessage}
+                  </p>
+                )}
+                <MarketDetailPanel market={selectedMarket} />
                 <div className="border-t border-zinc-200">
                   <div className={sectionHeaderClass}>
                     <h2 className={sectionTitleClass}>
                       플리마켓 수수료 기본 설정
                     </h2>
                     <p className={sectionDescriptionClass}>
-                      부스별 설정이 비어 있으면 이 값이 전체 설정보다 우선
-                      적용됩니다.
+                      현재 플리마켓 안의 부스별 예외값이 없으면 이 값이 전체
+                      설정보다 우선 적용됩니다.
                     </p>
                   </div>
                   <FeeSettingsForm
@@ -904,31 +1228,118 @@ export function DashboardClient({
                     onSubmit={handleUpdateMarketFeeSettings}
                   />
                 </div>
-              </>
+              </section>
             ) : (
-              <MarketSelectionCards
-                actionLabel="선택하고 관리"
-                markets={markets.data ?? []}
-                selectedMarketId={null}
-                onSelectMarket={(selectedId) =>
-                  router.push(`/markets/${selectedId}/management`)
-                }
-              />
+              <>
+                <section className={panelVariants()}>
+                  <div
+                    className={cn(
+                      sectionHeaderClass,
+                      "flex flex-col gap-3 md:flex-row md:items-center md:justify-between",
+                    )}
+                  >
+                    <div>
+                      <h2 className={sectionTitleClass}>플리마켓 선택</h2>
+                      <p className={sectionDescriptionClass}>
+                        작업할 플리마켓을 먼저 선택합니다.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <MarketLifecycleFilterControl
+                        selectedFilter={marketLifecycleFilter}
+                        onSelectFilter={setMarketLifecycleFilter}
+                      />
+                      <button
+                        className={buttonVariants()}
+                        disabled={createMarket.isPending}
+                        onClick={openCreateMarketDialog}
+                        type="button"
+                      >
+                        <Plus aria-hidden className="mr-2 h-4 w-4" />
+                        플리마켓 추가
+                      </button>
+                    </div>
+                  </div>
+                  {marketMessage && (
+                    <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                      {marketMessage}
+                    </p>
+                  )}
+                  <MarketSelectionCards
+                    emptyMessage="조건에 맞는 플리마켓이 없습니다."
+                    markets={filteredMarkets}
+                    selectedMarketId={null}
+                    onManageMarket={openEditMarketDialog}
+                    onSelectMarket={(selectedId) =>
+                      router.push(`/markets/${selectedId}/management`)
+                    }
+                  />
+                </section>
+              </>
             )}
-          </section>
+          </>
+        )}
+
+        {marketDialogMode && (
+          <MarketDialog
+            editingMarket={editingMarket}
+            isSubmitting={createMarket.isPending || updateMarket.isPending}
+            message={marketMessage}
+            mode={marketDialogMode}
+            onClose={closeMarketDialog}
+            onCreateSubmit={handleCreateMarket}
+            onUpdateSubmit={handleUpdateMarket}
+          />
         )}
 
         {view === "boothMasters" && (
           <section className={panelVariants()}>
-            <ParticipantMasterManagementHeader
-              isCreating={createParticipantMaster.isPending}
-              message={participantMasterMessage}
-              onSubmit={handleCreateParticipantMaster}
-            />
+            <div
+              className={cn(
+                sectionHeaderClass,
+                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+              )}
+            >
+              <div>
+                <h2 className={sectionTitleClass}>부스</h2>
+                <p className={sectionDescriptionClass}>
+                  플리마켓에 연결하기 전의 부스 기본 정보를 관리합니다.
+                </p>
+              </div>
+              <button
+                className={buttonVariants()}
+                disabled={createParticipantMaster.isPending}
+                onClick={openCreateParticipantMasterDialog}
+                type="button"
+              >
+                <Plus aria-hidden className="mr-2 h-4 w-4" />
+                부스 추가
+              </button>
+            </div>
+            {participantMasterMessage && (
+              <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                {participantMasterMessage}
+              </p>
+            )}
             <ParticipantMasterTable
               participants={participantMasters.data ?? []}
               showLinkStatus={false}
+              onEditParticipant={openEditParticipantMasterDialog}
             />
+            {participantMasterDialogMode && (
+              <ParticipantMasterDialog
+                editingParticipant={editingParticipantMaster}
+                isSubmitting={
+                  createParticipantMaster.isPending ||
+                  updateParticipantMaster.isPending
+                }
+                message={participantMasterMessage}
+                mode={participantMasterDialogMode}
+                onClose={closeParticipantMasterDialog}
+                onCreateSubmit={handleCreateParticipantMaster}
+                onUpdateSubmit={handleUpdateParticipantMaster}
+              />
+            )}
           </section>
         )}
 
@@ -941,88 +1352,46 @@ export function DashboardClient({
                   "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
                 )}
               >
-                <div>
-                  <h2 className={sectionTitleClass}>마켓 참가 설정</h2>
-                  <p className={sectionDescriptionClass}>
-                    {selectedMarket?.name ?? "마켓 미선택"}
-                  </p>
-                </div>
-                <Link
-                  className={buttonVariants({ intent: "secondary" })}
-                  href="/booths"
-                >
-                  부스 관리
-                </Link>
-              </div>
-              <form
-                className="grid gap-3 p-4"
-                data-testid="participant-form"
-                onSubmit={handleCreateParticipant}
-              >
-                <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_180px]">
-                  <select
-                    className={selectClass}
-                    defaultValue=""
-                    disabled={
-                      !selectedMarket || !unlinkedParticipantMasters.length
-                    }
-                    name="participantId"
-                  >
-                    <option value="">참가부스 선택</option>
-                    {unlinkedParticipantMasters.map((participant) => (
-                      <option key={participant.id} value={participant.id}>
-                        {participant.displayName}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className={selectClass}
-                    defaultValue="seller"
-                    disabled={!selectedMarket}
-                    name="participantType"
-                  >
-                    <option value="seller">셀러</option>
-                    <option value="staff">운영진</option>
-                    <option value="special_booth">특수 부스</option>
-                  </select>
-                </div>
-                <FeeSettingsFields
-                  allowInheritance
-                  defaultValues={null}
-                  disabled={!selectedMarket}
-                />
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-zinc-500">
-                    비워둔 수수료 항목은 플리마켓 기본값, 전체 기본값 순으로
-                    적용됩니다.
-                  </p>
-                  <button
-                    className={buttonVariants()}
-                    disabled={
-                      !selectedMarket ||
-                      !unlinkedParticipantMasters.length ||
-                      createParticipant.isPending
-                    }
-                    type="submit"
-                  >
-                    마켓에 연결
-                  </button>
-                </div>
-                {participantMessage && (
-                  <p className="text-sm font-medium text-red-700">
-                    {participantMessage}
-                  </p>
-                )}
-              </form>
-              <ParticipantList
-                emptyMessage="연결된 참가부스가 없습니다."
-                participants={participants.data ?? []}
-                selectedParticipantId={selectedParticipantId}
-                onSelectParticipant={setRequestedParticipantId}
-              />
-            </section>
-
-            <section className={panelVariants()}>
+	                <div>
+	                  <h2 className={sectionTitleClass}>마켓 참가 설정</h2>
+	                  <p className={sectionDescriptionClass}>
+	                    {selectedMarket?.name ?? "마켓 미선택"}
+	                  </p>
+	                </div>
+	                <div className="flex flex-wrap gap-2">
+	                  <button
+	                    className={buttonVariants()}
+	                    disabled={
+	                      !selectedMarket ||
+	                      !unlinkedParticipantMasters.length ||
+	                      createParticipant.isPending
+	                    }
+	                    onClick={openCreateParticipantDialog}
+	                    type="button"
+	                  >
+	                    <Plus aria-hidden className="mr-2 h-4 w-4" />
+	                    참가부스 추가
+	                  </button>
+	                </div>
+	              </div>
+                  {participantMessage && !participantDialogMode && (
+                    <p className="border-t border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+                      {participantMessage}
+                    </p>
+                  )}
+	              <ParticipantList
+                    deleteDisabled={deleteParticipantFromMarket.isPending}
+	                emptyMessage="연결된 참가부스가 없습니다."
+                    globalSettings={globalFeeSettings.data ?? null}
+                    marketSettings={marketFeeSettings.data ?? null}
+	                participants={participants.data ?? []}
+                    onDeleteParticipant={handleDeleteParticipantFromMarket}
+	                selectedParticipantId={selectedParticipantId}
+	                onEditParticipant={openEditParticipantDialog}
+	                onSelectParticipant={setRequestedParticipantId}
+	              />
+	            </section>
+	            <section className={panelVariants()}>
               <div
                 className={cn(
                   sectionHeaderClass,
@@ -1038,7 +1407,7 @@ export function DashboardClient({
                   </p>
                 </div>
                 <form
-                  className="grid gap-2 lg:grid-cols-[200px_220px_160px_140px_auto]"
+                  className="grid gap-2 xl:grid-cols-[200px_220px_160px_140px_auto]"
                   data-testid="product-form"
                   onSubmit={handleCreateProduct}
                 >
@@ -1113,16 +1482,24 @@ export function DashboardClient({
               <div>
                 <h2 className={sectionTitleClass}>수수료 적용 현황</h2>
                 <p className={sectionDescriptionClass}>
-                  부스별로 전체 설정, 플리마켓 설정, 부스 설정 중 어떤 값이
-                  적용되는지 확인합니다.
+                  참가부스별로 전체 설정, 플리마켓 설정, 부스 설정
+                  중 어떤 값이 적용되는지 확인합니다.
                 </p>
               </div>
-              <Link
-                className={buttonVariants({ intent: "secondary" })}
-                href={`/markets/${marketId}/management`}
-              >
-                설정 수정
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  className={buttonVariants({ intent: "secondary" })}
+                  href="/settings"
+                >
+                  전체 설정
+                </Link>
+                <Link
+                  className={buttonVariants({ intent: "secondary" })}
+                  href={`/markets/${marketId}/management`}
+                >
+                  플리마켓 설정
+                </Link>
+              </div>
             </div>
             <FeeApplicationMatrix
               globalSettings={globalFeeSettings.data ?? null}
@@ -1133,6 +1510,7 @@ export function DashboardClient({
               }
               marketSettings={marketFeeSettings.data ?? null}
               participants={participants.data ?? []}
+              onEditParticipant={openEditParticipantDialog}
             />
           </section>
         )}
@@ -1151,12 +1529,6 @@ export function DashboardClient({
                       {selectedMarket?.name ?? "마켓 미선택"}
                     </p>
                   </div>
-                  <Link
-                    className={buttonVariants({ intent: "secondary" })}
-                    href="/markets"
-                  >
-                    마켓 선택
-                  </Link>
                 </div>
                 <form
                   className="grid gap-0"
@@ -1168,6 +1540,69 @@ export function DashboardClient({
                       {receiptMessage}
                     </p>
                   )}
+                  <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
+                    {matrixReceiptDateTimeEnabled ? (
+                      <div className="grid gap-2 md:grid-cols-[minmax(0,18rem)_auto]">
+                        <label
+                          className="grid gap-1 text-sm font-medium text-zinc-700"
+                          htmlFor="receipt-sold-at"
+                        >
+                          구매 날짜와 시간
+                          <input
+                            className={inputClass}
+                            disabled={!selectedMarket}
+                            id="receipt-sold-at"
+                            max={getReceiptDateTimeMax(
+                              selectedMarket?.endsOn ?? null,
+                            )}
+                            min={getReceiptDateTimeMin(
+                              selectedMarket?.startsOn ?? null,
+                            )}
+                            onChange={(event) =>
+                              setMatrixReceiptDateTimeDraft({
+                                enabled: true,
+                                marketId: selectedMarketId,
+                                value: event.target.value,
+                              })
+                            }
+                            required
+                            type="datetime-local"
+                            value={matrixReceiptDateTimeValue}
+                          />
+                        </label>
+                        <button
+                          className={cn(
+                            buttonVariants({ intent: "secondary" }),
+                            "self-end",
+                          )}
+                          onClick={() => {
+                            setMatrixReceiptDateTimeDraft(null);
+                          }}
+                          type="button"
+                        >
+                          현재 시간 사용
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className={buttonVariants({ intent: "secondary" })}
+                        disabled={!selectedMarket}
+                        onClick={() => {
+                          setMatrixReceiptDateTimeDraft({
+                            enabled: true,
+                            marketId: selectedMarketId,
+                            value: getDefaultReceiptDateTimeInputValue(
+                              selectedMarket?.startsOn ?? null,
+                              selectedMarket?.endsOn ?? null,
+                            ),
+                          });
+                        }}
+                        type="button"
+                      >
+                        날짜 직접 설정
+                      </button>
+                    )}
+                  </div>
                   <ReceiptMatrixInputTable
                     amounts={matrixReceiptAmounts}
                     onAmountChange={handleMatrixReceiptAmountChange}
@@ -1246,7 +1681,7 @@ export function DashboardClient({
                         </button>
                       </div>
                       {matrixPaymentMode === "single" ? (
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                           {paymentMethods.map((paymentMethod) => {
                             const Icon = paymentMethodIcons[paymentMethod];
                             const isActive =
@@ -1345,7 +1780,7 @@ export function DashboardClient({
                         </div>
                       )}
                     </div>
-                    <div className="grid gap-2 lg:grid-cols-[180px_1fr_auto]">
+                    <div className="grid gap-2 xl:grid-cols-[180px_1fr_auto]">
                       <input
                         className={inputClass}
                         disabled={!participants.data?.length}
@@ -1398,12 +1833,6 @@ export function DashboardClient({
                       )}
                     </p>
                   </div>
-                  <Link
-                    className={buttonVariants({ intent: "secondary" })}
-                    href="/markets"
-                  >
-                    마켓 선택
-                  </Link>
                 </div>
                 {participants.isLoading || receipts.isLoading ? (
                   <div className="px-4 py-12 text-center text-sm text-zinc-500">
@@ -1432,12 +1861,6 @@ export function DashboardClient({
                       {selectedMarket?.name ?? "마켓 미선택"}
                     </p>
                   </div>
-                  <Link
-                    className={buttonVariants({ intent: "secondary" })}
-                    href="/markets"
-                  >
-                    마켓 선택
-                  </Link>
                 </div>
                 <SettlementPreviewPanel
                   history={settlementHistory.data ?? []}
@@ -1445,13 +1868,60 @@ export function DashboardClient({
                   isDownloading={downloadSettlementPdfArchive.isPending}
                   isHistoryLoading={settlementHistory.isLoading}
                   isLoading={settlementPreview.isLoading}
+                  isReceiptsLoading={receipts.isLoading}
+                  market={selectedMarket}
                   message={settlementMessage}
                   preview={settlementPreview.data ?? null}
+                  receipts={receipts.data ?? []}
+                  selectedParticipantId={settlementParticipantId ?? null}
                   onConfirm={handleConfirmSettlement}
                   onDownloadPdfs={handleDownloadSettlementPdfs}
+                  onBackToParticipantList={() => {
+                    if (selectedMarketId) {
+                      router.push(`/markets/${selectedMarketId}/settlements`);
+                    }
+                  }}
+                  onOpenParticipantDetail={(participantId) => {
+                    if (selectedMarketId) {
+                      router.push(
+                        `/markets/${selectedMarketId}/settlements/${participantId}`,
+                      );
+                    }
+                  }}
+                  onOpenSettlementDetail={(settlementId) => {
+                    if (selectedMarketId) {
+                      router.push(
+                        `/markets/${selectedMarketId}/settlements/versions/${settlementId}`,
+                      );
+                    }
+                  }}
                 />
           </section>
         )}
+        {participantDialogMode && (
+          <ParticipantDialog
+            editingParticipant={editingParticipant}
+            feeOverrideEnabled={participantFeeOverrideEnabled}
+            isSubmitting={
+              createParticipant.isPending ||
+              updateParticipantForMarket.isPending
+            }
+            marketName={selectedMarket?.name ?? "마켓 미선택"}
+            message={participantMessage}
+            mode={participantDialogMode}
+            unlinkedParticipants={unlinkedParticipantMasters}
+            onClose={closeParticipantDialog}
+            onCreateSubmit={handleCreateParticipant}
+            onFeeOverrideChange={setParticipantFeeOverrideEnabled}
+            onUpdateSubmit={handleUpdateParticipant}
+          />
+        )}
+        <Toast
+          toast={toast}
+          onDismiss={() => {
+            setToast(null);
+          }}
+        />
       </div>
     </main>
   );
@@ -1468,6 +1938,45 @@ function PageStateMessage({ message }: { message: string }) {
         </section>
       </div>
     </main>
+  );
+}
+
+function Toast({
+  onDismiss,
+  toast,
+}: {
+  onDismiss: () => void;
+  toast: ToastState | null;
+}) {
+  if (!toast) {
+    return null;
+  }
+
+  return (
+    <div
+      aria-live="polite"
+      className="fixed bottom-4 right-4 z-[60] w-[calc(100%-2rem)] max-w-sm"
+      role="status"
+    >
+      <div className="flex items-start gap-3 rounded-md border border-emerald-700 bg-zinc-950 px-4 py-3 text-white shadow-lg">
+        <CheckCircle2
+          aria-hidden
+          className="mt-0.5 h-5 w-5 flex-none text-emerald-300"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">{toast.title}</p>
+          <p className="mt-1 text-sm text-zinc-200">{toast.message}</p>
+        </div>
+        <button
+          aria-label="토스트 닫기"
+          className="rounded p-1 text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          onClick={onDismiss}
+          type="button"
+        >
+          <X aria-hidden className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1497,80 +2006,177 @@ function HomeActionCard({
   );
 }
 
-function ParticipantMasterManagementHeader({
-  isCreating,
+function ParticipantMasterDialog({
+  editingParticipant,
+  isSubmitting,
   message,
-  onSubmit,
+  mode,
+  onClose,
+  onCreateSubmit,
+  onUpdateSubmit,
 }: {
-  isCreating: boolean;
+  editingParticipant: Participant | null;
+  isSubmitting: boolean;
   message: string | null;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  mode: ParticipantMasterDialogMode;
+  onClose: () => void;
+  onCreateSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onUpdateSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const isCreateMode = mode === "create";
+  const title = isCreateMode ? "부스 추가" : "부스 관리";
+  const submitLabel = isCreateMode ? "추가" : "저장";
+
   return (
-    <>
-      <div
-        className={cn(
-          sectionHeaderClass,
-          "flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between",
-        )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
+      <section
+        aria-labelledby="participant-master-dialog-title"
+        aria-modal="true"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        role="dialog"
       >
-        <div>
-          <h2 className={sectionTitleClass}>부스</h2>
-          <p className={sectionDescriptionClass}>
-            플리마켓에 연결하기 전의 부스 기본 정보를 관리합니다.
-          </p>
+        <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3">
+          <div>
+            <h2
+              className="text-base font-semibold text-zinc-950"
+              id="participant-master-dialog-title"
+            >
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              부스 기본 정보와 연락처
+            </p>
+          </div>
+          <button
+            aria-label="닫기"
+            className={buttonVariants({ intent: "quiet", size: "sm" })}
+            disabled={isSubmitting}
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden className="h-4 w-4" />
+          </button>
         </div>
         <form
-          className="grid gap-2 xl:grid-cols-[160px_130px_140px_140px_180px_1fr_auto]"
+          className="grid gap-4 p-4"
           data-testid="participant-master-form"
-          onSubmit={onSubmit}
+          key={`${mode}-${editingParticipant?.id ?? "new"}`}
+          onSubmit={isCreateMode ? onCreateSubmit : onUpdateSubmit}
         >
-          <input
-            className={inputClass}
-            name="displayName"
-            placeholder="부스명"
-            type="text"
-          />
-          <select className={selectClass} defaultValue="seller" name="participantType">
-            <option value="seller">셀러</option>
-            <option value="staff">운영진</option>
-            <option value="special_booth">특수 부스</option>
-          </select>
-          <input
-            className={inputClass}
-            name="contactName"
-            placeholder="담당자"
-            type="text"
-          />
-          <input
-            className={inputClass}
-            name="phone"
-            placeholder="연락처"
-            type="tel"
-          />
-          <input
-            className={inputClass}
-            name="email"
-            placeholder="이메일"
-            type="email"
-          />
-          <input
-            className={inputClass}
-            name="memo"
-            placeholder="메모"
-            type="text"
-          />
-          <button className={buttonVariants()} disabled={isCreating} type="submit">
-            추가
-          </button>
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+              부스명
+              <input
+                className={inputClass}
+                defaultValue={editingParticipant?.displayName ?? ""}
+                disabled={isSubmitting}
+                name="displayName"
+                placeholder="부스명"
+                required
+                type="text"
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+              유형
+              <select
+                className={selectClass}
+                defaultValue={editingParticipant?.participantType ?? "seller"}
+                disabled={isSubmitting}
+                name="participantType"
+              >
+                <option value="seller">셀러</option>
+                <option value="staff">운영진</option>
+                <option value="special_booth">특수 부스</option>
+              </select>
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+              담당자
+              <input
+                className={inputClass}
+                defaultValue={editingParticipant?.contactName ?? ""}
+                disabled={isSubmitting}
+                name="contactName"
+                placeholder="담당자"
+                type="text"
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+              연락처
+              <input
+                className={inputClass}
+                defaultValue={editingParticipant?.phone ?? ""}
+                disabled={isSubmitting}
+                name="phone"
+                placeholder="010-0000-0000"
+                type="tel"
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-zinc-600 sm:col-span-2">
+              이메일
+              <input
+                className={inputClass}
+                defaultValue={editingParticipant?.email ?? ""}
+                disabled={isSubmitting}
+                name="email"
+                placeholder="email@example.com"
+                type="email"
+              />
+            </label>
+          </div>
+          {!isCreateMode && (
+            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+              상태
+              <select
+                className={selectClass}
+                defaultValue={editingParticipant?.status ?? "active"}
+                disabled={isSubmitting || !editingParticipant}
+                name="status"
+              >
+                <option value="active">활성</option>
+                <option value="inactive">비활성</option>
+              </select>
+            </label>
+          )}
+          <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            메모
+            <textarea
+              className={cn(inputClass, "min-h-24 resize-none py-2")}
+              defaultValue={editingParticipant?.memo ?? ""}
+              disabled={isSubmitting}
+              name="memo"
+              placeholder="메모"
+            />
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-zinc-500">
+              부스 기본 정보는 플리마켓 참가 설정에서 다시 연결해 사용합니다.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                className={buttonVariants({ intent: "secondary" })}
+                disabled={isSubmitting}
+                onClick={onClose}
+                type="button"
+              >
+                취소
+              </button>
+              <button
+                className={buttonVariants()}
+                disabled={isSubmitting || (!isCreateMode && !editingParticipant)}
+                type="submit"
+              >
+                {isSubmitting ? "저장 중" : submitLabel}
+              </button>
+            </div>
+          </div>
+          {message && (
+            <p className="text-sm font-medium text-red-700">{message}</p>
+          )}
         </form>
-      </div>
-      {message && (
-        <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
-          {message}
-        </p>
-      )}
-    </>
+      </section>
+    </div>
   );
 }
 
@@ -1596,13 +2202,14 @@ function FeeSettingsForm({
       <FeeSettingsFields defaultValues={defaultValues ?? null} disabled={disabled} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-zinc-500">
-          적용 순서: 전체 설정, 플리마켓별 설정, 부스별 설정
+          우선순위: 현재 플리마켓의 부스별 예외값, 플리마켓별 설정,
+          전체 설정
         </p>
         <button className={buttonVariants()} disabled={disabled} type="submit">
           {submitLabel}
         </button>
       </div>
-      {message && <p className="text-sm font-medium text-zinc-700">{message}</p>}
+      {message && <p className="text-sm font-medium text-red-700">{message}</p>}
     </form>
   );
 }
@@ -1611,27 +2218,17 @@ function FeeSettingsFields({
   allowInheritance = false,
   defaultValues,
   disabled,
+  inheritanceScope = "market",
 }: {
   allowInheritance?: boolean;
   defaultValues: Partial<SettlementFeeSettings> | null;
   disabled: boolean;
+  inheritanceScope?: FeeSettingScope;
 }) {
+  const inheritanceLabel = `${feeSettingScopeLabels[inheritanceScope]} 사용`;
+
   return (
-    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
-        정산 방식
-        <select
-          className={selectClass}
-          defaultValue={defaultValues?.settlementType ?? ""}
-          disabled={disabled}
-          name="settlementType"
-        >
-          {allowInheritance && <option value="">상위 설정 사용</option>}
-          <option value="commission">수수료</option>
-          <option value="manual">수기</option>
-          <option value="investment">투자</option>
-        </select>
-      </label>
+    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
       <label className="grid gap-1 text-xs font-medium text-zinc-600">
         판매 수수료 %
         <input
@@ -1640,7 +2237,7 @@ function FeeSettingsFields({
           disabled={disabled}
           min="0"
           name="salesCommissionPercent"
-          placeholder={allowInheritance ? "상위 설정 사용" : "0"}
+          placeholder={allowInheritance ? inheritanceLabel : "0"}
           step="0.01"
           type="number"
         />
@@ -1653,7 +2250,7 @@ function FeeSettingsFields({
           disabled={disabled}
           min="0"
           name="cardFeePercent"
-          placeholder={allowInheritance ? "상위 설정 사용" : "0"}
+          placeholder={allowInheritance ? inheritanceLabel : "0"}
           step="0.01"
           type="number"
         />
@@ -1666,7 +2263,7 @@ function FeeSettingsFields({
           disabled={disabled}
           name="cardFeePayer"
         >
-          {allowInheritance && <option value="">상위 설정 사용</option>}
+          {allowInheritance && <option value="">{inheritanceLabel}</option>}
           <option value="market">마켓 부담</option>
           <option value="participant">참가부스 부담</option>
         </select>
@@ -1684,7 +2281,7 @@ function FeeSettingsFields({
           disabled={disabled}
           min="0"
           name="participationFeeAmount"
-          placeholder={allowInheritance ? "상위 설정 사용" : "0"}
+          placeholder={allowInheritance ? inheritanceLabel : "0"}
           step="1"
           type="number"
         />
@@ -1693,15 +2290,345 @@ function FeeSettingsFields({
   );
 }
 
+function ParticipantDialog({
+  editingParticipant,
+  feeOverrideEnabled,
+  isSubmitting,
+  marketName,
+  message,
+  mode,
+  onClose,
+  onCreateSubmit,
+  onFeeOverrideChange,
+  onUpdateSubmit,
+  unlinkedParticipants,
+}: {
+  editingParticipant: Participant | null;
+  feeOverrideEnabled: boolean;
+  isSubmitting: boolean;
+  marketName: string;
+  message: string | null;
+  mode: ParticipantDialogMode;
+  onClose: () => void;
+  onCreateSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onFeeOverrideChange: (enabled: boolean) => void;
+  onUpdateSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  unlinkedParticipants: Participant[];
+}) {
+  const isCreateMode = mode === "create";
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [selectedParticipantId, setSelectedParticipantId] = useState("");
+  const title = isCreateMode
+    ? "참가부스 추가"
+    : "이 플리마켓 참가 설정 수정";
+  const submitLabel = isCreateMode ? "마켓에 연결" : "설정 저장";
+  const selectedParticipant = isCreateMode
+    ? (unlinkedParticipants.find(
+        (participant) => participant.id === selectedParticipantId,
+      ) ?? null)
+    : editingParticipant;
+  const settlementControlsDisabled =
+    isSubmitting || (isCreateMode && !selectedParticipant);
+  const feeSettingsDefaults = isCreateMode
+    ? defaultFeeSettings
+    : getParticipantFeeSettingsDefaults(editingParticipant);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
+      <section
+        aria-labelledby="participant-dialog-title"
+        aria-modal="true"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3">
+          <div>
+            <h2
+              className="text-base font-semibold text-zinc-950"
+              id="participant-dialog-title"
+            >
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">{marketName}</p>
+          </div>
+          <button
+            aria-label="닫기"
+            className={buttonVariants({ intent: "quiet", size: "sm" })}
+            disabled={isSubmitting}
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden className="h-4 w-4" />
+          </button>
+        </div>
+        <form
+          className="grid gap-4 p-4"
+          data-testid="participant-form"
+          key={`${mode}-${editingParticipant?.id ?? "new"}`}
+          onSubmit={isCreateMode ? onCreateSubmit : onUpdateSubmit}
+        >
+          {isCreateMode ? (
+            <div className="grid gap-3">
+              <input
+                name="participantId"
+                type="hidden"
+                value={selectedParticipantId}
+              />
+              <ParticipantPicker
+                disabled={isSubmitting}
+                participants={unlinkedParticipants}
+                search={participantSearch}
+                selectedParticipantId={selectedParticipantId}
+                onSearchChange={setParticipantSearch}
+                onSelectParticipant={setSelectedParticipantId}
+              />
+            </div>
+          ) : (
+            <div className="grid gap-2 xl:grid-cols-[minmax(220px,1fr)_180px]">
+              <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+                <p className="text-xs font-medium text-zinc-500">참가부스</p>
+                <p className="mt-1 text-sm font-semibold text-zinc-950">
+                  {editingParticipant?.displayName ?? "선택된 참가부스 없음"}
+                </p>
+              </div>
+              <ParticipantTypeSelect
+                defaultValue={editingParticipant?.participantType ?? "seller"}
+                disabled={isSubmitting || !editingParticipant}
+              />
+            </div>
+          )}
+          {selectedParticipant ? (
+            <>
+              {isCreateMode && (
+                <div className="grid gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-end">
+                  <div>
+                    <p className="text-xs font-medium text-zinc-500">
+                      선택된 참가부스
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-950">
+                      {selectedParticipant.displayName}
+                    </p>
+                  </div>
+                  <ParticipantTypeSelect
+                    key={selectedParticipant.id}
+                    defaultValue={selectedParticipant.participantType}
+                    disabled={settlementControlsDisabled}
+                  />
+                </div>
+              )}
+              <label className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700">
+                <input
+                  checked={feeOverrideEnabled}
+                  className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600"
+                  disabled={settlementControlsDisabled}
+                  name="feeSettingOverrideEnabled"
+                  onChange={(event) =>
+                    onFeeOverrideChange(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                이 플리마켓에서만 부스별 수수료 예외 적용
+              </label>
+              <FeeSettingsFields
+                defaultValues={feeSettingsDefaults}
+                disabled={settlementControlsDisabled || !feeOverrideEnabled}
+              />
+            </>
+          ) : (
+            <div className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+              참가부스를 선택하면 정산 설정을 입력할 수 있습니다.
+            </div>
+          )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-zinc-500">
+              체크하지 않으면 플리마켓 기본값, 전체 기본값 순으로 적용됩니다.
+              체크한 값은 현재 플리마켓의 참가부스에만 저장됩니다.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                className={buttonVariants({ intent: "secondary" })}
+                disabled={isSubmitting}
+                onClick={onClose}
+                type="button"
+              >
+                취소
+              </button>
+              <button
+                className={buttonVariants()}
+                disabled={
+                  isSubmitting ||
+                  (isCreateMode && !selectedParticipant) ||
+                  (!isCreateMode && !editingParticipant)
+                }
+                type="submit"
+              >
+                {isSubmitting ? "저장 중" : submitLabel}
+              </button>
+            </div>
+          </div>
+          {message && (
+            <p className="text-sm font-medium text-red-700">{message}</p>
+          )}
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function ParticipantPicker({
+  disabled,
+  participants,
+  search,
+  selectedParticipantId,
+  onSearchChange,
+  onSelectParticipant,
+}: {
+  disabled: boolean;
+  participants: Participant[];
+  search: string;
+  selectedParticipantId: string;
+  onSearchChange: (search: string) => void;
+  onSelectParticipant: (participantId: string) => void;
+}) {
+  const filteredParticipants = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+
+    if (!keyword) {
+      return participants;
+    }
+
+    return participants.filter((participant) => {
+      const searchableText = [
+        participant.displayName,
+        participant.contactName,
+        participant.phone,
+        participant.email,
+      ]
+        .filter((value): value is string => Boolean(value))
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(keyword);
+    });
+  }, [participants, search]);
+
+  return (
+    <div className="grid gap-3">
+      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+        참가부스 검색
+        <input
+          className={inputClass}
+          disabled={disabled || participants.length === 0}
+          onChange={(event) => onSearchChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+            }
+          }}
+          placeholder="부스명, 담당자, 연락처 검색"
+          type="search"
+          value={search}
+        />
+      </label>
+      <div className="max-h-72 overflow-y-auto rounded-md border border-zinc-200 bg-white">
+        {participants.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-zinc-500">
+            연결 가능한 참가부스가 없습니다.
+          </div>
+        ) : filteredParticipants.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-zinc-500">
+            검색 결과가 없습니다.
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-100">
+            {filteredParticipants.map((participant) => {
+              const isSelected = participant.id === selectedParticipantId;
+              const secondaryText = [
+                participant.contactName,
+                participant.phone,
+                participant.email,
+              ]
+                .filter((value): value is string => Boolean(value))
+                .join(" · ");
+
+              return (
+                <button
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "grid w-full gap-2 px-4 py-3 text-left transition hover:bg-emerald-50/60",
+                    isSelected && "bg-emerald-50 ring-1 ring-inset ring-emerald-300",
+                  )}
+                  disabled={disabled}
+                  key={participant.id}
+                  onClick={() => onSelectParticipant(participant.id)}
+                  type="button"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-zinc-950">
+                        {participant.displayName}
+                      </span>
+                      {secondaryText && (
+                        <span className="mt-1 block truncate text-xs text-zinc-500">
+                          {secondaryText}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2 py-1 text-xs font-medium",
+                        isSelected
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-zinc-100 text-zinc-600",
+                      )}
+                    >
+                      {isSelected
+                        ? "선택됨"
+                        : participantTypeLabels[participant.participantType]}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantTypeSelect({
+  defaultValue,
+  disabled,
+}: {
+  defaultValue: ParticipantType;
+  disabled: boolean;
+}) {
+  return (
+    <select
+      className={selectClass}
+      defaultValue={defaultValue}
+      disabled={disabled}
+      name="participantType"
+    >
+      <option value="seller">셀러</option>
+      <option value="staff">운영진</option>
+      <option value="special_booth">특수 부스</option>
+    </select>
+  );
+}
+
 function FeeApplicationMatrix({
   globalSettings,
   isLoading,
   marketSettings,
+  onEditParticipant,
   participants,
 }: {
   globalSettings: SettlementDefaultSettings | null;
   isLoading: boolean;
   marketSettings: SettlementDefaultSettings | null;
+  onEditParticipant: (participant: Participant) => void;
   participants: Participant[];
 }) {
   if (isLoading) {
@@ -1732,8 +2659,8 @@ function FeeApplicationMatrix({
   const hasMarketSettings = Boolean(marketSettings?.id);
 
   return (
-    <div className="overflow-auto border-t border-zinc-200">
-      <table className="min-w-[1120px] border-collapse text-sm">
+    <div className="overflow-x-auto border-t border-zinc-200">
+      <table className="min-w-[1240px] border-collapse text-sm">
         <thead className="bg-zinc-50 text-left text-zinc-500">
           <tr>
             <th className="sticky left-0 z-20 w-[220px] border-r border-zinc-200 bg-zinc-50 px-4 py-3 font-medium">
@@ -1743,58 +2670,76 @@ function FeeApplicationMatrix({
             <th className="w-[300px] px-4 py-3 font-medium">
               플리마켓 설정
             </th>
-            <th className="w-[300px] px-4 py-3 font-medium">부스 설정</th>
+            <th className="w-[300px] px-4 py-3 font-medium">
+              이 플리마켓 부스 설정
+            </th>
+            <th className="sticky right-0 z-20 w-[120px] border-l border-zinc-200 bg-zinc-50 px-4 py-3 text-center font-medium">
+              설정
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
-          {participants.map((participant) => (
-            <tr data-testid="fee-status-row" key={participant.id}>
-              <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 align-top">
-                <p className="font-semibold text-zinc-950">
-                  {participant.displayName}
-                </p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  {participantTypeLabels[participant.participantType]}
-                </p>
-              </td>
-              <FeeApplicationCell
-                activeCount={countFeeSourceFields(
-                  "global",
-                  participant,
-                  hasMarketSettings,
-                )}
-                participant={participant}
-                scope="global"
-                settings={resolvedGlobalSettings}
-                title="전체 기본값"
-                hasMarketSettings={hasMarketSettings}
-              />
-              <FeeApplicationCell
-                activeCount={countFeeSourceFields(
-                  "market",
-                  participant,
-                  hasMarketSettings,
-                )}
-                participant={participant}
-                scope="market"
-                settings={hasMarketSettings ? marketSettings : null}
-                title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
-                hasMarketSettings={hasMarketSettings}
-              />
-              <FeeApplicationCell
-                activeCount={countFeeSourceFields(
-                  "booth",
-                  participant,
-                  hasMarketSettings,
-                )}
-                participant={participant}
-                scope="booth"
-                settings={participant.settings}
-                title="부스별 설정"
-                hasMarketSettings={hasMarketSettings}
-              />
-            </tr>
-          ))}
+          {participants.map((participant) => {
+            const activeScope = getParticipantFeePolicySource(
+              participant,
+              hasMarketSettings,
+            );
+            const hasBoothSettings =
+              participant.settings?.feeSettingOverrideEnabled === true;
+
+            return (
+              <tr data-testid="fee-status-row" key={participant.id}>
+                <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 align-top">
+                  <p className="font-semibold text-zinc-950">
+                    {participant.displayName}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {participantTypeLabels[participant.participantType]}
+                  </p>
+                </td>
+                <FeeApplicationCell
+                  isActive={activeScope === "global"}
+                  scope="global"
+                  settings={resolvedGlobalSettings}
+                  title="전체 기본값"
+                />
+                <FeeApplicationCell
+                  isActive={activeScope === "market"}
+                  scope="market"
+                  settings={hasMarketSettings ? marketSettings : null}
+                  title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
+                  unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
+                />
+                <FeeApplicationCell
+                  fallbackScope={hasMarketSettings ? "market" : "global"}
+                  isActive={activeScope === "booth"}
+                  scope="booth"
+                  settings={hasBoothSettings ? participant.settings : null}
+                  title="부스 설정"
+                  unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
+                />
+                <td className="sticky right-0 z-10 border-l border-zinc-200 bg-white px-4 py-4">
+                  <div className="flex min-h-[190px] items-center justify-center">
+                  <button
+                    aria-label={`${participant.displayName} 부스별 수수료 설정`}
+                    className={cn(
+                      buttonVariants({
+                        intent: "secondary",
+                        size: "sm",
+                      }),
+                      "h-10 w-10 px-0",
+                    )}
+                    onClick={() => onEditParticipant(participant)}
+                    title="부스별 수수료 설정"
+                    type="button"
+                  >
+                    <CircleDollarSign aria-hidden className="h-4 w-4" />
+                  </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -1802,16 +2747,15 @@ function FeeApplicationMatrix({
 }
 
 function FeeApplicationCell({
-  activeCount,
-  hasMarketSettings,
-  participant,
+  fallbackScope,
+  isActive,
   scope,
   settings,
   title,
+  unavailableMessage,
 }: {
-  activeCount: number;
-  hasMarketSettings: boolean;
-  participant: Participant;
+  fallbackScope?: FeeSettingScope;
+  isActive: boolean;
   scope: FeeSettingScope;
   settings:
     | SettlementDefaultSettings
@@ -1819,15 +2763,17 @@ function FeeApplicationCell({
     | null
     | undefined;
   title: string;
+  unavailableMessage?: string;
 }) {
-  const isUnavailable = scope === "market" && !hasMarketSettings;
+  const isUnavailable = !settings;
 
   return (
     <td className="px-4 py-4 align-top">
       <div
         className={cn(
-          "grid min-h-[190px] gap-2 rounded-md border border-zinc-200 bg-white p-3",
-          activeCount > 0 && "border-emerald-200 bg-emerald-50/40",
+          "grid min-h-[190px] gap-2 rounded-md border border-zinc-200 bg-white p-3 transition-opacity",
+          isActive && "border-emerald-200 bg-emerald-50/40",
+          !isActive && "opacity-30 hover:opacity-60",
         )}
       >
         <div className="flex items-center justify-between gap-2">
@@ -1835,33 +2781,26 @@ function FeeApplicationCell({
           <span
             className={cn(
               "rounded-full px-2 py-1 text-xs font-semibold",
-              activeCount > 0
+              isActive
                 ? "bg-emerald-100 text-emerald-800"
                 : "bg-zinc-100 text-zinc-500",
             )}
           >
-            {activeCount > 0 ? `${activeCount}개 적용` : "대기"}
+            {isActive ? "적용 중" : isUnavailable ? "미설정" : "대기"}
           </span>
         </div>
         {isUnavailable ? (
           <p className="mt-5 rounded-md bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500">
-            플리마켓 설정이 없어 전체 설정을 사용합니다.
+            {unavailableMessage ?? "설정이 없습니다."}
           </p>
         ) : (
           <dl className="grid gap-1.5">
             {feeSettingFields.map((field) => {
-              const source = getFeeFieldSource(
-                participant,
-                field.key,
-                hasMarketSettings,
-              );
-              const isApplied = source === scope;
-
               return (
                 <div
                   className={cn(
                     "grid grid-cols-[92px_minmax(0,1fr)_44px] items-center gap-2 rounded px-2 py-1",
-                    isApplied && "bg-white shadow-sm ring-1 ring-emerald-100",
+                    isActive && "bg-white shadow-sm ring-1 ring-emerald-100",
                   )}
                   key={field.key}
                 >
@@ -1870,15 +2809,16 @@ function FeeApplicationCell({
                     {formatFeeFieldValue(
                       field.key,
                       getScopedFeeFieldValue(scope, settings, field.key),
+                      fallbackScope,
                     )}
                   </dd>
                   <span
                     className={cn(
                       "text-right text-[11px] font-semibold",
-                      isApplied ? "text-emerald-700" : "text-zinc-300",
+                      isActive ? "text-emerald-700" : "text-zinc-300",
                     )}
                   >
-                    {isApplied ? "적용" : "-"}
+                    {isActive ? "적용" : "-"}
                   </span>
                 </div>
               );
@@ -1890,12 +2830,143 @@ function FeeApplicationCell({
   );
 }
 
+function MarketDialog({
+  editingMarket,
+  isSubmitting,
+  message,
+  mode,
+  onClose,
+  onCreateSubmit,
+  onUpdateSubmit,
+}: {
+  editingMarket: Market | null;
+  isSubmitting: boolean;
+  message: string | null;
+  mode: MarketDialogMode;
+  onClose: () => void;
+  onCreateSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onUpdateSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const isEditMode = mode === "edit";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
+      <div
+        aria-modal="true"
+        className="w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-950">
+              {isEditMode ? "플리마켓 관리" : "플리마켓 추가"}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              {isEditMode
+                ? "플리마켓의 기본 정보와 진행 상태를 수정합니다."
+                : "새로운 플리마켓 이벤트를 등록합니다."}
+            </p>
+          </div>
+          <button
+            aria-label="닫기"
+            className={buttonVariants({ intent: "quiet", size: "sm" })}
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden className="h-4 w-4" />
+          </button>
+        </div>
+        {message && (
+          <p className="border-b border-zinc-200 px-5 py-3 text-sm font-medium text-red-700">
+            {message}
+          </p>
+        )}
+        <form
+          className="grid max-h-[calc(100vh-12rem)] gap-4 overflow-y-auto p-5"
+          data-testid="market-form"
+          onSubmit={isEditMode ? onUpdateSubmit : onCreateSubmit}
+        >
+          <label className="grid gap-2 text-sm font-medium text-zinc-700">
+            마켓명
+            <input
+              className={inputClass}
+              defaultValue={editingMarket?.name ?? ""}
+              name="name"
+              placeholder="마켓명"
+              type="text"
+            />
+          </label>
+          {isEditMode && (
+            <label className="grid gap-2 text-sm font-medium text-zinc-700">
+              상태
+              <select
+                className={selectClass}
+                defaultValue={editingMarket?.status ?? "draft"}
+                name="status"
+              >
+                {Object.entries(marketStatusLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium text-zinc-700">
+              시작일
+              <input
+                className={inputClass}
+                defaultValue={editingMarket?.startsOn ?? ""}
+                name="startsOn"
+                type="date"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-zinc-700">
+              종료일
+              <input
+                className={inputClass}
+                defaultValue={editingMarket?.endsOn ?? ""}
+                name="endsOn"
+                type="date"
+              />
+            </label>
+          </div>
+          <label className="grid gap-2 text-sm font-medium text-zinc-700">
+            메모
+            <textarea
+              className={cn(inputClass, "h-auto min-h-28 py-3")}
+              defaultValue={editingMarket?.description ?? ""}
+              name="description"
+              placeholder="메모"
+            />
+          </label>
+          <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4">
+            <button
+              className={buttonVariants({ intent: "secondary" })}
+              onClick={onClose}
+              type="button"
+            >
+              취소
+            </button>
+            <button
+              className={buttonVariants()}
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "저장 중" : isEditMode ? "저장" : "추가"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function MarketDetailPanel({
   market,
-  onStatusChange,
 }: {
   market: Market | null;
-  onStatusChange: (marketId: string, status: MarketStatus) => void;
 }) {
   if (!market) {
     return (
@@ -1906,12 +2977,25 @@ function MarketDetailPanel({
   }
 
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="p-4">
+      <dl className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
         <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
           <dt className="text-xs font-medium text-zinc-500">마켓명</dt>
           <dd className="mt-1 text-sm font-semibold text-zinc-950">
             {market.name}
+          </dd>
+        </div>
+        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+          <dt className="text-xs font-medium text-zinc-500">상태</dt>
+          <dd className="mt-1">
+            <span
+              className={cn(
+                "rounded-md px-2 py-1 text-xs font-semibold",
+                getMarketStatusBadgeClass(market.status),
+              )}
+            >
+              {marketStatusLabels[market.status]}
+            </span>
           </dd>
         </div>
         <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
@@ -1932,78 +3016,103 @@ function MarketDetailPanel({
             {formatDate(market.createdAt)}
           </dd>
         </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 sm:col-span-2 xl:col-span-4">
+        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 sm:col-span-2 2xl:col-span-5">
           <dt className="text-xs font-medium text-zinc-500">메모</dt>
           <dd className="mt-1 text-sm font-medium text-zinc-800">
-            {market.description ?? "-"}
+            {market.description || "-"}
           </dd>
         </div>
       </dl>
-      <label className="grid content-start gap-2 text-sm font-medium text-zinc-700">
-        상태
-        <select
-          className={selectClass}
-          onChange={(event) =>
-            onStatusChange(market.id, event.target.value as MarketStatus)
-          }
-          value={market.status}
-        >
-          {Object.entries(marketStatusLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
+    </div>
+  );
+}
+
+function MarketLifecycleFilterControl({
+  onSelectFilter,
+  selectedFilter,
+}: {
+  onSelectFilter: (filter: MarketLifecycleFilter) => void;
+  selectedFilter: MarketLifecycleFilter;
+}) {
+  return (
+    <div
+      aria-label="플리마켓 상태 필터"
+      className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-100 p-1"
+      role="group"
+    >
+      {marketLifecycleFilters.map((filter) => {
+        const isActive = selectedFilter === filter.value;
+
+        return (
+          <button
+            aria-pressed={isActive}
+            className={cn(
+              "h-9 rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2",
+              isActive
+                ? "bg-white text-zinc-950 shadow-sm ring-1 ring-zinc-200"
+                : "text-zinc-500 hover:bg-white/70 hover:text-zinc-950",
+            )}
+            key={filter.value}
+            onClick={() => onSelectFilter(filter.value)}
+            type="button"
+          >
+            {filter.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 function MarketSelectionCards({
-  actionLabel = "영수증 목록 보기",
+  emptyMessage = "등록된 마켓이 없습니다.",
   markets,
   selectedMarketId,
+  onManageMarket,
   onSelectMarket,
 }: {
-  actionLabel?: string;
+  emptyMessage?: string;
   markets: Market[];
   selectedMarketId: string | null;
+  onManageMarket?: (market: Market) => void;
   onSelectMarket: (marketId: string) => void;
 }) {
   if (markets.length === 0) {
     return (
       <div className="px-4 py-12 text-center text-sm text-zinc-500">
-        등록된 마켓이 없습니다.
+        {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="divide-y divide-zinc-100 border-t border-zinc-200">
       {markets.map((market) => {
         const isSelected = selectedMarketId === market.id;
 
         return (
-          <button
+          <article
             className={cn(
-              "group flex min-h-[220px] flex-col justify-between rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2",
-              isSelected && "border-emerald-400 bg-emerald-50",
+              "grid cursor-pointer gap-4 px-4 py-4 transition hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_auto] lg:items-center",
+              isSelected && "bg-emerald-50",
             )}
             data-testid="receipt-market-row"
             key={market.id}
             onClick={() => onSelectMarket(market.id)}
-            type="button"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelectMarket(market.id);
+              }
+            }}
+            role="button"
+            tabIndex={0}
           >
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold text-emerald-700">
-                    플리마켓
-                  </p>
-                  <h3 className="mt-1 text-lg font-semibold text-zinc-950">
-                    {market.name}
-                  </h3>
-                </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold text-emerald-700">
+                  플리마켓
+                </p>
                 <span
                   className={cn(
                     "rounded-md px-2 py-1 text-xs font-semibold",
@@ -2013,50 +3122,51 @@ function MarketSelectionCards({
                   {marketStatusLabels[market.status]}
                 </span>
               </div>
-
-              <dl className="mt-4 grid gap-3 text-sm">
-                <div>
-                  <dt className="text-xs font-medium text-zinc-500">기간</dt>
-                  <dd className="mt-1 font-medium text-zinc-800">
-                    {formatDateRange(market.startsOn, market.endsOn)}
-                  </dd>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <dt className="text-xs font-medium text-zinc-500">
-                      진행일
-                    </dt>
-                    <dd className="mt-1 font-medium text-zinc-800">
-                      {formatMarketDuration(market.startsOn, market.endsOn)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-zinc-500">
-                      등록일
-                    </dt>
-                    <dd className="mt-1 font-medium text-zinc-800">
-                      {formatDate(market.createdAt)}
-                    </dd>
-                  </div>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-zinc-500">메모</dt>
-                  <dd className="mt-1 line-clamp-2 text-zinc-700">
-                    {market.description ?? "-"}
-                  </dd>
-                </div>
-              </dl>
+              <h3 className="mt-2 truncate text-lg font-semibold text-zinc-950">
+                {market.name}
+              </h3>
+              <p className="mt-2 text-sm font-medium text-zinc-700">
+                {formatDateRange(market.startsOn, market.endsOn)}
+              </p>
             </div>
 
-            <span
-              className={cn(
-                "mt-4 inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 px-3 text-sm font-medium text-zinc-800 transition group-hover:border-emerald-600 group-hover:bg-emerald-600 group-hover:text-white",
-                isSelected && "border-emerald-600 bg-emerald-600 text-white",
+            <dl className="grid gap-3 text-sm sm:grid-cols-[120px_140px_minmax(0,1fr)]">
+              <div>
+                <dt className="text-xs font-medium text-zinc-500">진행일</dt>
+                <dd className="mt-1 font-medium text-zinc-800">
+                  {formatMarketDuration(market.startsOn, market.endsOn)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-zinc-500">등록일</dt>
+                <dd className="mt-1 font-medium text-zinc-800">
+                  {formatDate(market.createdAt)}
+                </dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-xs font-medium text-zinc-500">메모</dt>
+                <dd className="mt-1 truncate text-zinc-700">
+                  {market.description || "-"}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              {onManageMarket && (
+                <button
+                  className={buttonVariants({ intent: "secondary", size: "sm" })}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onManageMarket(market);
+                  }}
+                  type="button"
+                >
+                  <Pencil aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+                  정보 수정
+                </button>
               )}
-            >
-              {actionLabel}
-            </span>
-          </button>
+            </div>
+          </article>
         );
       })}
     </div>
@@ -2066,10 +3176,12 @@ function MarketSelectionCards({
 function ParticipantMasterTable({
   participants,
   linkedParticipantIds = new Set<string>(),
+  onEditParticipant,
   showLinkStatus = true,
 }: {
   participants: Participant[];
   linkedParticipantIds?: Set<string>;
+  onEditParticipant?: (participant: Participant) => void;
   showLinkStatus?: boolean;
 }) {
   if (participants.length === 0) {
@@ -2082,17 +3194,22 @@ function ParticipantMasterTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[860px] border-collapse text-sm">
+      <table className="w-full min-w-[980px] border-collapse text-sm">
         <thead className="bg-zinc-50 text-left text-zinc-500">
           <tr>
             <th className="px-4 py-3 font-medium">부스명</th>
             <th className="px-4 py-3 font-medium">유형</th>
             <th className="px-4 py-3 font-medium">담당자</th>
             <th className="px-4 py-3 font-medium">연락처</th>
+            <th className="px-4 py-3 font-medium">이메일</th>
+            <th className="px-4 py-3 font-medium">상태</th>
             {showLinkStatus && (
               <th className="px-4 py-3 font-medium">선택 마켓</th>
             )}
             <th className="px-4 py-3 font-medium">메모</th>
+            {onEditParticipant && (
+              <th className="px-4 py-3 text-right font-medium">관리</th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -2108,7 +3225,22 @@ function ParticipantMasterTable({
                 {participant.contactName ?? "-"}
               </td>
               <td className="px-4 py-3 text-zinc-700">
-                {participant.phone ?? participant.email ?? "-"}
+                {participant.phone ?? "-"}
+              </td>
+              <td className="max-w-[220px] truncate px-4 py-3 text-zinc-700">
+                {participant.email ?? "-"}
+              </td>
+              <td className="px-4 py-3">
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-1 text-xs font-medium",
+                    participant.status === "active"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-zinc-100 text-zinc-500",
+                  )}
+                >
+                  {participant.status === "active" ? "활성" : "비활성"}
+                </span>
               </td>
               {showLinkStatus && (
                 <td className="px-4 py-3">
@@ -2124,6 +3256,21 @@ function ParticipantMasterTable({
               <td className="max-w-[260px] truncate px-4 py-3 text-zinc-600">
                 {participant.memo ?? "-"}
               </td>
+              {onEditParticipant && (
+                <td className="px-4 py-3 text-right">
+                  <button
+                    className={buttonVariants({
+                      intent: "secondary",
+                      size: "sm",
+                    })}
+                    onClick={() => onEditParticipant(participant)}
+                    type="button"
+                  >
+                    <Pencil aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+                    관리
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -2133,13 +3280,23 @@ function ParticipantMasterTable({
 }
 
 function ParticipantList({
+  deleteDisabled = false,
+  globalSettings,
+  marketSettings,
   participants,
   selectedParticipantId,
+  onDeleteParticipant,
+  onEditParticipant,
   onSelectParticipant,
   emptyMessage = "등록된 참가부스가 없습니다.",
 }: {
+  deleteDisabled?: boolean;
+  globalSettings: SettlementDefaultSettings | null;
+  marketSettings: SettlementDefaultSettings | null;
   participants: Participant[];
   selectedParticipantId: string | null;
+  onDeleteParticipant?: (participant: Participant) => void;
+  onEditParticipant: (participant: Participant) => void;
   onSelectParticipant: (participantId: string) => void;
   emptyMessage?: string;
 }) {
@@ -2156,46 +3313,106 @@ function ParticipantList({
       className="divide-y divide-zinc-100 border-t border-zinc-200"
       data-testid="participant-list"
     >
-      {participants.map((participant) => (
-        <button
-          className={cn(
-            "w-full px-4 py-3 text-left transition hover:bg-emerald-50/50",
-            selectedParticipantId === participant.id && "bg-emerald-50",
-          )}
-          data-testid="participant-row"
-          key={participant.id}
-          onClick={() => onSelectParticipant(participant.id)}
-          type="button"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium text-zinc-950">
-                {participant.displayName}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500">
-                {participantTypeLabels[participant.participantType]}
-              </p>
+      {participants.map((participant) => {
+        const hasMarketSettings = Boolean(marketSettings?.id);
+        const activeScope = getParticipantFeePolicySource(
+          participant,
+          hasMarketSettings,
+        );
+
+        return (
+          <div
+            className={cn(
+              "grid gap-3 px-4 py-3 transition hover:bg-emerald-50/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start",
+              selectedParticipantId === participant.id && "bg-emerald-50",
+            )}
+            data-testid="participant-row"
+            key={participant.id}
+          >
+            <button
+              className="min-w-0 text-left"
+              onClick={() => onSelectParticipant(participant.id)}
+              type="button"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-zinc-950">
+                    {participant.displayName}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {participantTypeLabels[participant.participantType]}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-1 text-xs font-medium",
+                    activeScope === "booth"
+                      ? "bg-amber-100 text-amber-800"
+                      : activeScope === "market"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-zinc-100 text-zinc-600",
+                  )}
+                >
+                  {feeSettingScopeLabels[activeScope]}
+                </span>
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <dt className="text-zinc-500">카드 수수료</dt>
+                  <dd className="mt-1 font-medium text-zinc-800">
+                    {formatParticipantFeeFieldDisplay(
+                      participant,
+                      globalSettings,
+                      marketSettings,
+                      "cardFeeRate",
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">참가비</dt>
+                  <dd className="mt-1 font-medium text-zinc-800">
+                    {formatParticipantFeeFieldDisplay(
+                      participant,
+                      globalSettings,
+                      marketSettings,
+                      "participationFeeAmount",
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                aria-label={`${participant.displayName} 수정`}
+                className={cn(
+                  buttonVariants({ intent: "secondary", size: "sm" }),
+                  "h-10 w-10 px-0",
+                )}
+                onClick={() => onEditParticipant(participant)}
+                title="수정"
+                type="button"
+              >
+                <Pencil aria-hidden className="h-4 w-4" />
+              </button>
+              {onDeleteParticipant && (
+                <button
+                  aria-label={`${participant.displayName} 삭제`}
+                  className={cn(
+                    buttonVariants({ intent: "secondary", size: "sm" }),
+                    "h-10 w-10 border-red-200 px-0 text-red-700 hover:bg-red-50",
+                  )}
+                  disabled={deleteDisabled}
+                  onClick={() => onDeleteParticipant(participant)}
+                  title="삭제"
+                  type="button"
+                >
+                  <Trash2 aria-hidden className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
-              {formatNullablePercent(participant.settings?.salesCommissionRate)}
-            </span>
           </div>
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <dt className="text-zinc-500">카드 수수료</dt>
-              <dd className="mt-1 font-medium text-zinc-800">
-                {formatNullablePercent(participant.settings?.cardFeeRate)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-zinc-500">참가비</dt>
-              <dd className="mt-1 font-medium text-zinc-800">
-                {formatNullableWon(participant.settings?.participationFeeAmount)}
-              </dd>
-            </div>
-          </dl>
-        </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -2285,8 +3502,8 @@ function ReceiptMatrixInputTable({
         <thead className="bg-zinc-50 text-left text-zinc-500">
           <tr>
             <th className="px-4 py-3 font-medium">참가부스</th>
+            <th className="px-4 py-3 font-medium">구매 금액</th>
             <th className="px-4 py-3 font-medium">유형</th>
-            <th className="px-4 py-3 text-right font-medium">구매 금액</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -2295,12 +3512,9 @@ function ReceiptMatrixInputTable({
               <td className="px-4 py-3 font-medium text-zinc-950">
                 {participant.displayName}
               </td>
-              <td className="px-4 py-3 text-zinc-700">
-                {participantTypeLabels[participant.participantType]}
-              </td>
               <td className="px-4 py-3">
                 <input
-                  className={cn(inputClass, "ml-auto max-w-[180px] text-right")}
+                  className={cn(inputClass, "max-w-[180px] text-right")}
                   inputMode="numeric"
                   name={`amount-${participant.id}`}
                   onChange={(event) =>
@@ -2310,6 +3524,9 @@ function ReceiptMatrixInputTable({
                   type="text"
                   value={amounts[participant.id] ?? ""}
                 />
+              </td>
+              <td className="px-4 py-3 text-zinc-700">
+                {participantTypeLabels[participant.participantType]}
               </td>
             </tr>
           ))}
@@ -2530,22 +3747,36 @@ function SettlementPreviewPanel({
   preview,
   history,
   isLoading,
+  isReceiptsLoading,
   isHistoryLoading,
   isConfirming,
   isDownloading,
+  market,
   message,
+  receipts,
+  selectedParticipantId,
   onConfirm,
   onDownloadPdfs,
+  onBackToParticipantList,
+  onOpenParticipantDetail,
+  onOpenSettlementDetail,
 }: {
   preview: MarketSettlementPreview | null;
   history: SettlementListItem[];
   isLoading: boolean;
+  isReceiptsLoading: boolean;
   isHistoryLoading: boolean;
   isConfirming: boolean;
   isDownloading: boolean;
+  market: Market | null;
   message: string | null;
+  receipts: Receipt[];
+  selectedParticipantId: string | null;
   onConfirm: (event: FormEvent<HTMLFormElement>) => void;
   onDownloadPdfs: () => void;
+  onBackToParticipantList: () => void;
+  onOpenParticipantDetail: (participantId: string) => void;
+  onOpenSettlementDetail: (settlementId: string) => void;
 }) {
   if (isLoading) {
     return (
@@ -2570,6 +3801,12 @@ function SettlementPreviewPanel({
       </div>
     );
   }
+
+  const selectedParticipant = selectedParticipantId
+    ? (preview.participants.find(
+        (participant) => participant.participantId === selectedParticipantId,
+      ) ?? null)
+    : null;
 
   return (
     <div>
@@ -2604,12 +3841,12 @@ function SettlementPreviewPanel({
           정산 확정
         </button>
         {message && (
-          <p className="text-sm font-medium text-zinc-700 md:col-span-3">
+          <p className="text-sm font-medium text-red-700 md:col-span-3">
             {message}
           </p>
         )}
       </form>
-      <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-5">
+      <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <SettlementMetric
           label="총매출"
           value={formatWon(preview.netSalesAmount)}
@@ -2631,32 +3868,52 @@ function SettlementPreviewPanel({
           value={formatWon(preview.participantPayoutAmount)}
         />
       </dl>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse text-sm">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">참가부스</th>
-              <th className="px-4 py-3 text-right font-medium">현금</th>
-              <th className="px-4 py-3 text-right font-medium">카드</th>
-              <th className="px-4 py-3 text-right font-medium">계좌이체</th>
-              <th className="px-4 py-3 text-right font-medium">기타</th>
-              <th className="px-4 py-3 text-right font-medium">총매출</th>
-              <th className="px-4 py-3 text-right font-medium">판매 수수료</th>
-              <th className="px-4 py-3 text-right font-medium">카드 수수료</th>
-              <th className="px-4 py-3 text-right font-medium">지급 예정</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {preview.participants.map((participant) => (
-              <SettlementPreviewRow
-                key={participant.participantId}
-                participant={participant}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <SettlementHistoryPanel history={history} isLoading={isHistoryLoading} />
+      {selectedParticipantId ? (
+        <ParticipantDailySalesDetail
+          isReceiptsLoading={isReceiptsLoading}
+          market={market}
+          participant={selectedParticipant}
+          receipts={receipts}
+          onBackToList={onBackToParticipantList}
+        />
+      ) : (
+        <ParticipantSettlementDualChart participants={preview.participants} />
+      )}
+      {!selectedParticipantId && (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1120px] border-collapse text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">참가부스</th>
+                  <th className="px-4 py-3 text-right font-medium">현금</th>
+                  <th className="px-4 py-3 text-right font-medium">카드</th>
+                  <th className="px-4 py-3 text-right font-medium">계좌이체</th>
+                  <th className="px-4 py-3 text-right font-medium">기타</th>
+                  <th className="px-4 py-3 text-right font-medium">총매출</th>
+                  <th className="px-4 py-3 text-right font-medium">판매 수수료</th>
+                  <th className="px-4 py-3 text-right font-medium">카드 수수료</th>
+                  <th className="px-4 py-3 text-right font-medium">지급 예정</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {preview.participants.map((participant) => (
+                  <SettlementPreviewRow
+                    key={participant.participantId}
+                    onSelectParticipant={onOpenParticipantDetail}
+                    participant={participant}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <SettlementHistoryPanel
+            history={history}
+            isLoading={isHistoryLoading}
+            onOpenSettlementDetail={onOpenSettlementDetail}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -2664,9 +3921,11 @@ function SettlementPreviewPanel({
 function SettlementHistoryPanel({
   history,
   isLoading,
+  onOpenSettlementDetail,
 }: {
   history: SettlementListItem[];
   isLoading: boolean;
+  onOpenSettlementDetail: (settlementId: string) => void;
 }) {
   if (isLoading) {
     return (
@@ -2690,7 +3949,7 @@ function SettlementHistoryPanel({
         <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[920px] border-collapse text-sm">
+        <table className="w-full min-w-[1000px] border-collapse text-sm">
           <thead className="bg-zinc-50 text-left text-zinc-500">
             <tr>
               <th className="px-4 py-3 font-medium">회차</th>
@@ -2700,6 +3959,7 @@ function SettlementHistoryPanel({
               <th className="px-4 py-3 text-right font-medium">지급 예정</th>
               <th className="px-4 py-3 text-right font-medium">마켓 손익</th>
               <th className="px-4 py-3 font-medium">메모</th>
+              <th className="px-4 py-3 text-right font-medium">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
@@ -2726,6 +3986,18 @@ function SettlementHistoryPanel({
                 <td className="max-w-[280px] truncate px-4 py-3 text-zinc-600">
                   {settlement.memo ?? "-"}
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    className={buttonVariants({
+                      intent: "secondary",
+                      size: "sm",
+                    })}
+                    onClick={() => onOpenSettlementDetail(settlement.id)}
+                    type="button"
+                  >
+                    상세
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2744,18 +4016,549 @@ function SettlementMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ParticipantSettlementDualChart({
+  participants,
+}: {
+  participants: ParticipantSettlementPreview[];
+}) {
+  const hasSales = participants.some(
+    (participant) =>
+      participant.netSalesAmount > 0 || participant.saleLineCount > 0,
+  );
+
+  if (!hasSales) {
+    return (
+      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+        상점별 판매 데이터가 없습니다.
+      </section>
+    );
+  }
+
+  const chartWidth = Math.max(920, participants.length * 116 + 128);
+  const chartHeight = 320;
+  const chartTop = 34;
+  const chartBottom = 82;
+  const chartLeft = 72;
+  const chartRight = 72;
+  const plotWidth = chartWidth - chartLeft - chartRight;
+  const plotHeight = chartHeight - chartTop - chartBottom;
+  const baselineY = chartTop + plotHeight;
+  const maxAmount = Math.max(
+    1,
+    ...participants.map((participant) => participant.netSalesAmount),
+  );
+  const maxSaleCount = Math.max(
+    1,
+    ...participants.map((participant) => participant.saleLineCount),
+  );
+  const xStep = plotWidth / participants.length;
+  const barWidth = Math.min(48, xStep * 0.46);
+  const points = participants
+    .map((participant, index) => {
+      const x = chartLeft + xStep * index + xStep / 2;
+      const y =
+        baselineY -
+        (participant.saleLineCount / maxSaleCount) * plotHeight;
+
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
+
+  return (
+    <section className="border-b border-zinc-200">
+      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-950">
+            상점별 판매 현황
+          </h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            플리마켓 기간 내 판매 금액과 판매 건수를 함께 확인합니다.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3 text-xs font-medium text-zinc-600">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+            판매 금액
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-0.5 w-4 rounded-full bg-zinc-900" />
+            판매 건수
+          </span>
+        </div>
+      </div>
+      <div className="overflow-x-auto px-4 pb-4">
+        <svg
+          aria-label="상점별 판매 금액과 판매 건수 그래프"
+          className="block"
+          height={chartHeight}
+          role="img"
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          width={chartWidth}
+        >
+          <line
+            stroke="#d4d4d8"
+            strokeWidth="1"
+            x1={chartLeft}
+            x2={chartWidth - chartRight}
+            y1={baselineY}
+            y2={baselineY}
+          />
+          {yTicks.map((tick) => {
+            const y = baselineY - tick * plotHeight;
+            const amountValue = Math.round(maxAmount * tick);
+            const saleCountValue = Math.round(maxSaleCount * tick);
+
+            return (
+              <g key={tick}>
+                <line
+                  stroke="#f4f4f5"
+                  strokeWidth="1"
+                  x1={chartLeft}
+                  x2={chartWidth - chartRight}
+                  y1={y}
+                  y2={y}
+                />
+                <text
+                  fill="#71717a"
+                  fontSize="11"
+                  textAnchor="end"
+                  x={chartLeft - 10}
+                  y={y + 4}
+                >
+                  {formatCompactWon(amountValue)}
+                </text>
+                <text
+                  fill="#71717a"
+                  fontSize="11"
+                  textAnchor="start"
+                  x={chartWidth - chartRight + 10}
+                  y={y + 4}
+                >
+                  {saleCountValue}건
+                </text>
+              </g>
+            );
+          })}
+          <text
+            fill="#52525b"
+            fontSize="12"
+            fontWeight="600"
+            textAnchor="start"
+            x={chartLeft}
+            y="16"
+          >
+            금액
+          </text>
+          <text
+            fill="#52525b"
+            fontSize="12"
+            fontWeight="600"
+            textAnchor="end"
+            x={chartWidth - chartRight}
+            y="16"
+          >
+            건수
+          </text>
+          {participants.map((participant, index) => {
+            const x = chartLeft + xStep * index + xStep / 2;
+            const barHeight =
+              (participant.netSalesAmount / maxAmount) * plotHeight;
+            const y = baselineY - barHeight;
+
+            return (
+              <g key={participant.participantId}>
+                <title>
+                  {participant.displayName}: {formatWon(participant.netSalesAmount)},{" "}
+                  {participant.saleLineCount}건
+                </title>
+                <rect
+                  fill="#10b981"
+                  height={barHeight}
+                  rx="4"
+                  width={barWidth}
+                  x={x - barWidth / 2}
+                  y={y}
+                />
+                <text
+                  fill="#3f3f46"
+                  fontSize="11"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  x={x}
+                  y={baselineY + 24}
+                >
+                  {truncateChartLabel(participant.displayName)}
+                </text>
+                <text
+                  fill="#71717a"
+                  fontSize="10"
+                  textAnchor="middle"
+                  x={x}
+                  y={baselineY + 42}
+                >
+                  {formatCompactWon(participant.netSalesAmount)}
+                </text>
+              </g>
+            );
+          })}
+          <polyline
+            fill="none"
+            points={points}
+            stroke="#18181b"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.5"
+          />
+          {participants.map((participant, index) => {
+            const x = chartLeft + xStep * index + xStep / 2;
+            const y =
+              baselineY -
+              (participant.saleLineCount / maxSaleCount) * plotHeight;
+
+            return (
+              <g key={`${participant.participantId}-count`}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  fill="#ffffff"
+                  r="5"
+                  stroke="#18181b"
+                  strokeWidth="2"
+                />
+                <text
+                  fill="#18181b"
+                  fontSize="10"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  x={x}
+                  y={Math.max(12, y - 10)}
+                >
+                  {participant.saleLineCount}건
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </section>
+  );
+}
+
+type ParticipantDailySalesPoint = {
+  date: string;
+  amount: number;
+  saleCount: number;
+};
+
+function ParticipantDailySalesDetail({
+  isReceiptsLoading,
+  market,
+  participant,
+  receipts,
+  onBackToList,
+}: {
+  isReceiptsLoading: boolean;
+  market: Market | null;
+  participant: ParticipantSettlementPreview | null;
+  receipts: Receipt[];
+  onBackToList: () => void;
+}) {
+  if (!participant) {
+    return (
+      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+        선택한 참가부스 정산 데이터를 찾을 수 없습니다.
+      </section>
+    );
+  }
+
+  if (isReceiptsLoading) {
+    return (
+      <section className="border-b border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+        날짜별 판매 데이터를 불러오는 중입니다.
+      </section>
+    );
+  }
+
+  const dailySales = buildParticipantDailySales(
+    participant.participantId,
+    receipts,
+    market?.startsOn ?? null,
+    market?.endsOn ?? null,
+  );
+
+  return (
+    <section className="border-b border-zinc-200">
+      <div className="grid gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-950">
+            {participant.displayName} 날짜별 판매
+          </h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            {participantTypeLabels[participant.participantType]} ·{" "}
+            {formatMarketDuration(market?.startsOn ?? null, market?.endsOn ?? null)}
+          </p>
+        </div>
+        <div className="grid gap-2 lg:justify-items-end">
+          <button
+            className={buttonVariants({ intent: "secondary", size: "sm" })}
+            onClick={onBackToList}
+            type="button"
+          >
+            <ArrowLeft aria-hidden className="mr-1.5 h-3.5 w-3.5" />
+            목록
+          </button>
+          <dl className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-md border border-zinc-200 px-3 py-2">
+              <dt className="text-xs font-medium text-zinc-500">총매출</dt>
+              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+                {formatWon(participant.netSalesAmount)}
+              </dd>
+            </div>
+            <div className="rounded-md border border-zinc-200 px-3 py-2">
+              <dt className="text-xs font-medium text-zinc-500">판매 건수</dt>
+              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+                {participant.saleLineCount}건
+              </dd>
+            </div>
+            <div className="rounded-md border border-zinc-200 px-3 py-2">
+              <dt className="text-xs font-medium text-zinc-500">평균 판매</dt>
+              <dd className="mt-1 text-sm font-semibold text-zinc-950">
+                {formatWon(
+                  participant.saleLineCount > 0
+                    ? Math.round(
+                        participant.netSalesAmount / participant.saleLineCount,
+                      )
+                    : 0,
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+      <ParticipantDailySalesChart points={dailySales} />
+    </section>
+  );
+}
+
+function ParticipantDailySalesChart({
+  points,
+}: {
+  points: ParticipantDailySalesPoint[];
+}) {
+  const hasSales = points.some((point) => point.amount > 0 || point.saleCount > 0);
+
+  if (!hasSales) {
+    return (
+      <div className="px-4 pb-10 pt-4 text-center text-sm text-zinc-500">
+        날짜별 판매 데이터가 없습니다.
+      </div>
+    );
+  }
+
+  const chartWidth = Math.max(720, points.length * 104 + 128);
+  const chartHeight = 300;
+  const chartTop = 34;
+  const chartBottom = 74;
+  const chartLeft = 72;
+  const chartRight = 72;
+  const plotWidth = chartWidth - chartLeft - chartRight;
+  const plotHeight = chartHeight - chartTop - chartBottom;
+  const baselineY = chartTop + plotHeight;
+  const maxAmount = Math.max(1, ...points.map((point) => point.amount));
+  const maxSaleCount = Math.max(1, ...points.map((point) => point.saleCount));
+  const xStep = plotWidth / points.length;
+  const barWidth = Math.min(42, xStep * 0.44);
+  const linePoints = points
+    .map((point, index) => {
+      const x = chartLeft + xStep * index + xStep / 2;
+      const y = baselineY - (point.saleCount / maxSaleCount) * plotHeight;
+
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
+
+  return (
+    <div className="overflow-x-auto px-4 pb-4">
+      <svg
+        aria-label="날짜별 판매 금액과 판매 건수 그래프"
+        className="block"
+        height={chartHeight}
+        role="img"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        width={chartWidth}
+      >
+        <line
+          stroke="#d4d4d8"
+          strokeWidth="1"
+          x1={chartLeft}
+          x2={chartWidth - chartRight}
+          y1={baselineY}
+          y2={baselineY}
+        />
+        {yTicks.map((tick) => {
+          const y = baselineY - tick * plotHeight;
+          const amountValue = Math.round(maxAmount * tick);
+          const saleCountValue = Math.round(maxSaleCount * tick);
+
+          return (
+            <g key={tick}>
+              <line
+                stroke="#f4f4f5"
+                strokeWidth="1"
+                x1={chartLeft}
+                x2={chartWidth - chartRight}
+                y1={y}
+                y2={y}
+              />
+              <text
+                fill="#71717a"
+                fontSize="11"
+                textAnchor="end"
+                x={chartLeft - 10}
+                y={y + 4}
+              >
+                {formatCompactWon(amountValue)}
+              </text>
+              <text
+                fill="#71717a"
+                fontSize="11"
+                textAnchor="start"
+                x={chartWidth - chartRight + 10}
+                y={y + 4}
+              >
+                {saleCountValue}건
+              </text>
+            </g>
+          );
+        })}
+        <text
+          fill="#52525b"
+          fontSize="12"
+          fontWeight="600"
+          textAnchor="start"
+          x={chartLeft}
+          y="16"
+        >
+          금액
+        </text>
+        <text
+          fill="#52525b"
+          fontSize="12"
+          fontWeight="600"
+          textAnchor="end"
+          x={chartWidth - chartRight}
+          y="16"
+        >
+          건수
+        </text>
+        {points.map((point, index) => {
+          const x = chartLeft + xStep * index + xStep / 2;
+          const barHeight = (point.amount / maxAmount) * plotHeight;
+          const y = baselineY - barHeight;
+
+          return (
+            <g key={point.date}>
+              <title>
+                {formatDate(point.date)}: {formatWon(point.amount)},{" "}
+                {point.saleCount}건
+              </title>
+              <rect
+                fill="#10b981"
+                height={barHeight}
+                rx="4"
+                width={barWidth}
+                x={x - barWidth / 2}
+                y={y}
+              />
+              <text
+                fill="#3f3f46"
+                fontSize="11"
+                fontWeight="600"
+                textAnchor="middle"
+                x={x}
+                y={baselineY + 24}
+              >
+                {formatChartDateLabel(point.date)}
+              </text>
+              <text
+                fill="#71717a"
+                fontSize="10"
+                textAnchor="middle"
+                x={x}
+                y={baselineY + 42}
+              >
+                {formatCompactWon(point.amount)}
+              </text>
+            </g>
+          );
+        })}
+        <polyline
+          fill="none"
+          points={linePoints}
+          stroke="#18181b"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.5"
+        />
+        {points.map((point, index) => {
+          const x = chartLeft + xStep * index + xStep / 2;
+          const y = baselineY - (point.saleCount / maxSaleCount) * plotHeight;
+
+          return (
+            <g key={`${point.date}-count`}>
+              <circle
+                cx={x}
+                cy={y}
+                fill="#ffffff"
+                r="5"
+                stroke="#18181b"
+                strokeWidth="2"
+              />
+              <text
+                fill="#18181b"
+                fontSize="10"
+                fontWeight="600"
+                textAnchor="middle"
+                x={x}
+                y={Math.max(12, y - 10)}
+              >
+                {point.saleCount}건
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 function SettlementPreviewRow({
+  onSelectParticipant,
   participant,
 }: {
+  onSelectParticipant: (participantId: string) => void;
   participant: ParticipantSettlementPreview;
 }) {
   return (
-    <tr data-testid="settlement-row">
+    <tr
+      className="cursor-pointer transition hover:bg-emerald-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+      data-testid="settlement-row"
+      onClick={() => onSelectParticipant(participant.participantId)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelectParticipant(participant.participantId);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <td className="px-4 py-3">
         <p className="font-medium text-zinc-950">{participant.displayName}</p>
         <p className="mt-1 text-xs text-zinc-500">
           {participantTypeLabels[participant.participantType]} ·{" "}
-          {settlementTypeLabels[participant.settlementType]} ·{" "}
           {participant.saleLineCount}건
         </p>
       </td>
@@ -2783,6 +4586,9 @@ function SettlementPreviewRow({
       <td className="px-4 py-3 text-right text-zinc-700">
         {formatWon(participant.cardFeeAmount)}
         <span className="ml-1 text-xs text-zinc-400">
+          {formatPercent(participant.cardFeeRate)}
+        </span>
+        <span className="ml-1 text-xs text-zinc-400">
           {participant.cardFeePayer === "participant" ? "참가부스" : "마켓"}
         </span>
       </td>
@@ -2798,12 +4604,24 @@ function getFormString(formData: FormData, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
+function getCheckboxValue(formData: FormData, name: string): boolean {
+  return formData.get(name) === "on";
+}
+
 function getOptionalFormString(
   formData: FormData,
   name: string,
 ): string | undefined {
   const value = getFormString(formData, name).trim();
   return value || undefined;
+}
+
+function getNullableFormString(
+  formData: FormData,
+  name: string,
+): string | null {
+  const value = getFormString(formData, name).trim();
+  return value || null;
 }
 
 function getNumber(formData: FormData, name: string): number | undefined {
@@ -2836,28 +4654,73 @@ function getPercentRate(formData: FormData, name: string): number | undefined {
   return value === undefined ? undefined : value / 100;
 }
 
-function countFeeSourceFields(
-  scope: FeeSettingScope,
+function getParticipantFeePolicySource(
   participant: Participant,
-  hasMarketSettings: boolean,
-): number {
-  return feeSettingFields.filter(
-    (field) => getFeeFieldSource(participant, field.key, hasMarketSettings) === scope,
-  ).length;
-}
-
-function getFeeFieldSource(
-  participant: Participant,
-  field: FeeSettingFieldKey,
   hasMarketSettings: boolean,
 ): FeeSettingScope {
-  const boothValue = participant.settings?.[field];
-
-  if (boothValue !== null && boothValue !== undefined) {
+  if (participant.settings?.feeSettingOverrideEnabled) {
     return "booth";
   }
 
   return hasMarketSettings ? "market" : "global";
+}
+
+function getParticipantFeeFieldPolicySource(
+  participant: Participant,
+  marketSettings: SettlementDefaultSettings | null | undefined,
+  field: FeeSettingFieldKey,
+): FeeSettingScope {
+  const fieldValue = participant.settings?.[field];
+
+  if (
+    participant.settings?.feeSettingOverrideEnabled &&
+    fieldValue !== null &&
+    fieldValue !== undefined
+  ) {
+    return "booth";
+  }
+
+  return marketSettings?.id ? "market" : "global";
+}
+
+function formatParticipantFeeFieldDisplay(
+  participant: Participant,
+  globalSettings: SettlementDefaultSettings | null | undefined,
+  marketSettings: SettlementDefaultSettings | null | undefined,
+  field: FeeSettingFieldKey,
+): string {
+  const source = getParticipantFeeFieldPolicySource(
+    participant,
+    marketSettings,
+    field,
+  );
+  const value = getParticipantFeeFieldValue(
+    participant,
+    globalSettings,
+    marketSettings,
+    field,
+    source,
+  );
+
+  return `${feeSettingScopeLabels[source]} ${formatFeeFieldValue(field, value)}`;
+}
+
+function getParticipantFeeFieldValue(
+  participant: Participant,
+  globalSettings: SettlementDefaultSettings | null | undefined,
+  marketSettings: SettlementDefaultSettings | null | undefined,
+  field: FeeSettingFieldKey,
+  source: FeeSettingScope,
+): SettlementFeeSettings[FeeSettingFieldKey] | null {
+  if (source === "booth") {
+    return participant.settings?.[field] ?? null;
+  }
+
+  if (source === "market") {
+    return getScopedFeeFieldValue("market", marketSettings, field);
+  }
+
+  return getScopedFeeFieldValue("global", globalSettings, field);
 }
 
 function getScopedFeeFieldValue(
@@ -2883,14 +4746,15 @@ function getScopedFeeFieldValue(
 function formatFeeFieldValue(
   field: FeeSettingFieldKey,
   value: SettlementFeeSettings[FeeSettingFieldKey] | null,
+  fallbackScope?: FeeSettingScope,
 ): string {
   if (value === null || value === undefined) {
-    return "상위 설정";
+    return fallbackScope
+      ? `${feeSettingScopeLabels[fallbackScope]} 사용`
+      : "미설정";
   }
 
   switch (field) {
-    case "settlementType":
-      return settlementTypeLabels[value as SettlementType];
     case "salesCommissionRate":
     case "cardFeeRate":
       return formatPercent(value as number);
@@ -2907,7 +4771,7 @@ function getFeeSettingsPayload(
   formData: FormData,
 ): UpdateSettlementFeeSettingsPayload {
   return {
-    settlementType: getFormString(formData, "settlementType") as SettlementType,
+    settlementType: "commission",
     salesCommissionRate: getPercentRate(formData, "salesCommissionPercent") ?? 0,
     cardFeeRate: getPercentRate(formData, "cardFeePercent") ?? 0,
     cardFeePayer: getFormString(formData, "cardFeePayer") as CardFeePayer,
@@ -2915,30 +4779,24 @@ function getFeeSettingsPayload(
   };
 }
 
-function getOptionalFeeSettingsPayload(
-  formData: FormData,
-): UpdateSettlementFeeSettingsPayload {
-  const settlementType = getOptionalFormString(
-    formData,
-    "settlementType",
-  ) as SettlementType | undefined;
-  const salesCommissionRate = getPercentRate(
-    formData,
-    "salesCommissionPercent",
-  );
-  const cardFeeRate = getPercentRate(formData, "cardFeePercent");
-  const cardFeePayer = getOptionalFormString(
-    formData,
-    "cardFeePayer",
-  ) as CardFeePayer | undefined;
-  const participationFeeAmount = getNumber(formData, "participationFeeAmount");
+function getParticipantFeeSettingsDefaults(
+  participant: Participant | null,
+): SettlementFeeSettings {
+  const settings = participant?.settings;
+
+  if (!settings?.feeSettingOverrideEnabled) {
+    return defaultFeeSettings;
+  }
 
   return {
-    ...(settlementType ? { settlementType } : {}),
-    ...(salesCommissionRate !== undefined ? { salesCommissionRate } : {}),
-    ...(cardFeeRate !== undefined ? { cardFeeRate } : {}),
-    ...(cardFeePayer ? { cardFeePayer } : {}),
-    ...(participationFeeAmount !== undefined ? { participationFeeAmount } : {}),
+    settlementType: "commission",
+    salesCommissionRate:
+      settings.salesCommissionRate ?? defaultFeeSettings.salesCommissionRate,
+    cardFeeRate: settings.cardFeeRate ?? defaultFeeSettings.cardFeeRate,
+    cardFeePayer: settings.cardFeePayer ?? defaultFeeSettings.cardFeePayer,
+    participationFeeAmount:
+      settings.participationFeeAmount ??
+      defaultFeeSettings.participationFeeAmount,
   };
 }
 
@@ -2984,12 +4842,14 @@ function buildReceiptPayload({
   paymentMethod,
   paymentSplits,
   saleLines,
+  soldAt,
 }: {
   customerLabel?: string;
   memo?: string;
   paymentMethod: PaymentMethod | "";
   paymentSplits?: CreateReceiptPaymentSplitPayload[];
   saleLines: ReceiptLineDraft[];
+  soldAt?: string;
 }): CreateReceiptPayload {
   if (saleLines.length === 0) {
     throw new Error("부스별 구매 금액을 하나 이상 입력해주세요.");
@@ -3032,6 +4892,7 @@ function buildReceiptPayload({
         },
       ],
     })),
+    soldAt,
   };
 }
 
@@ -3201,6 +5062,270 @@ function formatDate(value: string | null): string {
   }
 }
 
+function getDefaultReceiptDateTimeInputValue(
+  startsOn: string | null,
+  endsOn: string | null,
+): string {
+  const now = new Date();
+
+  if (isDateTimeWithinReceiptPeriod(now, startsOn, endsOn)) {
+    return formatDateTimeInputValue(now);
+  }
+
+  const endDate = parseDateOnly(endsOn ?? "");
+  if (endDate) {
+    endDate.setHours(23, 59, 0, 0);
+    return formatDateTimeInputValue(endDate);
+  }
+
+  const startDate = parseDateOnly(startsOn ?? "");
+  if (startDate) {
+    startDate.setHours(0, 0, 0, 0);
+    return formatDateTimeInputValue(startDate);
+  }
+
+  return formatDateTimeInputValue(now);
+}
+
+function buildReceiptSoldAtFromDateTimeInput(
+  value: string,
+  startsOn: string | null,
+  endsOn: string | null,
+): string {
+  const date = parseLocalDateTimeInput(value);
+
+  if (!date) {
+    throw new Error("구매 날짜와 시간을 입력해주세요.");
+  }
+
+  if (!isDateTimeWithinReceiptPeriod(date, startsOn, endsOn)) {
+    throw new Error("구매 날짜와 시간은 플리마켓 기간 내로 설정해주세요.");
+  }
+
+  return date.toISOString();
+}
+
+function getReceiptDateTimeMin(startsOn: string | null): string | undefined {
+  return startsOn ? `${startsOn}T00:00` : undefined;
+}
+
+function getReceiptDateTimeMax(endsOn: string | null): string | undefined {
+  return endsOn ? `${endsOn}T23:59` : undefined;
+}
+
+function isDateTimeWithinReceiptPeriod(
+  date: Date,
+  startsOn: string | null,
+  endsOn: string | null,
+): boolean {
+  const startDate = parseDateOnly(startsOn ?? "");
+  const endDate = parseDateOnly(endsOn ?? "");
+
+  if (startDate && date.getTime() < startDate.getTime()) {
+    return false;
+  }
+
+  if (endDate) {
+    endDate.setHours(23, 59, 59, 999);
+    if (date.getTime() > endDate.getTime()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function parseLocalDateTimeInput(value: string): Date | null {
+  const [datePart, timePart] = value.split("T");
+  const date = parseDateOnly(datePart ?? "");
+
+  if (!date || !timePart) {
+    return null;
+  }
+
+  const [hours, minutes] = timePart.split(":").map(Number);
+
+  if (
+    hours === undefined ||
+    minutes === undefined ||
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes)
+  ) {
+    return null;
+  }
+
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+function formatDateTimeInputValue(date: Date): string {
+  return `${getDateOnlyKey(date)}T${String(date.getHours()).padStart(
+    2,
+    "0",
+  )}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function formatChartDateLabel(value: string): string {
+  const [, month, day] = value.split("-");
+
+  return month && day ? `${Number(month)}/${Number(day)}` : value;
+}
+
+function buildParticipantDailySales(
+  participantId: string,
+  receipts: Receipt[],
+  startsOn: string | null,
+  endsOn: string | null,
+): ParticipantDailySalesPoint[] {
+  const salesByDate = new Map<string, ParticipantDailySalesPoint>();
+
+  for (const receipt of receipts) {
+    const date = getLocalDateKey(receipt.soldAt);
+
+    for (const saleLine of receipt.saleLines) {
+      if (saleLine.participantId !== participantId) {
+        continue;
+      }
+
+      const point = salesByDate.get(date) ?? {
+        date,
+        amount: 0,
+        saleCount: 0,
+      };
+
+      point.amount += saleLine.netAmount;
+      point.saleCount += 1;
+      salesByDate.set(date, point);
+    }
+  }
+
+  const dateRange = buildDateRange(
+    startsOn ?? getFirstSalesDate(salesByDate),
+    endsOn ?? getLastSalesDate(salesByDate),
+  );
+
+  if (dateRange.length === 0) {
+    return [...salesByDate.values()].sort((left, right) =>
+      left.date.localeCompare(right.date),
+    );
+  }
+
+  return dateRange.map(
+    (date) =>
+      salesByDate.get(date) ?? {
+        date,
+        amount: 0,
+        saleCount: 0,
+      },
+  );
+}
+
+function buildDateRange(
+  startsOn: string | null,
+  endsOn: string | null,
+): string[] {
+  if (!startsOn && !endsOn) {
+    return [];
+  }
+
+  const startDate = parseDateOnly(startsOn ?? endsOn ?? "");
+  const endDate = parseDateOnly(endsOn ?? startsOn ?? "");
+
+  if (!startDate || !endDate) {
+    return [];
+  }
+
+  const dates: string[] = [];
+  const currentDate = new Date(startDate);
+
+  while (currentDate.getTime() <= endDate.getTime()) {
+    dates.push(getDateOnlyKey(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function parseDateOnly(value: string): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function getLocalDateKey(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value.slice(0, 10);
+  }
+
+  return getDateOnlyKey(date);
+}
+
+function getDateOnlyKey(date: Date): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function getFirstSalesDate(
+  salesByDate: Map<string, ParticipantDailySalesPoint>,
+): string | null {
+  return [...salesByDate.keys()].sort()[0] ?? null;
+}
+
+function getLastSalesDate(
+  salesByDate: Map<string, ParticipantDailySalesPoint>,
+): string | null {
+  return [...salesByDate.keys()].sort().at(-1) ?? null;
+}
+
+function filterMarketsByLifecycle(
+  markets: Market[],
+  filter: MarketLifecycleFilter,
+): Market[] {
+  if (filter === "all") {
+    return markets;
+  }
+
+  return markets.filter((market) => getMarketLifecycle(market.status) === filter);
+}
+
+function sortMarketsByNewest(markets: Market[]): Market[] {
+  return [...markets].sort(
+    (left, right) => getMarketSortTime(right) - getMarketSortTime(left),
+  );
+}
+
+function getMarketSortTime(market: Market): number {
+  const time = Date.parse(market.startsOn ?? market.endsOn ?? market.createdAt);
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function getMarketLifecycle(status: MarketStatus): Exclude<MarketLifecycleFilter, "all"> {
+  switch (status) {
+    case "draft":
+      return "upcoming";
+    case "active":
+      return "active";
+    case "closed":
+    case "archived":
+    default:
+      return "ended";
+  }
+}
+
 function getMarketStatusBadgeClass(status: MarketStatus): string {
   switch (status) {
     case "active":
@@ -3219,16 +5344,30 @@ function formatWon(value: number): string {
   return `${formatMoneyAmount(value)}원`;
 }
 
+function formatCompactWon(value: number): string {
+  if (value >= 100_000_000) {
+    return `${formatCompactNumber(value / 100_000_000)}억`;
+  }
+
+  if (value >= 10_000) {
+    return `${formatCompactNumber(value / 10_000)}만`;
+  }
+
+  return `${formatMoneyAmount(value)}원`;
+}
+
+function formatCompactNumber(value: number): string {
+  return value >= 10
+    ? String(Math.round(value))
+    : value.toFixed(1).replace(/\.0$/, "");
+}
+
+function truncateChartLabel(value: string): string {
+  return value.length > 7 ? `${value.slice(0, 7)}...` : value;
+}
+
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(2).replace(/\\.00$/, "")}%`;
-}
-
-function formatNullablePercent(value: number | null | undefined): string {
-  return value === null || value === undefined ? "상위 설정" : formatPercent(value);
-}
-
-function formatNullableWon(value: number | null | undefined): string {
-  return value === null || value === undefined ? "상위 설정" : formatWon(value);
 }
 
 function formatRateInput(value: number | null | undefined): string {

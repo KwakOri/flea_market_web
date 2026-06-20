@@ -10,6 +10,7 @@ export type ParticipantSettlementSettings = {
   marketParticipantId: string | null;
   participantId: string;
   marketId: string | null;
+  feeSettingOverrideEnabled: boolean;
   settlementType: SettlementType | null;
   salesCommissionRate: number | null;
   cardFeeRate: number | null;
@@ -46,11 +47,23 @@ export type CreateParticipantPayload = {
   phone?: string;
   email?: string;
   memo?: string;
+  feeSettingOverrideEnabled?: boolean;
   settlementType?: SettlementType;
   salesCommissionRate?: number;
   cardFeeRate?: number;
   cardFeePayer?: CardFeePayer;
   participationFeeAmount?: number;
+};
+
+export type UpdateParticipantPayload = Omit<
+  CreateParticipantPayload,
+  "contactName" | "email" | "memo" | "participantId" | "phone"
+> & {
+  contactName?: string | null;
+  email?: string | null;
+  memo?: string | null;
+  phone?: string | null;
+  status?: ParticipantStatus;
 };
 
 export async function listParticipantMasters(): Promise<Participant[]> {
@@ -62,6 +75,16 @@ export async function createParticipantMaster(
 ): Promise<Participant> {
   return apiRequest<Participant>("/participants", {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateParticipantMaster(
+  participantId: string,
+  payload: UpdateParticipantPayload,
+): Promise<Participant> {
+  return apiRequest<Participant>(`/participants/${participantId}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
@@ -80,4 +103,30 @@ export async function createParticipant(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function updateParticipantForMarket(
+  marketId: string,
+  participantId: string,
+  payload: UpdateParticipantPayload,
+): Promise<Participant> {
+  return apiRequest<Participant>(
+    `/markets/${marketId}/participants/${participantId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function deleteParticipantFromMarket(
+  marketId: string,
+  participantId: string,
+): Promise<void> {
+  return apiRequest<void>(
+    `/markets/${marketId}/participants/${participantId}`,
+    {
+      method: "DELETE",
+    },
+  );
 }

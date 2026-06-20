@@ -1,10 +1,10 @@
 import { cva } from "class-variance-authority";
 
 export const pageShellClass =
-  "min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-950";
+  "min-h-screen min-w-0 bg-zinc-50 text-zinc-950";
 
 export const appShellClass =
-  "flex w-full max-w-none flex-col gap-5 px-4 py-5 sm:px-6";
+  "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
 
 export const buttonVariants = cva(
   "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
@@ -69,7 +69,7 @@ export const selectVariants = cva(
 );
 
 export const dashboardTabListClass =
-  "flex w-full overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-1 sm:inline-flex sm:w-auto";
+  "flex w-full max-w-full flex-wrap rounded-lg border border-zinc-200 bg-zinc-100 p-1 xl:inline-flex xl:w-auto";
 
 export const dashboardTabVariants = cva(
   "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 sm:min-w-28",
@@ -87,7 +87,7 @@ export const dashboardTabVariants = cva(
 );
 
 export const panelVariants = cva(
-  "rounded-lg border border-zinc-200 bg-white shadow-sm",
+  "min-w-0 rounded-lg border border-zinc-200 bg-white shadow-sm",
   {
     variants: {
       padding: {
@@ -103,7 +103,7 @@ export const panelVariants = cva(
 );
 
 export const statCardVariants = cva(
-  "min-h-[92px] rounded-lg border border-zinc-200 bg-white p-4 shadow-sm",
+  "min-h-[92px] min-w-0 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm",
 );
 
 export const sectionHeaderClass = "border-b border-zinc-200 px-4 py-3";

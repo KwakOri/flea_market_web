@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
+import { SettlementVersionDetailClient } from "@/app/settlement-version-detail-client";
 
-export default async function SettlementsMarketPage({
+export default async function SettlementVersionPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  redirect(`/markets/${id}/settlements`);
+  return <SettlementVersionDetailClient settlementId={id} />;
 }

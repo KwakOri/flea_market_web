@@ -166,6 +166,10 @@ export type CreateSettlementPayload = {
   memo?: string;
 };
 
+export type VoidSettlementPayload = {
+  memo?: string;
+};
+
 export async function getSettlementPreview(
   marketId: string,
 ): Promise<MarketSettlementPreview> {
@@ -192,6 +196,16 @@ export async function createSettlement(
 
 export async function getSettlement(settlementId: string): Promise<Settlement> {
   return apiRequest<Settlement>(`/settlements/${settlementId}`);
+}
+
+export async function voidSettlement(
+  settlementId: string,
+  payload: VoidSettlementPayload,
+): Promise<Settlement> {
+  return apiRequest<Settlement>(`/settlements/${settlementId}/void`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function downloadSettlementPdfArchive(
