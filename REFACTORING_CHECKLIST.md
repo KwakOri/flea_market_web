@@ -36,10 +36,10 @@
 - [x] 조회/수수료 표 뷰 추가 분리
   - [x] 영수증 조회 matrix 영역 분리
   - [x] 수수료 정책 status matrix/card 분리
-- [ ] 스타일 variant 추가 정리
-  - [ ] 반복 table shell/header/cell 스타일 후보 정리
-  - [ ] badge/status card variant 후보 정리
-  - [ ] 과한 조건부 className을 cva로 이동
+- [x] 스타일 variant 추가 정리
+  - [x] 수수료 matrix cell/field 상태 variant 정리
+  - [x] 상태 텍스트 variant 정리
+  - [x] 과한 조건부 className 일부를 component-local cva로 이동
 
 ## 검증 기준
 

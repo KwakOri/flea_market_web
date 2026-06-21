@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { cva } from "class-variance-authority";
 import { CircleDollarSign } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import type { SettlementDefaultSettings } from "@/services/settlement-settings.service";
@@ -14,7 +15,54 @@ import {
   type FeeSettingScope,
 } from "@/features/fees/lib/fee-policy";
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
-import { cn } from "@/lib/utils";
+
+const feeApplicationCellVariants = cva(
+  "grid h-full min-h-[154px] content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity",
+  {
+    variants: {
+      active: {
+        true: "border-[#1f8a4d] bg-[#e6f4ec]",
+        false: "opacity-50 hover:opacity-75",
+      },
+    },
+  },
+);
+
+const feeApplicationStatusTextVariants = cva(
+  "font-mono text-[9.5px] font-bold",
+  {
+    variants: {
+      active: {
+        true: "text-[#1f8a4d]",
+        false: "text-[#bdb9a8]",
+      },
+    },
+  },
+);
+
+const feeSettingFieldRowVariants = cva(
+  "grid min-h-7 grid-cols-[76px_minmax(0,1fr)_38px] items-center gap-2 rounded-md px-2 py-1",
+  {
+    variants: {
+      active: {
+        true: "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
+        false: "",
+      },
+    },
+  },
+);
+
+const feeSettingFieldStatusVariants = cva(
+  "text-right font-mono text-[11px] font-semibold",
+  {
+    variants: {
+      active: {
+        true: "text-[#1f8a4d]",
+        false: "text-[#c4c0ae]",
+      },
+    },
+  },
+);
 
 export function FeeApplicationMatrix({
   globalSettings,
@@ -160,27 +208,14 @@ function FeeApplicationCell({
   const isUnavailable = !settings;
 
   return (
-    <div
-      className={cn(
-        "grid h-full min-h-[154px] content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity",
-        isActive && "border-[#1f8a4d] bg-[#e6f4ec]",
-        !isActive && "opacity-50 hover:opacity-75",
-      )}
-    >
+    <div className={feeApplicationCellVariants({ active: isActive })}>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <p className="min-w-0 truncate text-xs font-semibold text-[#56564a]">
           {title}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
           <span
-            className={cn(
-              "font-mono text-[9.5px] font-bold",
-              isActive
-                ? "text-[#1f8a4d]"
-                : isUnavailable
-                  ? "text-[#bdb9a8]"
-                  : "text-[#bdb9a8]",
-            )}
+            className={feeApplicationStatusTextVariants({ active: isActive })}
           >
             {isActive ? "적용 중" : isUnavailable ? "미설정" : "대기"}
           </span>
@@ -196,10 +231,7 @@ function FeeApplicationCell({
           {feeSettingFields.map((field) => {
             return (
               <div
-                className={cn(
-                  "grid min-h-7 grid-cols-[76px_minmax(0,1fr)_38px] items-center gap-2 rounded-md px-2 py-1",
-                  isActive && "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
-                )}
+                className={feeSettingFieldRowVariants({ active: isActive })}
                 key={field.key}
               >
                 <dt className="text-xs text-[#8a8775]">{field.label}</dt>
@@ -211,10 +243,9 @@ function FeeApplicationCell({
                   )}
                 </dd>
                 <span
-                  className={cn(
-                    "text-right font-mono text-[11px] font-semibold",
-                    isActive ? "text-[#1f8a4d]" : "text-[#c4c0ae]",
-                  )}
+                  className={feeSettingFieldStatusVariants({
+                    active: isActive,
+                  })}
                 >
                   {isActive ? "적용" : "-"}
                 </span>
