@@ -33,9 +33,9 @@
   - [x] 좌측 레일 컴포넌트 분리
   - [x] 헤더/마켓 요약 컴포넌트 분리
   - [x] 컨텐츠 컨테이너를 shell 조립부에만 유지
-- [ ] 조회/수수료 표 뷰 추가 분리
-  - [ ] 영수증 조회 matrix 영역 분리
-  - [ ] 수수료 정책 status row/card 분리
+- [x] 조회/수수료 표 뷰 추가 분리
+  - [x] 영수증 조회 matrix 영역 분리
+  - [x] 수수료 정책 status matrix/card 분리
 - [ ] 스타일 variant 추가 정리
   - [ ] 반복 table shell/header/cell 스타일 후보 정리
   - [ ] badge/status card variant 후보 정리
