@@ -83,10 +83,10 @@ export function ReceiptMatrixTable({
           />
         ))}
       </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
-        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[1040px] grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden">
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-t-[18px] md:block">
+        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[1040px] grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[18px]">
           <div
-            className="z-20 grid items-center border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
+            className="z-20 grid items-center rounded-tl-[18px] border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
             style={{ gridTemplateColumns: fixedGridTemplate }}
           >
             <div className="px-4 text-center font-semibold">판매 시각</div>
@@ -97,7 +97,7 @@ export function ReceiptMatrixTable({
           </div>
 
           <div
-            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden border-b border-[#2c2d22] bg-[#16170f]"
+            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden rounded-tr-[18px] border-b border-[#2c2d22] bg-[#16170f]"
             data-testid="receipt-booth-header"
             onScroll={handleBoothHeaderScroll}
             ref={boothHeaderRef}
