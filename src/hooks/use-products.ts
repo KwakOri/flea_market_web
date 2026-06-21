@@ -3,33 +3,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createProduct,
-  listProducts,
   updateProduct,
   type CreateProductPayload,
   type UpdateProductPayload,
 } from "@/services/products.service";
 import { invalidateProductsByMarketParticipant } from "@/hooks/query-invalidations";
-import { productKeys } from "@/hooks/query-keys";
+import { productsByMarketParticipantQueryOptions } from "@/hooks/query-options";
 
 export function useProducts(
   marketId: string | null,
   participantId: string | null,
 ) {
-  return useQuery({
-    queryKey: productKeys.byMarketParticipant(marketId, participantId),
-    queryFn: () => {
-      if (!marketId) {
-        throw new Error("Market is required");
-      }
-
-      if (!participantId) {
-        throw new Error("Participant is required");
-      }
-
-      return listProducts(marketId, participantId);
-    },
-    enabled: Boolean(marketId && participantId),
-  });
+  return useQuery(
+    productsByMarketParticipantQueryOptions(marketId, participantId),
+  );
 }
 
 export function useCreateProduct(

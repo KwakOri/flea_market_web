@@ -119,3 +119,70 @@ export function invalidateMarketSettlementSettings(
     queryKey: settlementSettingsKeys.market(marketId),
   });
 }
+
+export function invalidateParticipantMasterWrite(
+  queryClient: QueryClient,
+  participantId?: string,
+) {
+  return Promise.all([
+    invalidateParticipantMasters(queryClient),
+    ...(participantId
+      ? [
+          invalidateParticipantMasterDetail(queryClient, participantId),
+          invalidateAllMarketParticipantLists(queryClient),
+        ]
+      : []),
+  ]);
+}
+
+export function invalidateMarketParticipantWrite(
+  queryClient: QueryClient,
+  marketId: string,
+  participantId?: string,
+) {
+  return Promise.all([
+    invalidateParticipantsByMarket(queryClient, marketId),
+    invalidateParticipantMasters(queryClient),
+    invalidateSettlementPreviewByMarket(queryClient, marketId),
+    ...(participantId
+      ? [invalidateParticipantMasterDetail(queryClient, participantId)]
+      : []),
+  ]);
+}
+
+export function invalidateReceiptWrite(
+  queryClient: QueryClient,
+  marketId: string,
+  receiptId?: string,
+) {
+  return Promise.all([
+    invalidateReceiptsByMarket(queryClient, marketId),
+    invalidateSettlementPreviewByMarket(queryClient, marketId),
+    ...(receiptId ? [invalidateReceiptDetail(queryClient, receiptId)] : []),
+  ]);
+}
+
+export function invalidateSettlementWrite(
+  queryClient: QueryClient,
+  marketId: string,
+  settlementId?: string,
+) {
+  return Promise.all([
+    invalidateSettlementsByMarket(queryClient, marketId),
+    invalidateSettlementPreviewByMarket(queryClient, marketId),
+    ...(settlementId
+      ? [invalidateSettlementDetail(queryClient, settlementId)]
+      : []),
+  ]);
+}
+
+export function invalidateMarketSettlementSettingsWrite(
+  queryClient: QueryClient,
+  marketId: string,
+) {
+  return Promise.all([
+    invalidateMarketSettlementSettings(queryClient, marketId),
+    invalidateParticipantsByMarket(queryClient, marketId),
+    invalidateSettlementPreviewByMarket(queryClient, marketId),
+  ]);
+}

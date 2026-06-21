@@ -3,20 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMarket,
-  listMarkets,
   updateMarket,
   type CreateMarketPayload,
   type UpdateMarketPayload,
 } from "@/services/markets.service";
 import { invalidateMarkets } from "@/hooks/query-invalidations";
-import { marketKeys } from "@/hooks/query-keys";
+import { marketsQueryOptions } from "@/hooks/query-options";
 
 export function useMarkets(enabled: boolean) {
-  return useQuery({
-    queryKey: marketKeys.all,
-    queryFn: listMarkets,
-    enabled,
-  });
+  return useQuery(marketsQueryOptions(enabled));
 }
 
 export function useCreateMarket() {

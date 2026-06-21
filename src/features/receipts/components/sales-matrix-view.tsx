@@ -3,13 +3,10 @@
 import type { FormEventHandler } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { Market } from "@/services/markets.service";
-import type {
-  Participant,
-  ParticipantType,
-} from "@/services/participants.service";
+import type { Participant } from "@/services/participants.service";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
-import { participantTypeLabels } from "@/features/participants/lib/participant-display";
+import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
 import {
   getDefaultReceiptDateTimeInputValue,
   getReceiptDateTimeMax,
@@ -509,24 +506,5 @@ function ReceiptMatrixInputTable({
         </div>
       </div>
     </div>
-  );
-}
-
-function ParticipantTypeBadge({ type }: { type: ParticipantType }) {
-  const classNameByType: Record<ParticipantType, string> = {
-    seller: "bg-[#f1eee2] text-[#8a8775]",
-    staff: "bg-[#26271c] text-[#d7d3bf]",
-    special_booth: "bg-[#eef9d4] text-[#5c7a16]",
-  };
-
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-md px-2 py-1 font-mono text-[10.5px] font-semibold",
-        classNameByType[type],
-      )}
-    >
-      {participantTypeLabels[type]}
-    </span>
   );
 }

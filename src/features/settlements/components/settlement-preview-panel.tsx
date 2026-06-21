@@ -10,6 +10,7 @@ import type {
   SettlementListItem,
 } from "@/services/settlements.service";
 import { formatPercent } from "@/features/fees/lib/fee-policy";
+import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import {
   buildParticipantDailySales,
@@ -935,32 +936,6 @@ function SettlementPreviewRow({
         {formatWon(participant.payoutAmount)}
       </td>
     </tr>
-  );
-}
-
-function ParticipantTypeBadge({
-  type,
-}: {
-  type: ParticipantSettlementPreview["participantType"];
-}) {
-  const classNameByType: Record<
-    ParticipantSettlementPreview["participantType"],
-    string
-  > = {
-    seller: "bg-[#f1eee2] text-[#8a8775]",
-    staff: "bg-[#26271c] text-[#d7d3bf]",
-    special_booth: "bg-[#eef9d4] text-[#5c7a16]",
-  };
-
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-md px-2 py-1 font-mono text-[10.5px] font-semibold",
-        classNameByType[type],
-      )}
-    >
-      {participantTypeLabels[type]}
-    </span>
   );
 }
 

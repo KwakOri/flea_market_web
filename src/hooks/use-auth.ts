@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getCurrentUser,
   login,
   logout,
   register,
@@ -10,14 +9,10 @@ import {
   type RegisterPayload,
 } from "@/services/auth.service";
 import { setCurrentUserCache } from "@/hooks/query-invalidations";
-import { authKeys } from "@/hooks/query-keys";
+import { currentUserQueryOptions } from "@/hooks/query-options";
 
 export function useCurrentUser() {
-  return useQuery({
-    queryKey: authKeys.me,
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  return useQuery(currentUserQueryOptions());
 }
 
 export function useLogin() {

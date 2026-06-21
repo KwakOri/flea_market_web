@@ -5,42 +5,26 @@ import {
   createParticipant,
   createParticipantMaster,
   deleteParticipantFromMarket,
-  listParticipantMasters,
-  listParticipants,
   updateParticipantMaster,
   updateParticipantForMarket,
   type CreateParticipantPayload,
   type UpdateParticipantPayload,
 } from "@/services/participants.service";
 import {
-  invalidateAllMarketParticipantLists,
-  invalidateParticipantMasterDetail,
-  invalidateParticipantMasters,
-  invalidateParticipantsByMarket,
-  invalidateSettlementPreviewByMarket,
+  invalidateMarketParticipantWrite,
+  invalidateParticipantMasterWrite,
 } from "@/hooks/query-invalidations";
-import { participantKeys } from "@/hooks/query-keys";
+import {
+  participantMastersQueryOptions,
+  participantsByMarketQueryOptions,
+} from "@/hooks/query-options";
 
 export function useParticipantMasters(enabled: boolean) {
-  return useQuery({
-    queryKey: participantKeys.masters,
-    queryFn: listParticipantMasters,
-    enabled,
-  });
+  return useQuery(participantMastersQueryOptions(enabled));
 }
 
 export function useParticipants(marketId: string | null) {
-  return useQuery({
-    queryKey: participantKeys.byMarket(marketId),
-    queryFn: () => {
-      if (!marketId) {
-        throw new Error("Market is required");
-      }
-
-      return listParticipants(marketId);
-    },
-    enabled: Boolean(marketId),
-  });
+  return useQuery(participantsByMarketQueryOptions(marketId));
 }
 
 export function useCreateParticipantMaster() {
@@ -50,7 +34,7 @@ export function useCreateParticipantMaster() {
     mutationFn: (payload: CreateParticipantPayload) =>
       createParticipantMaster(payload),
     onSuccess: () => {
-      void invalidateParticipantMasters(queryClient);
+      void invalidateParticipantMasterWrite(queryClient);
     },
   });
 }
@@ -67,9 +51,7 @@ export function useUpdateParticipantMaster() {
       payload: UpdateParticipantPayload;
     }) => updateParticipantMaster(participantId, payload),
     onSuccess: (participant) => {
-      void invalidateParticipantMasters(queryClient);
-      void invalidateParticipantMasterDetail(queryClient, participant.id);
-      void invalidateAllMarketParticipantLists(queryClient);
+      void invalidateParticipantMasterWrite(queryClient, participant.id);
     },
   });
 }
@@ -87,9 +69,7 @@ export function useCreateParticipant(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void invalidateParticipantsByMarket(queryClient, marketId);
-        void invalidateParticipantMasters(queryClient);
-        void invalidateSettlementPreviewByMarket(queryClient, marketId);
+        void invalidateMarketParticipantWrite(queryClient, marketId);
       }
     },
   });
@@ -114,12 +94,12 @@ export function useUpdateParticipantForMarket(marketId: string | null) {
     },
     onSuccess: (participant) => {
       if (marketId) {
-        void invalidateParticipantsByMarket(queryClient, marketId);
-        void invalidateSettlementPreviewByMarket(queryClient, marketId);
+        void invalidateMarketParticipantWrite(
+          queryClient,
+          marketId,
+          participant.id,
+        );
       }
-
-      void invalidateParticipantMasters(queryClient);
-      void invalidateParticipantMasterDetail(queryClient, participant.id);
     },
   });
 }
@@ -137,11 +117,8 @@ export function useDeleteParticipantFromMarket(marketId: string | null) {
     },
     onSuccess: () => {
       if (marketId) {
-        void invalidateParticipantsByMarket(queryClient, marketId);
-        void invalidateSettlementPreviewByMarket(queryClient, marketId);
+        void invalidateMarketParticipantWrite(queryClient, marketId);
       }
-
-      void invalidateParticipantMasters(queryClient);
     },
   });
 }
