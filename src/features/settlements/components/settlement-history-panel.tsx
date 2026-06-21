@@ -35,44 +35,44 @@ export function SettlementHistoryPanel({
         <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
       </div>
       <div className="min-w-0 max-w-full overflow-x-auto">
-        <table className="w-full min-w-[1000px] border-collapse text-sm">
+        <table className="w-full min-w-[760px] border-collapse text-sm xl:min-w-[1000px]">
           <thead className="bg-zinc-50 text-left text-zinc-500">
             <tr>
-              <th className="px-4 py-3 font-medium">회차</th>
-              <th className="px-4 py-3 font-medium">상태</th>
-              <th className="px-4 py-3 font-medium">확정 시각</th>
-              <th className="px-4 py-3 text-right font-medium">총매출</th>
-              <th className="px-4 py-3 text-right font-medium">지급 예정</th>
-              <th className="px-4 py-3 text-right font-medium">마켓 손익</th>
-              <th className="px-4 py-3 font-medium">메모</th>
-              <th className="px-4 py-3 text-right font-medium">관리</th>
+              <th className="px-3 py-3 font-medium xl:px-4">회차</th>
+              <th className="px-3 py-3 font-medium xl:px-4">상태</th>
+              <th className="px-3 py-3 font-medium xl:px-4">확정 시각</th>
+              <th className="px-3 py-3 text-right font-medium xl:px-4">총매출</th>
+              <th className="px-3 py-3 text-right font-medium xl:px-4">지급 예정</th>
+              <th className="px-3 py-3 text-right font-medium xl:px-4">마켓 손익</th>
+              <th className="px-3 py-3 font-medium xl:px-4">메모</th>
+              <th className="px-3 py-3 text-right font-medium xl:px-4">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {history.map((settlement) => (
               <tr data-testid="settlement-history-row" key={settlement.id}>
-                <td className="px-4 py-3 font-medium text-zinc-950">
+                <td className="px-3 py-3 font-medium text-zinc-950 xl:px-4">
                   v{settlement.versionNo}
                 </td>
-                <td className="px-4 py-3 text-zinc-700">
+                <td className="px-3 py-3 text-zinc-700 xl:px-4">
                   {settlementStatusLabels[settlement.status]}
                 </td>
-                <td className="px-4 py-3 text-zinc-700">
+                <td className="px-3 py-3 text-zinc-700 xl:px-4">
                   {formatDateTime(settlement.confirmedAt)}
                 </td>
-                <td className="px-4 py-3 text-right font-medium text-zinc-950">
+                <td className="px-3 py-3 text-right font-medium text-zinc-950 xl:px-4">
                   {formatWon(settlement.netSalesAmount)}
                 </td>
-                <td className="px-4 py-3 text-right text-zinc-700">
+                <td className="px-3 py-3 text-right text-zinc-700 xl:px-4">
                   {formatWon(settlement.participantPayoutAmount)}
                 </td>
-                <td className="px-4 py-3 text-right text-zinc-700">
+                <td className="px-3 py-3 text-right text-zinc-700 xl:px-4">
                   {formatWon(settlement.marketProfitAmount)}
                 </td>
-                <td className="max-w-[280px] truncate px-4 py-3 text-zinc-600">
+                <td className="max-w-[220px] truncate px-3 py-3 text-zinc-600 xl:max-w-[280px] xl:px-4">
                   {settlement.memo ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-3 py-3 text-right xl:px-4">
                   <button
                     className={buttonVariants({
                       intent: "secondary",

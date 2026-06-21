@@ -32,9 +32,9 @@ export function DashboardHeader({
   view: DashboardView;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 py-[18px] pl-[calc(76px+1.5rem)] pr-5 backdrop-blur-md sm:pl-[calc(76px+2rem)] sm:pr-8 lg:pl-[calc(76px+2.5rem)] lg:pr-10">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <div className="flex min-w-0 flex-wrap items-center gap-4">
+    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 py-[18px] pl-[calc(76px+1rem)] pr-4 backdrop-blur-md sm:pl-[calc(76px+1.5rem)] sm:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
           {backHref && (
             <button
               className={cn(
@@ -63,7 +63,7 @@ export function DashboardHeader({
             </h1>
           </div>
           {marketDateRange && (
-            <span className="pb-0.5 font-mono text-[11.5px] text-[#8a8775]">
+            <span className="basis-full pb-0.5 font-mono text-[11.5px] text-[#8a8775] sm:basis-auto">
               {marketDateRange}
             </span>
           )}
@@ -88,12 +88,14 @@ export function DashboardHeader({
 
 function DashboardSummary({ items }: { items: DashboardSummaryItem[] }) {
   return (
-    <div className="flex min-w-0 items-stretch overflow-hidden rounded-[14px] border border-[#d8d3c2] bg-[#fbf9f1]">
+    <div className="grid w-full min-w-0 grid-cols-2 items-stretch overflow-hidden rounded-[14px] border border-[#d8d3c2] bg-[#fbf9f1] sm:grid-cols-4 xl:flex xl:w-auto">
       {items.map((item, index) => (
         <div
           className={cn(
-            "min-w-[112px] px-[18px] py-2.5",
-            index > 0 && "border-l border-[#e7e2d2]",
+            "min-w-0 border-[#e7e2d2] px-3 py-2.5 sm:px-4 xl:min-w-[112px] xl:px-[18px]",
+            index % 2 === 1 && "border-l sm:border-l-0",
+            index > 0 && "sm:border-l",
+            index > 1 && "border-t sm:border-t-0",
             item.accent && "bg-[#faf0db]",
           )}
           key={item.label}
@@ -108,7 +110,7 @@ function DashboardSummary({ items }: { items: DashboardSummaryItem[] }) {
           </div>
           <div
             className={cn(
-              "mt-0.5 whitespace-nowrap font-display text-[19px] font-bold",
+              "mt-0.5 truncate whitespace-nowrap font-display text-[17px] font-bold sm:text-[18px] xl:text-[19px]",
               item.accent && "text-[#a9791f]",
             )}
           >
