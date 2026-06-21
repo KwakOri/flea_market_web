@@ -15,6 +15,7 @@ import {
   type FeeSettingScope,
 } from "@/features/fees/lib/fee-policy";
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
+import { cn } from "@/lib/utils";
 
 const feeApplicationCellVariants = cva(
   "grid h-full min-h-0 content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity md:min-h-[154px]",
@@ -22,19 +23,19 @@ const feeApplicationCellVariants = cva(
     variants: {
       active: {
         true: "border-[#1f8a4d] bg-[#e6f4ec]",
-        false: "opacity-50 hover:opacity-75",
+        false: "border-[#f2eee3] bg-[#fffdf8] opacity-30 hover:opacity-50",
       },
     },
   },
 );
 
 const feeApplicationStatusTextVariants = cva(
-  "font-mono text-[9.5px] font-bold",
+  "font-mono text-[9.5px]",
   {
     variants: {
       active: {
-        true: "text-[#1f8a4d]",
-        false: "text-[#bdb9a8]",
+        true: "font-bold text-[#1f8a4d]",
+        false: "font-medium text-[#d7d2c4]",
       },
     },
   },
@@ -53,12 +54,12 @@ const feeSettingFieldRowVariants = cva(
 );
 
 const feeSettingFieldStatusVariants = cva(
-  "text-right font-mono text-[11px] font-semibold",
+  "text-right font-mono text-[11px]",
   {
     variants: {
       active: {
-        true: "text-[#1f8a4d]",
-        false: "text-[#c4c0ae]",
+        true: "font-semibold text-[#1f8a4d]",
+        false: "font-normal text-[#ded9cb]",
       },
     },
   },
@@ -167,7 +168,7 @@ export function FeeApplicationMatrix({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[1120px]">
-          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] bg-[#16170f] px-[22px] py-[13px] font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
+          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-[#16170f] px-[22px] py-[13px] text-center font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
             <span>참가 부스</span>
             <span>전체 기본값</span>
             <span>플리마켓 기본값</span>
@@ -188,7 +189,7 @@ export function FeeApplicationMatrix({
                   data-testid="fee-status-row"
                   key={participant.id}
                 >
-                  <div className="pt-1">
+                  <div className="flex min-h-full flex-col items-center justify-center text-center">
                     <p className="text-[14.5px] font-semibold text-[#1a1b12]">
                       {participant.displayName}
                     </p>
@@ -269,7 +270,14 @@ function FeeApplicationCell({
   return (
     <div className={feeApplicationCellVariants({ active: isActive })}>
       <div className="flex min-w-0 items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-xs font-semibold text-[#56564a]">
+        <p
+          className={cn(
+            "min-w-0 truncate text-xs",
+            isActive
+              ? "font-semibold text-[#56564a]"
+              : "font-medium text-[#b8b3a4]",
+          )}
+        >
           {title}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -282,7 +290,12 @@ function FeeApplicationCell({
         </div>
       </div>
       {isUnavailable ? (
-        <p className="grid min-h-[94px] place-items-center rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm leading-relaxed text-[#8a8775]">
+        <p
+          className={cn(
+            "grid min-h-[94px] place-items-center rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm leading-relaxed",
+            isActive ? "font-medium text-[#8a8775]" : "font-normal text-[#c9c4b7]",
+          )}
+        >
           {unavailableMessage ?? "설정이 없습니다."}
         </p>
       ) : (
@@ -293,8 +306,22 @@ function FeeApplicationCell({
                 className={feeSettingFieldRowVariants({ active: isActive })}
                 key={field.key}
               >
-                <dt className="text-xs text-[#8a8775]">{field.label}</dt>
-                <dd className="truncate font-display font-semibold text-[#1a1b12]">
+                <dt
+                  className={cn(
+                    "text-xs",
+                    isActive ? "font-normal text-[#8a8775]" : "font-light text-[#b8b3a4]",
+                  )}
+                >
+                  {field.label}
+                </dt>
+                <dd
+                  className={cn(
+                    "truncate font-display",
+                    isActive
+                      ? "font-semibold text-[#1a1b12]"
+                      : "font-medium text-[#8f8a7d]",
+                  )}
+                >
                   {formatFeeFieldValue(
                     field.key,
                     getScopedFeeFieldValue(scope, settings, field.key),
