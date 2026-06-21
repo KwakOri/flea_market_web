@@ -34,7 +34,16 @@ export function SettlementHistoryPanel({
       <div className="px-4 py-3">
         <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
       </div>
-      <div className="min-w-0 max-w-full overflow-x-auto">
+      <div className="grid gap-3 px-4 pb-4 md:hidden">
+        {history.map((settlement) => (
+          <SettlementHistoryCard
+            key={settlement.id}
+            settlement={settlement}
+            onOpenSettlementDetail={onOpenSettlementDetail}
+          />
+        ))}
+      </div>
+      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <table className="w-full min-w-[760px] border-collapse text-sm xl:min-w-[1000px]">
           <thead className="bg-zinc-50 text-left text-zinc-500">
             <tr>
@@ -89,6 +98,72 @@ export function SettlementHistoryPanel({
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function SettlementHistoryCard({
+  onOpenSettlementDetail,
+  settlement,
+}: {
+  onOpenSettlementDetail: (settlementId: string) => void;
+  settlement: SettlementListItem;
+}) {
+  return (
+    <article
+      className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-white p-4"
+      data-testid="settlement-history-card"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-display text-lg font-bold text-[#1a1b12]">
+            v{settlement.versionNo}
+          </p>
+          <p className="mt-1 text-sm text-[#56564a]">
+            {settlementStatusLabels[settlement.status]} ·{" "}
+            {formatDateTime(settlement.confirmedAt)}
+          </p>
+        </div>
+        <button
+          className={buttonVariants({ intent: "secondary", size: "sm" })}
+          onClick={() => onOpenSettlementDetail(settlement.id)}
+          type="button"
+        >
+          상세
+        </button>
+      </div>
+      <dl className="grid grid-cols-2 gap-2 text-sm">
+        <SettlementHistoryMetric
+          label="총매출"
+          value={formatWon(settlement.netSalesAmount)}
+        />
+        <SettlementHistoryMetric
+          label="지급 예정"
+          value={formatWon(settlement.participantPayoutAmount)}
+        />
+        <SettlementHistoryMetric
+          label="마켓 손익"
+          value={formatWon(settlement.marketProfitAmount)}
+        />
+        <SettlementHistoryMetric label="메모" value={settlement.memo ?? "-"} />
+      </dl>
+    </article>
+  );
+}
+
+function SettlementHistoryMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-[10px] bg-[#fcfbf6] px-3 py-2">
+      <dt className="font-mono text-[10px] text-[#8a8775]">{label}</dt>
+      <dd className="mt-0.5 truncate font-display font-semibold text-[#1a1b12]">
+        {value}
+      </dd>
     </div>
   );
 }

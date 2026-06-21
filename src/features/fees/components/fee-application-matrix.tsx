@@ -17,7 +17,7 @@ import {
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
 
 const feeApplicationCellVariants = cva(
-  "grid h-full min-h-[154px] content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity",
+  "grid h-full min-h-0 content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity md:min-h-[154px]",
   {
     variants: {
       active: {
@@ -106,7 +106,66 @@ export function FeeApplicationMatrix({
 
   return (
     <div className="overflow-hidden rounded-[18px] bg-white">
-      <div className="min-w-0 max-w-full overflow-x-auto">
+      <div className="grid gap-3 p-3 md:hidden">
+        {participants.map((participant) => {
+          const activeScope = getParticipantFeePolicySource(
+            participant,
+            hasMarketSettings,
+          );
+          const hasBoothSettings =
+            participant.settings?.feeSettingOverrideEnabled === true;
+
+          return (
+            <article
+              className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-[#fcfbf6] p-3"
+              data-testid="fee-status-card"
+              key={participant.id}
+            >
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold text-[#1a1b12]">
+                    {participant.displayName}
+                  </p>
+                  <p className="mt-2">
+                    <ParticipantTypeBadge type={participant.participantType} />
+                  </p>
+                </div>
+                <button
+                  aria-label={`${participant.displayName} 부스별 수수료 설정`}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#d8d3c2] bg-white text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                  onClick={() => onEditParticipant(participant)}
+                  title="부스별 수수료 설정"
+                  type="button"
+                >
+                  <CircleDollarSign aria-hidden className="h-4 w-4" />
+                </button>
+              </div>
+              <FeeApplicationCell
+                isActive={activeScope === "global"}
+                scope="global"
+                settings={resolvedGlobalSettings}
+                title="전체 기본값"
+              />
+              <FeeApplicationCell
+                isActive={activeScope === "market"}
+                scope="market"
+                settings={hasMarketSettings ? marketSettings : null}
+                title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
+                unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
+              />
+              <FeeApplicationCell
+                fallbackScope={hasMarketSettings ? "market" : "global"}
+                isActive={activeScope === "booth"}
+                scope="booth"
+                settings={hasBoothSettings ? participant.settings : null}
+                title={hasBoothSettings ? "부스 설정" : "부스 설정 없음"}
+                unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
+              />
+            </article>
+          );
+        })}
+      </div>
+      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[1120px]">
           <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] bg-[#16170f] px-[22px] py-[13px] font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
             <span>참가 부스</span>

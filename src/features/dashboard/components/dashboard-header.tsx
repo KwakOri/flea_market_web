@@ -32,7 +32,7 @@ export function DashboardHeader({
   view: DashboardView;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 py-[18px] pl-[calc(76px+1rem)] pr-4 backdrop-blur-md sm:pl-[calc(76px+1.5rem)] sm:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
+    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 px-4 py-[18px] backdrop-blur-md sm:px-6 md:pl-[calc(76px+1.5rem)] md:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
           {backHref && (

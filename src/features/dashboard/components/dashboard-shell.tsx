@@ -75,7 +75,7 @@ export function DashboardShell({
           onBack={onBack}
         />
 
-        <div className="min-w-0 py-[30px] pb-14 pl-[calc(76px+1.5rem)] pr-5 sm:pl-[calc(76px+2rem)] sm:pr-8 lg:pl-[calc(76px+2.5rem)] lg:pr-10">
+        <div className="min-w-0 px-4 py-5 pb-28 sm:px-6 md:py-[30px] md:pb-14 md:pl-[calc(76px+1.5rem)] md:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
           {children}
         </div>
       </div>

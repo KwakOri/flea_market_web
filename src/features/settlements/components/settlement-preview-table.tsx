@@ -11,38 +11,146 @@ export function SettlementPreviewTable({
   onOpenParticipantDetail: (participantId: string) => void;
 }) {
   return (
-    <div className="min-w-0 max-w-full overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-      <table className="w-full min-w-[960px] border-collapse text-sm xl:min-w-[1180px]">
-        <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
-          <tr>
-            <th className="px-4 py-3.5 font-semibold xl:px-6">참가 부스</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">현금</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">카드</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">계좌이체</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">기타</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">총매출</th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
-              판매 수수료
-            </th>
-            <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
-              카드 수수료
-            </th>
-            <th className="px-4 py-3.5 text-right font-semibold text-[#c7f94b] xl:px-6">
-              지급 예정
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#f1eee2]">
-          {participants.map((participant) => (
-            <SettlementPreviewRow
-              key={participant.participantId}
-              participant={participant}
-              onSelectParticipant={onOpenParticipantDetail}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="grid gap-3 md:hidden">
+        {participants.map((participant) => (
+          <SettlementPreviewCard
+            key={participant.participantId}
+            participant={participant}
+            onSelectParticipant={onOpenParticipantDetail}
+          />
+        ))}
+      </div>
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:block">
+        <table className="w-full min-w-[960px] border-collapse text-sm xl:min-w-[1180px]">
+          <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
+            <tr>
+              <th className="px-4 py-3.5 font-semibold xl:px-6">
+                참가 부스
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                현금
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                카드
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                계좌이체
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                기타
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                총매출
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                판매 수수료
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold xl:px-6">
+                카드 수수료
+              </th>
+              <th className="px-4 py-3.5 text-right font-semibold text-[#c7f94b] xl:px-6">
+                지급 예정
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#f1eee2]">
+            {participants.map((participant) => (
+              <SettlementPreviewRow
+                key={participant.participantId}
+                participant={participant}
+                onSelectParticipant={onOpenParticipantDetail}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function SettlementPreviewCard({
+  onSelectParticipant,
+  participant,
+}: {
+  onSelectParticipant: (participantId: string) => void;
+  participant: ParticipantSettlementPreview;
+}) {
+  return (
+    <button
+      className="grid gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-4 text-left shadow-[0_1px_3px_rgba(26,27,18,0.05)] transition hover:bg-[#fcfdf7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+      data-testid="settlement-card"
+      onClick={() => onSelectParticipant(participant.participantId)}
+      type="button"
+    >
+      <span className="flex min-w-0 items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block truncate text-[15px] font-semibold text-[#1a1b12]">
+            {participant.displayName}
+          </span>
+          <span className="mt-1 flex items-center gap-1.5">
+            <ParticipantTypeBadge type={participant.participantType} />
+            <span className="font-mono text-[10.5px] text-[#a8a593]">
+              {participant.saleLineCount}건
+            </span>
+          </span>
+        </span>
+        <span className="text-right font-display text-[15px] font-bold text-[#1f8a4d]">
+          {formatWon(participant.payoutAmount)}
+        </span>
+      </span>
+      <span className="grid grid-cols-2 gap-2 text-[13px]">
+        <SettlementCardMetric
+          label="총매출"
+          value={formatWon(participant.netSalesAmount)}
+        />
+        <SettlementCardMetric
+          label="판매 수수료"
+          value={`${formatWon(participant.salesCommissionAmount)} ${formatPercent(
+            participant.salesCommissionRate,
+          )}`}
+        />
+        <SettlementCardMetric
+          label="현금"
+          value={formatWon(participant.cashSalesAmount)}
+        />
+        <SettlementCardMetric
+          label="카드"
+          value={formatWon(participant.cardSalesAmount)}
+        />
+        <SettlementCardMetric
+          label="카드 수수료"
+          value={`${formatWon(participant.cardFeeAmount)} ${
+            participant.cardFeePayer === "participant" ? "참가부스" : "마켓"
+          }`}
+        />
+        <SettlementCardMetric
+          label="계좌/기타"
+          value={`${formatWon(participant.transferSalesAmount)} / ${formatWon(
+            participant.otherSalesAmount,
+          )}`}
+        />
+      </span>
+    </button>
+  );
+}
+
+function SettlementCardMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <span className="min-w-0 rounded-[10px] bg-[#fcfbf6] px-3 py-2">
+      <span className="block font-mono text-[10px] text-[#8a8775]">
+        {label}
+      </span>
+      <span className="mt-0.5 block truncate font-display font-semibold text-[#1a1b12]">
+        {value}
+      </span>
+    </span>
   );
 }
 
