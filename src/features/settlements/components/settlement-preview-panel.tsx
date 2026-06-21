@@ -82,8 +82,8 @@ export function SettlementPreviewPanel({
     : null;
 
   return (
-    <div className="grid gap-[18px] p-0">
-      <dl className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+    <div className="grid min-w-0 gap-[18px] p-0">
+      <dl className="grid min-w-0 gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <SettlementMetric
           label="총매출"
           tone="dark"
@@ -110,7 +110,7 @@ export function SettlementPreviewPanel({
         />
       </dl>
       <form
-        className="grid gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-3.5 shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
+        className="grid min-w-0 gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-3.5 shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
         data-testid="settlement-confirm-form"
         onSubmit={onConfirm}
       >

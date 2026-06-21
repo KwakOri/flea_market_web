@@ -8,15 +8,19 @@ export function DashboardPageTitle({
   title: string;
 }) {
   return (
-    <div className="mb-[22px] flex flex-wrap items-baseline gap-3.5">
-      <h2 className="m-0 font-display text-[30px] font-bold tracking-[-0.025em] text-[#1a1b12]">
+    <div className="mb-5 grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:items-baseline sm:gap-3.5">
+      <h2 className="m-0 min-w-0 font-display text-[26px] font-bold leading-tight text-[#1a1b12] sm:text-[30px]">
         {title}
       </h2>
       {subtitle ? (
-        <span className="font-mono text-xs text-[#8a8775]">{subtitle}</span>
+        <span className="min-w-0 font-mono text-xs leading-relaxed text-[#8a8775]">
+          {subtitle}
+        </span>
       ) : null}
       {eyebrow ? (
-        <span className="font-mono text-[11px] text-[#a8a593]">{eyebrow}</span>
+        <span className="min-w-0 font-mono text-[11px] text-[#a8a593]">
+          {eyebrow}
+        </span>
       ) : null}
     </div>
   );

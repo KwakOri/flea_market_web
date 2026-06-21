@@ -79,7 +79,7 @@ export function SettlementScreen({
   }
 
   return (
-    <div>
+    <div className="min-w-0">
       <DashboardPageTitle
         eyebrow={market?.name ?? "마켓 미선택"}
         subtitle="확정 시 현재 정산 결과가 회차 스냅샷으로 저장됩니다."

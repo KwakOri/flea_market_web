@@ -34,8 +34,8 @@ export function ReceiptPaymentPanel({
   const receiptTotal = sumReceiptAmounts(receiptAmounts);
 
   return (
-    <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-5 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-      <div className="mb-3.5 flex items-center justify-between gap-3">
+    <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-5">
+      <div className="mb-3.5 flex min-w-0 items-center justify-between gap-3">
         <h3 className="font-display text-[15px] font-bold">결제수단 분할</h3>
         <div className="inline-flex rounded-[9px] bg-[#f1eee2] p-[3px]">
           <button
@@ -85,10 +85,10 @@ export function ReceiptPaymentPanel({
                 type="button"
               >
                 <Icon aria-hidden className="h-4 w-4 flex-none" />
-                <span className="flex-1">
+                <span className="min-w-0 flex-1 truncate">
                   {paymentMethodLabels[paymentMethod]}
                 </span>
-                <span className="font-display text-[15px] font-bold">
+                <span className="shrink-0 font-display text-[15px] font-bold">
                   {isActive ? formatWon(receiptTotal) : "0원"}
                 </span>
               </button>
@@ -106,11 +106,13 @@ export function ReceiptPaymentPanel({
                 key={paymentMethod}
               >
                 <label
-                  className="flex items-center gap-2 text-sm font-semibold text-[#56564a]"
+                  className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#56564a]"
                   htmlFor={`matrix-payment-${paymentMethod}`}
                 >
                   <Icon aria-hidden="true" className="h-4 w-4 text-[#8a8775]" />
-                  {paymentMethodLabels[paymentMethod]}
+                  <span className="min-w-0 truncate">
+                    {paymentMethodLabels[paymentMethod]}
+                  </span>
                 </label>
                 <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
                   <input

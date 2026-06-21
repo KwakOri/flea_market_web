@@ -17,7 +17,7 @@ export function ParticipantSettlementDualChart({
 
   if (!hasSales) {
     return (
-      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
         상점별 판매 데이터가 없습니다.
       </section>
     );
@@ -54,9 +54,9 @@ export function ParticipantSettlementDualChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-6 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+    <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-[#1a1b12]">
             상점별 판매 현황
           </h3>

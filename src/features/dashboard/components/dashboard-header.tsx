@@ -32,7 +32,7 @@ export function DashboardHeader({
   view: DashboardView;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 px-4 py-[18px] backdrop-blur-md sm:px-6 md:pl-[calc(76px+1.5rem)] md:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
+    <header className="sticky top-0 z-40 border-b border-[#d8d3c2] bg-[#e9e5d8]/80 py-[18px] pl-4 pr-16 backdrop-blur-md sm:pl-6 sm:pr-16 md:pl-[calc(76px+1.5rem)] md:pr-6 lg:pl-[calc(76px+2rem)] lg:pr-8 xl:pl-[calc(76px+2.5rem)] xl:pr-10">
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
           {backHref && (
@@ -54,11 +54,11 @@ export function DashboardHeader({
               {statusLabel}
             </span>
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 basis-full sm:basis-auto">
             <div className="font-mono text-[10.5px] tracking-[0.08em] text-[#8a8775]">
               {marketName ? "CURRENT MARKET" : "WORKSPACE"}
             </div>
-            <h1 className="mt-0.5 truncate font-display text-[22px] font-bold tracking-[-0.02em] text-[#1a1b12]">
+            <h1 className="mt-0.5 truncate font-display text-[20px] font-bold text-[#1a1b12] sm:text-[22px]">
               {marketName ?? dashboardViewLabels[view]}
             </h1>
           </div>
@@ -110,7 +110,7 @@ function DashboardSummary({ items }: { items: DashboardSummaryItem[] }) {
           </div>
           <div
             className={cn(
-              "mt-0.5 truncate whitespace-nowrap font-display text-[17px] font-bold sm:text-[18px] xl:text-[19px]",
+              "mt-0.5 truncate whitespace-nowrap font-display text-[15px] font-bold leading-tight sm:text-[18px] xl:text-[19px]",
               item.accent && "text-[#a9791f]",
             )}
           >

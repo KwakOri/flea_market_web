@@ -23,7 +23,7 @@ export function FeeStatusView({
   participants: Participant[];
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <DashboardPageTitle
         subtitle="전체 → 플리마켓 → 부스 우선순위로 적용되는 정책입니다."
         title="수수료 정책 현황"

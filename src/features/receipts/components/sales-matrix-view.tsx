@@ -28,18 +28,18 @@ export function SalesMatrixView({
   const hasParticipants = participants.length > 0;
 
   return (
-    <div>
+    <div className="min-w-0">
       <DashboardPageTitle
         eyebrow={selectedMarket?.name ?? "마켓 미선택"}
         subtitle="한 결제 묶음에서 여러 부스 판매 라인을 한 번에 기록합니다."
         title="영수증 입력"
       />
       <form
-        className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
+        className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
         data-testid="receipt-matrix-form"
         onSubmit={onSubmit}
       >
-        <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+        <section className="min-w-0 overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
           <ReceiptDetailsPanel
             hasParticipants={hasParticipants}
             selectedMarket={selectedMarket}
@@ -56,7 +56,7 @@ export function SalesMatrixView({
           <ReceiptTotalSummary />
         </section>
 
-        <aside className="grid gap-5">
+        <aside className="grid min-w-0 gap-5">
           <ReceiptPaymentPanel hasParticipants={hasParticipants} />
           <ReceiptSubmitPanel
             hasParticipants={hasParticipants}

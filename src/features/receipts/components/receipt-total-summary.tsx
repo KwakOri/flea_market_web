@@ -14,7 +14,7 @@ export function ReceiptTotalSummary() {
   const paymentRemaining = Math.max(receiptTotal - paymentSplitTotal, 0);
 
   return (
-    <div className="grid gap-px border-t border-[#e6e2d4] bg-[#e6e2d4] md:grid-cols-3">
+    <div className="grid min-w-0 gap-px border-t border-[#e6e2d4] bg-[#e6e2d4] md:grid-cols-3">
       <ReceiptTotalCell
         label="종합 금액"
         testId="receipt-matrix-total"
@@ -49,7 +49,10 @@ function ReceiptTotalCell({
 }) {
   return (
     <div
-      className={cn("px-6 py-4", accent ? "bg-[#e6f4ec]" : "bg-[#fcfbf6]")}
+      className={cn(
+        "min-w-0 px-4 py-4 sm:px-6",
+        accent ? "bg-[#e6f4ec]" : "bg-[#fcfbf6]",
+      )}
       data-testid={testId}
     >
       <div
@@ -62,7 +65,7 @@ function ReceiptTotalCell({
       </div>
       <div
         className={cn(
-          "mt-1 font-display text-[22px] font-bold",
+          "mt-1 truncate font-display text-[20px] font-bold sm:text-[22px]",
           accent ? "text-[#1f8a4d]" : "text-[#1a1b12]",
         )}
       >

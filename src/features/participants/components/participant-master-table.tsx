@@ -25,7 +25,7 @@ export function ParticipantMasterTable({
 
   return (
     <>
-      <div className="grid gap-3 md:hidden">
+      <div className="grid gap-3 p-3 md:hidden">
         {participants.map((participant) => (
           <ParticipantMasterCard
             isLinked={linkedParticipantIds.has(participant.id)}

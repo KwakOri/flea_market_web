@@ -74,7 +74,7 @@ export function ReceiptMatrixTable({
 
   return (
     <>
-      <div className="grid gap-3 md:hidden">
+      <div className="grid gap-3 p-3 md:hidden">
         {receipts.map((receipt) => (
           <ReceiptMobileCard
             key={receipt.id}

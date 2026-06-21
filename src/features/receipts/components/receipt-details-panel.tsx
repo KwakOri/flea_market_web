@@ -40,7 +40,7 @@ export function ReceiptDetailsPanel({
         );
 
   return (
-    <div className="grid gap-4 border-b border-dashed border-[#e0dbca] bg-[#fcfbf6] px-6 py-5 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 gap-4 border-b border-dashed border-[#e0dbca] bg-[#fcfbf6] px-4 py-5 sm:px-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
       <div className="min-w-0">
         <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
           판매 시각

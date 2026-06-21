@@ -30,7 +30,7 @@ export function ParticipantDailySalesDetail({
 }) {
   if (!participant) {
     return (
-      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
         선택한 참가부스 정산 데이터를 찾을 수 없습니다.
       </section>
     );
@@ -38,7 +38,7 @@ export function ParticipantDailySalesDetail({
 
   if (isReceiptsLoading) {
     return (
-      <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-6 py-12 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
         날짜별 판매 데이터를 불러오는 중입니다.
       </section>
     );
@@ -52,9 +52,9 @@ export function ParticipantDailySalesDetail({
   );
 
   return (
-    <section className="rounded-[18px] border border-[#e6e2d4] bg-white p-6 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-        <div>
+    <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-[#1a1b12]">
             {participant.displayName} 날짜별 판매
           </h3>
@@ -63,7 +63,7 @@ export function ParticipantDailySalesDetail({
             {formatMarketDuration(market?.startsOn ?? null, market?.endsOn ?? null)}
           </p>
         </div>
-        <div className="grid gap-2 lg:justify-items-end">
+        <div className="grid min-w-0 gap-2 lg:justify-items-end">
           <button
             className={buttonVariants({ intent: "secondary", size: "sm" })}
             onClick={onBackToList}
@@ -72,22 +72,22 @@ export function ParticipantDailySalesDetail({
             <ArrowLeft aria-hidden className="mr-1.5 h-3.5 w-3.5" />
             목록
           </button>
-          <dl className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+          <dl className="grid min-w-0 gap-2 sm:grid-cols-3">
+            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
               <dt className="text-xs font-medium text-[#8a8775]">총매출</dt>
-              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
+              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
                 {formatWon(participant.netSalesAmount)}
               </dd>
             </div>
-            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
               <dt className="text-xs font-medium text-[#8a8775]">판매 건수</dt>
-              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
+              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
                 {participant.saleLineCount}건
               </dd>
             </div>
-            <div className="rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
+            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
               <dt className="text-xs font-medium text-[#8a8775]">평균 판매</dt>
-              <dd className="mt-1 text-sm font-semibold text-[#1a1b12]">
+              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
                 {formatWon(
                   participant.saleLineCount > 0
                     ? Math.round(

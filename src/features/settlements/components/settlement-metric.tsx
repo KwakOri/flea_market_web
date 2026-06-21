@@ -38,7 +38,12 @@ export function SettlementMetric({
   }[tone];
 
   return (
-    <div className={cn("rounded-[16px] border p-[18px]", toneClass.card)}>
+    <div
+      className={cn(
+        "min-w-0 rounded-[16px] border p-4 sm:p-[18px]",
+        toneClass.card,
+      )}
+    >
       <dt
         className={cn(
           "font-mono text-[10.5px] tracking-[0.05em]",
@@ -49,7 +54,7 @@ export function SettlementMetric({
       </dt>
       <dd
         className={cn(
-          "mt-1.5 font-display text-[23px] font-bold",
+          "mt-1.5 truncate font-display text-[20px] font-bold leading-tight sm:text-[23px]",
           toneClass.value,
         )}
       >

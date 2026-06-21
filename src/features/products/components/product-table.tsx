@@ -20,7 +20,7 @@ export function ProductTable({
 
   return (
     <>
-      <div className="grid gap-3 md:hidden">
+      <div className="grid gap-3 p-3 md:hidden">
         {products.map((product) => (
           <ProductCard
             key={product.id}

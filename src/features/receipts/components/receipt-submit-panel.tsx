@@ -22,7 +22,7 @@ export function ReceiptSubmitPanel({
   const waitingForSplitAmount = paymentMode === "split" && paymentRemaining !== 0;
 
   return (
-    <section className="rounded-[18px] bg-[#16170f] p-[22px] text-[#f3f0e2]">
+    <section className="min-w-0 rounded-[18px] bg-[#16170f] p-5 text-[#f3f0e2] sm:p-[22px]">
       <div className="mb-3.5 flex items-center gap-2.5">
         <span
           className={cn(
@@ -45,9 +45,9 @@ export function ReceiptSubmitPanel({
           </div>
         </div>
       </div>
-      <div className="flex justify-between border-t border-[#2c2d22] py-1.5 text-[12.5px]">
+      <div className="flex min-w-0 justify-between gap-3 border-t border-[#2c2d22] py-1.5 text-[12.5px]">
         <span className="text-[#9b9a86]">남은 금액</span>
-        <span className="font-display font-bold text-[#c7f94b]">
+        <span className="truncate font-display font-bold text-[#c7f94b]">
           {formatWon(paymentMode === "split" ? paymentRemaining : 0)}
         </span>
       </div>

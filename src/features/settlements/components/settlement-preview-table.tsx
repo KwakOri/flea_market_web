@@ -12,7 +12,7 @@ export function SettlementPreviewTable({
 }) {
   return (
     <>
-      <div className="grid gap-3 md:hidden">
+      <div className="grid gap-3 p-3 md:hidden">
         {participants.map((participant) => (
           <SettlementPreviewCard
             key={participant.participantId}
@@ -99,7 +99,7 @@ function SettlementPreviewCard({
           {formatWon(participant.payoutAmount)}
         </span>
       </span>
-      <span className="grid grid-cols-2 gap-2 text-[13px]">
+      <span className="grid grid-cols-1 gap-2 text-[13px] sm:grid-cols-2">
         <SettlementCardMetric
           label="총매출"
           value={formatWon(participant.netSalesAmount)}
