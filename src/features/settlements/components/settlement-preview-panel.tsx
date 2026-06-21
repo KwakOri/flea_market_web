@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import type { FormEvent } from "react";
-import { Download } from "lucide-react";
-import type { Market } from "@/services/markets.service";
-import type { Receipt } from "@/services/receipts.service";
+import { ParticipantDailySalesDetail } from '@/features/settlements/components/participant-daily-sales-detail';
+import { ParticipantSettlementDualChart } from '@/features/settlements/components/participant-settlement-dual-chart';
+import { SettlementHistoryPanel } from '@/features/settlements/components/settlement-history-panel';
+import { SettlementMetric } from '@/features/settlements/components/settlement-metric';
+import { SettlementPreviewTable } from '@/features/settlements/components/settlement-preview-table';
+import { buttonVariants, inputClass } from '@/lib/design-system';
+import { formatWon } from '@/lib/money';
+import type { Market } from '@/services/markets.service';
+import type { Receipt } from '@/services/receipts.service';
 import type {
   MarketSettlementPreview,
   SettlementListItem,
-} from "@/services/settlements.service";
-import { ParticipantDailySalesDetail } from "@/features/settlements/components/participant-daily-sales-detail";
-import { ParticipantSettlementDualChart } from "@/features/settlements/components/participant-settlement-dual-chart";
-import { SettlementHistoryPanel } from "@/features/settlements/components/settlement-history-panel";
-import { SettlementMetric } from "@/features/settlements/components/settlement-metric";
-import { SettlementPreviewTable } from "@/features/settlements/components/settlement-preview-table";
-import { buttonVariants, inputClass } from "@/lib/design-system";
-import { formatWon } from "@/lib/money";
+} from '@/services/settlements.service';
+import { Download } from 'lucide-react';
+import type { FormEvent } from 'react';
 
 export function SettlementPreviewPanel({
   preview,
@@ -76,13 +76,13 @@ export function SettlementPreviewPanel({
   }
 
   const selectedParticipant = selectedParticipantId
-    ? (preview.participants.find(
-        (participant) => participant.participantId === selectedParticipantId,
-      ) ?? null)
+    ? preview.participants.find(
+        (participant) => participant.participantId === selectedParticipantId
+      ) ?? null
     : null;
 
   return (
-    <div className="grid min-w-0 gap-[18px] p-0">
+    <div className="grid min-w-0 gap-[18px] p-4">
       <dl className="grid min-w-0 gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <SettlementMetric
           label="총매출"
@@ -122,14 +122,14 @@ export function SettlementPreviewPanel({
           type="text"
         />
         <button
-          className={buttonVariants({ intent: "secondary" })}
+          className={buttonVariants({ intent: 'secondary' })}
           data-testid="settlement-pdf-download"
           disabled={isDownloading || preview.receiptCount === 0}
           onClick={onDownloadPdfs}
           type="button"
         >
           <Download aria-hidden className="mr-2 h-4 w-4" />
-          {isDownloading ? "저장 중" : "부스별 PDF 저장"}
+          {isDownloading ? '저장 중' : '부스별 PDF 저장'}
         </button>
         <button
           className={buttonVariants()}
