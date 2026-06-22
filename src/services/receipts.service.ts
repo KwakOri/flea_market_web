@@ -81,8 +81,7 @@ export type CreateSaleLinePayload = {
 
 export type CreateReceiptPayload = {
   marketDayId?: string;
-  receiptNo?: string;
-  customerLabel?: string;
+  receiptNo: string;
   soldAt?: string;
   memo?: string;
   paymentSplits: CreateReceiptPaymentSplitPayload[];
@@ -116,5 +115,11 @@ export async function updateReceipt(
   return apiRequest<Receipt>(`/receipts/${receiptId}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteReceipt(receiptId: string): Promise<void> {
+  return apiRequest<void>(`/receipts/${receiptId}`, {
+    method: "DELETE",
   });
 }

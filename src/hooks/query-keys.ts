@@ -6,6 +6,11 @@ export const healthKeys = {
   status: ["health", "status"] as const,
 };
 
+export const auditLogKeys = {
+  lists: ["audit-logs", "list"] as const,
+  list: (paramsKey: string) => ["audit-logs", "list", paramsKey] as const,
+};
+
 export const marketKeys = {
   all: ["markets"] as const,
 };

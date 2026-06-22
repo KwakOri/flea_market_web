@@ -52,20 +52,26 @@ export function getPaymentSplitsFromAmounts(
 }
 
 export function buildReceiptPayload({
-  customerLabel,
   memo,
   paymentMethod,
   paymentSplits,
+  receiptNo,
   saleLines,
   soldAt,
 }: {
-  customerLabel?: string;
   memo?: string;
   paymentMethod: PaymentMethod | "";
   paymentSplits?: CreateReceiptPaymentSplitPayload[];
+  receiptNo?: string;
   saleLines: ReceiptLineDraft[];
   soldAt?: string;
 }): CreateReceiptPayload {
+  const normalizedReceiptNo = receiptNo?.trim();
+
+  if (!normalizedReceiptNo) {
+    throw new Error("영수증 번호를 입력해주세요.");
+  }
+
   if (saleLines.length === 0) {
     throw new Error("부스별 구매 금액을 하나 이상 입력해주세요.");
   }
@@ -94,9 +100,9 @@ export function buildReceiptPayload({
   }
 
   return {
-    customerLabel,
     memo,
     paymentSplits: receiptPaymentSplits,
+    receiptNo: normalizedReceiptNo,
     saleLines: saleLines.map((saleLine) => ({
       participantId: saleLine.participantId,
       items: [

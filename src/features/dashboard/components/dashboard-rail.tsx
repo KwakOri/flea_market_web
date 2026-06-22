@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   BarChart3,
   ClipboardList,
+  FileClock,
   ListChecks,
   LogOut,
   Menu,
@@ -40,6 +41,7 @@ const dashboardTabs: Array<{
     view: "receiptLookup",
   },
   { icon: BarChart3, label: "정산", segment: "settlements", view: "settlements" },
+  { icon: FileClock, label: "LOG", segment: "logs", view: "logs" },
   { icon: Percent, label: "수수료 정책", segment: "fees", view: "feeStatus" },
   { icon: Users, label: "참가 부스", segment: "booths", view: "booths" },
 ];
@@ -73,7 +75,8 @@ export function DashboardRail({
   const closeRail = useDashboardUiStore((state) => state.closeRail);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navItems = getDashboardNavItems(marketId);
-  const activeItem = navItems.find((item) => item.view === view);
+  const activeView = view === "receiptEdit" ? "receiptLookup" : view;
+  const activeItem = navItems.find((item) => item.view === activeView);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -116,7 +119,7 @@ export function DashboardRail({
         <nav aria-label="업무 화면" className="grid gap-1">
           {navItems.map((item) => (
             <RailLink
-              active={view === item.view}
+              active={activeView === item.view}
               href={item.href}
               icon={item.icon}
               key={item.href}
@@ -227,7 +230,7 @@ export function DashboardRail({
             >
               {navItems.map((item) => (
                 <MobileDrawerLink
-                  active={view === item.view}
+                  active={activeView === item.view}
                   href={item.href}
                   icon={item.icon}
                   key={item.href}

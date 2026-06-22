@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createReceipt,
+  deleteReceipt,
   updateReceipt,
   type CreateReceiptPayload,
   type UpdateReceiptPayload,
@@ -58,6 +59,19 @@ export function useUpdateReceipt(marketId: string | null) {
 
       if (resolvedMarketId) {
         void invalidateReceiptWrite(queryClient, resolvedMarketId, receipt.id);
+      }
+    },
+  });
+}
+
+export function useDeleteReceipt(marketId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (receiptId: string) => deleteReceipt(receiptId),
+    onSuccess: (_result, receiptId) => {
+      if (marketId) {
+        void invalidateReceiptWrite(queryClient, marketId, receiptId);
       }
     },
   });

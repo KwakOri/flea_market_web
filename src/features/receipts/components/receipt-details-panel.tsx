@@ -12,10 +12,14 @@ import { cn } from "@/lib/utils";
 
 export function ReceiptDetailsPanel({
   hasParticipants,
+  memoDefaultValue,
+  receiptNoDefaultValue,
   selectedMarket,
   selectedMarketId,
 }: {
   hasParticipants: boolean;
+  memoDefaultValue?: string;
+  receiptNoDefaultValue?: string;
   selectedMarket: Market | null;
   selectedMarketId: string | null;
 }) {
@@ -99,13 +103,16 @@ export function ReceiptDetailsPanel({
       </div>
       <label className="min-w-0">
         <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
-          구매자
+          영수증 번호
         </span>
         <input
           className={inputClass}
+          defaultValue={receiptNoDefaultValue}
           disabled={!hasParticipants}
-          name="customerLabel"
-          placeholder="현장 고객"
+          maxLength={80}
+          name="receiptNo"
+          placeholder="R1"
+          required
           type="text"
         />
       </label>
@@ -115,6 +122,7 @@ export function ReceiptDetailsPanel({
         </span>
         <input
           className={inputClass}
+          defaultValue={memoDefaultValue}
           disabled={!hasParticipants}
           name="memo"
           placeholder="묶음 결제 · 요청사항"

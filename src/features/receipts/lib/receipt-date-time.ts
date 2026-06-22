@@ -49,6 +49,16 @@ export function getReceiptDateTimeMax(endsOn: string | null): string | undefined
   return endsOn ? `${endsOn}T23:59` : undefined;
 }
 
+export function getReceiptDateTimeInputValue(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return formatDateTimeInputValue(date);
+}
+
 export function parseDateOnly(value: string): Date | null {
   if (!value) {
     return null;

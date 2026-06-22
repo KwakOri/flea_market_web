@@ -6,6 +6,12 @@ import { ParticipantTypeBadge } from "@/features/participants/components/partici
 import { parseOptionalReceiptAmount } from "@/lib/receipt-matrix";
 import { cn } from "@/lib/utils";
 
+const amountInputFrameClass =
+  "flex w-[140px] items-center justify-end gap-[3px] rounded-[9px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-[#16170f] focus-within:bg-[#f7fbe9]";
+
+const amountInputClass =
+  "num min-w-0 flex-1 bg-transparent text-right text-[15px] font-bold outline-none placeholder:text-[#c4c0ae]";
+
 export function ReceiptMatrixInputTable({
   participants,
 }: {
@@ -36,7 +42,7 @@ export function ReceiptMatrixInputTable({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-3">
+          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-[11px]">
             <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
               참가 부스
             </span>
@@ -72,14 +78,17 @@ export function ReceiptMatrixInputTable({
                   <div className="flex justify-end">
                     <div
                       className={cn(
-                        "flex w-[150px] items-center gap-1 rounded-[9px] border px-3 py-2",
+                        amountInputFrameClass,
                         hasAmount
                           ? "border-[#16170f] bg-[#f7fbe9]"
                           : "border-[#e6e2d4] bg-[#fcfbf6]",
                       )}
                     >
                       <input
-                        className="min-w-0 flex-1 bg-transparent text-right font-display text-[15px] font-bold text-[#16170f] outline-none placeholder:text-[#c4c0ae]"
+                        className={cn(
+                          amountInputClass,
+                          hasAmount ? "text-[#16170f]" : "text-[#c4c0ae]",
+                        )}
                         inputMode="numeric"
                         name={`amount-${participant.id}`}
                         onChange={(event) =>
@@ -139,14 +148,18 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
         </div>
         <div
           className={cn(
-            "flex w-[140px] shrink-0 items-center gap-1 rounded-[9px] border px-3 py-2",
+            amountInputFrameClass,
+            "shrink-0",
             hasAmount
               ? "border-[#16170f] bg-[#f7fbe9]"
               : "border-[#e6e2d4] bg-[#fcfbf6]",
           )}
         >
           <input
-            className="min-w-0 flex-1 bg-transparent text-right font-display text-[15px] font-bold text-[#16170f] outline-none placeholder:text-[#c4c0ae]"
+            className={cn(
+              amountInputClass,
+              hasAmount ? "text-[#16170f]" : "text-[#c4c0ae]",
+            )}
             inputMode="numeric"
             name={`mobile-amount-${participant.id}`}
             onChange={(event) =>

@@ -7,7 +7,9 @@ export type DashboardView =
   | "feeStatus"
   | "salesMatrix"
   | "receiptLookup"
-  | "settlements";
+  | "receiptEdit"
+  | "settlements"
+  | "logs";
 
 export type DashboardSummaryItem = {
   accent: boolean;
@@ -24,5 +26,7 @@ export const dashboardViewLabels: Record<DashboardView, string> = {
   feeStatus: "수수료 현황",
   salesMatrix: "영수증 입력",
   receiptLookup: "영수증 조회",
+  receiptEdit: "영수증 수정",
   settlements: "정산",
+  logs: "LOG",
 };

@@ -7,9 +7,11 @@ import { formatWon } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 export function ReceiptSubmitPanel({
+  buttonLabel = "영수증 저장",
   hasParticipants,
   isSubmitting,
 }: {
+  buttonLabel?: string;
   hasParticipants: boolean;
   isSubmitting: boolean;
 }) {
@@ -61,7 +63,7 @@ export function ReceiptSubmitPanel({
         }
         type="submit"
       >
-        영수증 저장
+        {buttonLabel}
       </button>
     </section>
   );

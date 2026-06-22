@@ -17,6 +17,7 @@ import {
   DashboardShell,
   type DashboardView,
 } from "@/features/dashboard/components/dashboard-shell";
+import { AuditLogScreen } from "@/features/audit-logs/components/audit-log-screen";
 import {
   DashboardToast,
   type ToastState,
@@ -42,6 +43,14 @@ function getDashboardBackHref(pathname: string): string | null {
     return null;
   }
 
+  const receiptEditMatch = pathname.match(
+    /^\/markets\/([^/]+)\/receipts\/[^/]+\/edit$/,
+  );
+
+  if (receiptEditMatch?.[1]) {
+    return `/markets/${receiptEditMatch[1]}/receipts`;
+  }
+
   if (pathname.startsWith("/markets/")) {
     return "/markets";
   }
@@ -51,10 +60,12 @@ function getDashboardBackHref(pathname: string): string | null {
 
 export function DashboardClient({
   marketId,
+  receiptId,
   settlementParticipantId,
   view = "home",
 }: {
   marketId?: string;
+  receiptId?: string;
   settlementParticipantId?: string;
   view?: DashboardView;
 }) {
@@ -227,11 +238,13 @@ export function DashboardClient({
           />
         )}
 
-        {view === "salesMatrix" && (
+        {(view === "salesMatrix" || view === "receiptEdit") && (
           <SalesMatrixScreen
             market={selectedMarket}
             marketId={selectedMarketId}
+            mode={view === "receiptEdit" ? "edit" : "create"}
             onSaved={showToast}
+            receiptId={receiptId ?? null}
           />
         )}
 
@@ -239,6 +252,7 @@ export function DashboardClient({
           <ReceiptLookupScreen
             market={selectedMarket}
             marketId={selectedMarketId}
+            onSaved={showToast}
           />
         )}
 
@@ -248,6 +262,15 @@ export function DashboardClient({
             marketId={selectedMarketId}
             selectedParticipantId={settlementParticipantId ?? null}
             onSaved={showToast}
+          />
+        )}
+
+        {view === "logs" && (
+          <AuditLogScreen
+            key={selectedMarketId ?? "all"}
+            markets={markets.data ?? []}
+            selectedMarket={selectedMarket}
+            selectedMarketId={selectedMarketId}
           />
         )}
         <MarketParticipantDialogController

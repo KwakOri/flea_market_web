@@ -8,14 +8,22 @@ import { panelVariants } from "@/lib/design-system";
 
 export function ReceiptLookupView({
   dateRangeLabel,
+  isDeletingReceipt,
   isLoading,
   participants,
+  receiptMessage,
   receipts,
+  onDeleteReceipt,
+  onEditReceipt,
 }: {
   dateRangeLabel: string;
+  isDeletingReceipt: boolean;
   isLoading: boolean;
   participants: Participant[];
+  receiptMessage: string | null;
   receipts: Receipt[];
+  onDeleteReceipt: (receipt: Receipt) => void;
+  onEditReceipt: (receipt: Receipt) => void;
 }) {
   return (
     <div>
@@ -25,12 +33,23 @@ export function ReceiptLookupView({
         title="영수증 조회"
       />
       <section className={panelVariants()}>
+        {receiptMessage && (
+          <p className="border-b border-[#f1eee2] px-5 py-3 text-sm font-semibold text-[#cf3d3d]">
+            {receiptMessage}
+          </p>
+        )}
         {isLoading ? (
           <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
             영수증을 불러오는 중입니다.
           </div>
         ) : (
-          <ReceiptMatrixTable participants={participants} receipts={receipts} />
+          <ReceiptMatrixTable
+            actionsDisabled={isDeletingReceipt}
+            participants={participants}
+            receipts={receipts}
+            onDeleteReceipt={onDeleteReceipt}
+            onEditReceipt={onEditReceipt}
+          />
         )}
       </section>
     </div>

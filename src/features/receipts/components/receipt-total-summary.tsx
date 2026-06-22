@@ -65,7 +65,7 @@ function ReceiptTotalCell({
       </div>
       <div
         className={cn(
-          "mt-1 truncate font-display text-[20px] font-bold sm:text-[22px]",
+          "num mt-1 truncate text-[22px] font-bold",
           accent ? "text-[#1f8a4d]" : "text-[#1a1b12]",
         )}
       >

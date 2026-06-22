@@ -2,20 +2,29 @@
 
 import { useRef } from "react";
 import type { UIEvent } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import type { Receipt } from "@/services/receipts.service";
 import {
   paymentMethodIcons,
   paymentMethodLabels,
 } from "@/features/receipts/lib/payment-method-display";
+import { buttonVariants } from "@/lib/design-system";
 import { formatWon } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 export function ReceiptMatrixTable({
+  actionsDisabled,
   receipts,
   participants,
+  onDeleteReceipt,
+  onEditReceipt,
 }: {
+  actionsDisabled: boolean;
   receipts: Receipt[];
   participants: Participant[];
+  onDeleteReceipt: (receipt: Receipt) => void;
+  onEditReceipt: (receipt: Receipt) => void;
 }) {
   const fixedBodyRef = useRef<HTMLDivElement>(null);
   const boothHeaderRef = useRef<HTMLDivElement>(null);
@@ -33,7 +42,7 @@ export function ReceiptMatrixTable({
     participants.length,
     1,
   )}, minmax(132px, 132px))`;
-  const fixedGridTemplate = "132px 132px 124px 220px 112px";
+  const fixedGridTemplate = "156px 152px 112px";
 
   function syncReceiptScroll(scrollTop: number, scrollLeft: number) {
     if (fixedBodyRef.current) {
@@ -77,21 +86,22 @@ export function ReceiptMatrixTable({
       <div className="grid gap-3 p-3 md:hidden">
         {receipts.map((receipt) => (
           <ReceiptMobileCard
+            actionsDisabled={actionsDisabled}
             key={receipt.id}
+            onDeleteReceipt={onDeleteReceipt}
+            onEditReceipt={onEditReceipt}
             participants={participants}
             receipt={receipt}
           />
         ))}
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-t-[18px] md:block">
-        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[1040px] grid-cols-[720px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[18px]">
+        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[18px]">
           <div
             className="z-20 grid items-center rounded-tl-[18px] border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
             style={{ gridTemplateColumns: fixedGridTemplate }}
           >
             <div className="px-4 text-center font-semibold">판매 시각</div>
-            <div className="px-4 text-center font-semibold">영수증번호</div>
-            <div className="px-4 text-center font-semibold">구매자</div>
             <div className="px-4 text-center font-semibold">결제</div>
             <div className="px-4 text-center font-semibold">합계</div>
           </div>
@@ -134,15 +144,12 @@ export function ReceiptMatrixTable({
                     key={receipt.id}
                     style={{ gridTemplateColumns: fixedGridTemplate }}
                   >
-                    <div className="whitespace-nowrap px-4 text-center font-display text-[13px] text-[#56564a]">
-                      {formatDateTime(receipt.soldAt)}
-                    </div>
-                    <div className="truncate px-4 text-center font-mono text-[11.5px] text-[#8a8775]">
-                      {receipt.receiptNo ?? "-"}
-                    </div>
-                    <div className="truncate px-4 text-center font-semibold text-[#1a1b12]">
-                      {receipt.customerLabel ?? "-"}
-                    </div>
+                    <ReceiptTimeAndNumber
+                      actionsDisabled={actionsDisabled}
+                      receipt={receipt}
+                      onDeleteReceipt={onDeleteReceipt}
+                      onEditReceipt={onEditReceipt}
+                    />
                     <div className="px-4 text-center text-[#56564a]">
                       <ReceiptPaymentSplits receipt={receipt} />
                     </div>
@@ -200,9 +207,15 @@ export function ReceiptMatrixTable({
 }
 
 function ReceiptMobileCard({
+  actionsDisabled,
+  onDeleteReceipt,
+  onEditReceipt,
   participants,
   receipt,
 }: {
+  actionsDisabled: boolean;
+  onDeleteReceipt: (receipt: Receipt) => void;
+  onEditReceipt: (receipt: Receipt) => void;
   participants: Participant[];
   receipt: Receipt;
 }) {
@@ -219,19 +232,22 @@ function ReceiptMobileCard({
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] text-[#8a8775]">
-            {formatDateTime(receipt.soldAt)}
+            {formatReceiptDateTime(receipt.soldAt)}
           </p>
           <h3 className="mt-1 truncate text-[15px] font-semibold text-[#1a1b12]">
-            {receipt.customerLabel ?? "구매자 미입력"}
-          </h3>
-          <p className="mt-1 font-mono text-[10.5px] text-[#a8a593]">
             {receipt.receiptNo ?? "영수증번호 없음"}
-          </p>
+          </h3>
         </div>
         <p className="shrink-0 text-right font-display text-[17px] font-bold text-[#1a1b12]">
           {formatWon(receipt.totalAmount)}
         </p>
       </div>
+      <ReceiptActionButtons
+        actionsDisabled={actionsDisabled}
+        receipt={receipt}
+        onDeleteReceipt={onDeleteReceipt}
+        onEditReceipt={onEditReceipt}
+      />
       <div className="rounded-[10px] bg-[#fcfbf6] px-3 py-2 text-sm text-[#56564a]">
         <ReceiptPaymentSplits receipt={receipt} />
       </div>
@@ -260,6 +276,88 @@ function ReceiptMobileCard({
   );
 }
 
+function ReceiptTimeAndNumber({
+  actionsDisabled,
+  receipt,
+  onDeleteReceipt,
+  onEditReceipt,
+}: {
+  actionsDisabled: boolean;
+  receipt: Receipt;
+  onDeleteReceipt: (receipt: Receipt) => void;
+  onEditReceipt: (receipt: Receipt) => void;
+}) {
+  return (
+    <div className="grid min-w-0 gap-1 px-3 text-center">
+      <span className="whitespace-nowrap font-display text-[13px] text-[#56564a]">
+        {formatReceiptDateTime(receipt.soldAt)}
+      </span>
+      <div className="flex min-w-0 items-center justify-center gap-1">
+        <span className="min-w-0 max-w-[72px] truncate font-mono text-[11.5px] font-semibold text-[#1a1b12]">
+          {receipt.receiptNo ?? "-"}
+        </span>
+        <ReceiptActionButtons
+          actionsDisabled={actionsDisabled}
+          compact
+          receipt={receipt}
+          onDeleteReceipt={onDeleteReceipt}
+          onEditReceipt={onEditReceipt}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReceiptActionButtons({
+  actionsDisabled,
+  compact = false,
+  receipt,
+  onDeleteReceipt,
+  onEditReceipt,
+}: {
+  actionsDisabled: boolean;
+  compact?: boolean;
+  receipt: Receipt;
+  onDeleteReceipt: (receipt: Receipt) => void;
+  onEditReceipt: (receipt: Receipt) => void;
+}) {
+  const receiptLabel = receipt.receiptNo ?? receipt.id;
+
+  return (
+    <div className={cn("flex items-center gap-1", compact && "shrink-0")}>
+      <button
+        aria-label={`영수증 ${receiptLabel} 수정`}
+        className={cn(
+          buttonVariants({ intent: "secondary", size: "sm" }),
+          compact ? "h-6 w-6 rounded-md px-0" : "h-8 w-8 px-0",
+        )}
+        onClick={() => onEditReceipt(receipt)}
+        title="수정"
+        type="button"
+      >
+        <Pencil aria-hidden className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+      </button>
+      <button
+        aria-label={`영수증 ${receiptLabel} 삭제`}
+        className={cn(
+          buttonVariants({ intent: "secondary", size: "sm" }),
+          "border-red-200 text-red-700 hover:bg-red-50",
+          compact ? "h-6 w-6 rounded-md px-0" : "h-8 w-8 px-0",
+        )}
+        disabled={actionsDisabled}
+        onClick={() => onDeleteReceipt(receipt)}
+        title="삭제"
+        type="button"
+      >
+        <Trash2
+          aria-hidden
+          className={compact ? "h-3 w-3" : "h-3.5 w-3.5"}
+        />
+      </button>
+    </div>
+  );
+}
+
 function ReceiptPaymentSplits({ receipt }: { receipt: Receipt }) {
   if (receipt.paymentSplits.length === 0) {
     return <span>-</span>;
@@ -275,7 +373,7 @@ function ReceiptPaymentSplits({ receipt }: { receipt: Receipt }) {
             aria-label={`${paymentMethodLabels[paymentSplit.paymentMethod]} ${formatWon(
               paymentSplit.amount,
             )}`}
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-display text-[13px] leading-none"
             key={paymentSplit.id}
           >
             <Icon
@@ -291,12 +389,17 @@ function ReceiptPaymentSplits({ receipt }: { receipt: Receipt }) {
   );
 }
 
-function formatDateTime(value: string): string {
+function formatReceiptDateTime(value: string): string {
   try {
-    return new Intl.DateTimeFormat("ko-KR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date(value));
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return `${date.getMonth() + 1}.${date.getDate()} ${String(
+      date.getHours(),
+    ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   } catch {
     return value;
   }

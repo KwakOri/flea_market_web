@@ -88,7 +88,7 @@ export function ReceiptPaymentPanel({
                 <span className="min-w-0 flex-1 truncate">
                   {paymentMethodLabels[paymentMethod]}
                 </span>
-                <span className="shrink-0 font-display text-[15px] font-bold">
+                <span className="num shrink-0 text-[15px] font-bold">
                   {isActive ? formatWon(receiptTotal) : "0원"}
                 </span>
               </button>
@@ -116,7 +116,7 @@ export function ReceiptPaymentPanel({
                 </label>
                 <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-2">
                   <input
-                    className={cn(inputClass, "text-right")}
+                    className={cn(inputClass, "num text-right font-bold")}
                     disabled={!hasParticipants || receiptTotal <= 0}
                     id={`matrix-payment-${paymentMethod}`}
                     inputMode="numeric"

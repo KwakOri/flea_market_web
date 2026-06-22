@@ -24,6 +24,13 @@ type ReceiptMatrixState = {
   resetReceiptDraft: () => void;
   setPaymentMode: (paymentMode: ReceiptPaymentMode) => void;
   setPaymentSplit: (paymentMethod: PaymentMethod, amount: string) => void;
+  setReceiptDraft: (draft: {
+    paymentMode: ReceiptPaymentMode;
+    paymentSplits: ReceiptPaymentSplitDrafts;
+    receiptAmounts: ReceiptAmountDrafts;
+    receiptDateTimeDraft: ReceiptDateTimeDraft;
+    singlePaymentMethod: PaymentMethod;
+  }) => void;
   setReceiptAmount: (participantId: string, amount: string) => void;
   setReceiptDateTimeDraft: (draft: ReceiptDateTimeDraft) => void;
   setSinglePaymentMethod: (paymentMethod: PaymentMethod) => void;
@@ -95,6 +102,7 @@ export const useReceiptMatrixStore = create<ReceiptMatrixState>((set) => ({
         },
       };
     }),
+  setReceiptDraft: (draft) => set(draft),
   setReceiptAmount: (participantId, amount) =>
     set((state) => {
       const receiptAmounts = {

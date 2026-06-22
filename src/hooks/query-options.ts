@@ -1,4 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
+import {
+  listAuditLogs,
+  type AuditLogListParams,
+} from "@/services/audit-logs.service";
 import { getCurrentUser } from "@/services/auth.service";
 import { getHealth } from "@/services/health.service";
 import { listMarkets } from "@/services/markets.service";
@@ -19,6 +23,7 @@ import {
 } from "@/services/settlements.service";
 import {
   authKeys,
+  auditLogKeys,
   healthKeys,
   marketKeys,
   participantKeys,
@@ -37,6 +42,16 @@ function requireQueryValue(value: string | null, message: string): string {
   return value;
 }
 
+function stableParamsKey(params: AuditLogListParams): string {
+  return JSON.stringify(
+    Object.fromEntries(
+      Object.entries(params)
+        .filter(([, value]) => value !== undefined && value !== "")
+        .sort(([left], [right]) => left.localeCompare(right)),
+    ),
+  );
+}
+
 export function currentUserQueryOptions() {
   return queryOptions({
     queryKey: authKeys.me,
@@ -49,6 +64,13 @@ export function healthQueryOptions() {
   return queryOptions({
     queryKey: healthKeys.status,
     queryFn: getHealth,
+  });
+}
+
+export function auditLogsQueryOptions(params: AuditLogListParams) {
+  return queryOptions({
+    queryKey: auditLogKeys.list(stableParamsKey(params)),
+    queryFn: () => listAuditLogs(params),
   });
 }
 
