@@ -11,16 +11,11 @@ Next.js frontend for the flea market settlement app.
 
 Use mock mode when running this frontend without the backend/API server.
 
+Mock mode is the default even without a local env file. To persist edits across
+browser refreshes, create `.env.local` from the example:
+
 ```bash
 cp .env.example .env.local
-```
-
-The example env already uses mock mode:
-
-```env
-NEXT_PUBLIC_DATA_SOURCE=mock
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
-NEXT_PUBLIC_MOCK_PERSISTENCE=localStorage
 ```
 
 Then run:
@@ -32,6 +27,8 @@ npm run dev
 
 The app will use frontend fixtures plus an in-browser mock store, so auth, receipt,
 settlement, and log screens can render without local Supabase or the Nest API.
+
+`.env.example` is only a template file. Next.js does not load it directly.
 
 ## API Mode
 

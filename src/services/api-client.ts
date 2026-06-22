@@ -1,6 +1,6 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "api";
+const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock";
 
 type ApiErrorBody = {
   message?: string | string[];
