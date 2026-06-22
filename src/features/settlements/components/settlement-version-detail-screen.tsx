@@ -18,16 +18,9 @@ import { SettlementParticipantSnapshots } from "@/features/settlements/component
 import { SettlementChanges } from "@/features/settlements/components/settlement-version-changes";
 import { SettlementManagement } from "@/features/settlements/components/settlement-version-management";
 import { SettlementSummary } from "@/features/settlements/components/settlement-version-summary";
-import {
-  getSettlementStatusBadgeClass,
-  settlementStatusLabels,
-} from "@/features/settlements/lib/settlement-display";
+import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { cn } from "@/lib/utils";
-import {
-  appShellClass,
-  buttonVariants,
-  pageShellClass,
-} from "@/lib/design-system";
+import { appShellClass, pageShellClass } from "@/lib/design-system";
 
 type SettlementVersionDetailScreenProps = {
   marketId?: string;
@@ -151,49 +144,66 @@ export function SettlementVersionDetailScreen({
   return (
     <main className={pageShellClass}>
       <div className={appShellClass}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <button
-              className={buttonVariants({ intent: "quiet", size: "sm" })}
-              onClick={handleBack}
-              type="button"
-            >
-              <ArrowLeft aria-hidden className="mr-2 h-4 w-4" />
-              정산 목록
-            </button>
-            <h1 className="mt-3 text-2xl font-semibold text-zinc-950">
-              v{settlement.versionNo} 정산
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              확정된 정산 회차의 기준 데이터와 변경 내역을 확인합니다.
-            </p>
-          </div>
-          <span
-            className={cn(
-              "inline-flex h-8 w-fit items-center rounded-full px-3 text-xs font-semibold",
-              getSettlementStatusBadgeClass(settlement.status),
-            )}
+        <div className="mx-auto w-full max-w-[1120px]">
+          <button
+            className="mb-4 inline-flex items-center gap-[7px] text-[#8a8775] transition hover:text-[#16170f]"
+            onClick={handleBack}
+            type="button"
           >
-            {settlementStatusLabels[settlement.status]}
-          </span>
-        </div>
+            <ArrowLeft aria-hidden className="h-[17px] w-[17px]" />
+            <span className="mono text-[12px] font-semibold tracking-[0.02em]">
+              정산 목록
+            </span>
+          </button>
 
-        <SettlementSummary settlement={settlement} />
-        {settlement.status !== "voided" && (
-          <SettlementManagement
-            isSubmitting={voidSettlement.isPending}
-            memo={voidMemo}
-            message={voidMessage}
-            settlement={settlement}
-            onMemoChange={setVoidMemo}
-            onSubmit={handleVoidSettlement}
-          />
-        )}
-        <SettlementChanges changes={settlement.changes} />
-        <SettlementParticipantSnapshots
-          participants={sortedParticipants}
-          participantCount={settlement.participantCount}
-        />
+          <div className="mb-[22px] flex flex-col gap-[18px] sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="dsp num m-0 text-[32px] font-bold leading-tight tracking-[-0.025em] text-[#1a1b12]">
+                v{settlement.versionNo} 정산
+              </h1>
+              <p className="mt-[7px] text-[13.5px] text-[#8a8775]">
+                확정된 정산 회차의 기준 데이터와 변경 내역을 확인합니다.
+              </p>
+            </div>
+            <span
+              className={cn(
+                "mt-1 inline-flex w-fit flex-none items-center gap-[7px] rounded-full border px-[13px] py-1.5",
+                getSettlementStatusPillClass(settlement.status),
+              )}
+            >
+              <span
+                className={cn(
+                  "h-[7px] w-[7px] rounded-full",
+                  settlement.status === "voided"
+                    ? "bg-[#cf3d3d]"
+                    : "bg-[#1f8a4d]",
+                )}
+              />
+              <span className="mono text-[11.5px] font-bold tracking-[0.04em]">
+                {settlementStatusLabels[settlement.status]}
+              </span>
+            </span>
+          </div>
+
+          <div className="grid gap-[18px]">
+            <SettlementSummary settlement={settlement} />
+            {settlement.status !== "voided" && (
+              <SettlementManagement
+                isSubmitting={voidSettlement.isPending}
+                memo={voidMemo}
+                message={voidMessage}
+                settlement={settlement}
+                onMemoChange={setVoidMemo}
+                onSubmit={handleVoidSettlement}
+              />
+            )}
+            <SettlementChanges changes={settlement.changes} />
+            <SettlementParticipantSnapshots
+              participants={sortedParticipants}
+              participantCount={settlement.participantCount}
+            />
+          </div>
+        </div>
         <DashboardToast
           toast={toast}
           onDismiss={() => {
@@ -203,6 +213,14 @@ export function SettlementVersionDetailScreen({
       </div>
     </main>
   );
+}
+
+function getSettlementStatusPillClass(status: string): string {
+  if (status === "voided") {
+    return "border-[#f3c3bc] bg-[#fbe9e9] text-[#cf3d3d]";
+  }
+
+  return "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f8a4d]";
 }
 
 function getErrorMessage(error: unknown): string {

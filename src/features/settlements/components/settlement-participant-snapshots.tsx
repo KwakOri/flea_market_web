@@ -8,12 +8,10 @@ import {
   settlementTypeLabels,
 } from "@/features/participants/lib/participant-display";
 import { formatWon } from "@/lib/money";
-import {
-  panelVariants,
-  sectionDescriptionClass,
-  sectionHeaderClass,
-  sectionTitleClass,
-} from "@/lib/design-system";
+import { cn } from "@/lib/utils";
+
+const snapshotGridColumns =
+  "minmax(130px,1.4fr) minmax(72px,.7fr) minmax(86px,.8fr) minmax(76px,.7fr) minmax(86px,.8fr) minmax(110px,1fr) minmax(130px,1.15fr) minmax(140px,1.15fr) minmax(110px,1.05fr)";
 
 export function SettlementParticipantSnapshots({
   participantCount,
@@ -23,79 +21,141 @@ export function SettlementParticipantSnapshots({
   participants: Settlement["participants"];
 }) {
   return (
-    <section className={panelVariants()}>
-      <div className={sectionHeaderClass}>
-        <h2 className={sectionTitleClass}>부스별 정산 데이터</h2>
-        <p className={sectionDescriptionClass}>
+    <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <div className="px-5 pb-4 pt-5 sm:px-6">
+        <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+          부스별 정산 데이터
+        </h2>
+        <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-[#8a8775]">
           확정 당시 저장된 참가부스별 스냅샷 {participantCount}개
         </p>
       </div>
       {participants.length === 0 ? (
-        <div className="px-4 py-10 text-center text-sm text-zinc-500">
+        <div className="px-5 py-10 text-center text-sm text-[#8a8775] sm:px-6">
           저장된 부스별 정산 데이터가 없습니다.
         </div>
       ) : (
-        <div className="min-w-0 max-w-full overflow-x-auto">
-          <table className="w-full min-w-[1120px] border-collapse text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">참가부스</th>
-                <th className="px-4 py-3 font-medium">유형</th>
-                <th className="px-4 py-3 font-medium">정산 방식</th>
-                <th className="px-4 py-3 text-right font-medium">영수증</th>
-                <th className="px-4 py-3 text-right font-medium">판매 건수</th>
-                <th className="px-4 py-3 text-right font-medium">총매출</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  판매 수수료
-                </th>
-                <th className="px-4 py-3 text-right font-medium">
-                  카드 수수료
-                </th>
-                <th className="px-4 py-3 text-right font-medium">지급액</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {participants.map((participant) => (
-                <tr key={participant.id}>
-                  <td className="px-4 py-3 font-medium text-zinc-950">
-                    {participant.displayName}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-700">
+        <div className="overflow-x-auto">
+          <div className="min-w-[1180px]">
+            <div
+              className="grid bg-[#16170f] px-5 py-3 sm:px-6"
+              style={{ gridTemplateColumns: snapshotGridColumns }}
+            >
+              <SnapshotHeader>참가부스</SnapshotHeader>
+              <SnapshotHeader>유형</SnapshotHeader>
+              <SnapshotHeader>정산 방식</SnapshotHeader>
+              <SnapshotHeader align="right">영수증</SnapshotHeader>
+              <SnapshotHeader align="right">판매 건수</SnapshotHeader>
+              <SnapshotHeader align="right">총매출</SnapshotHeader>
+              <SnapshotHeader align="right">판매 수수료</SnapshotHeader>
+              <SnapshotHeader align="right">카드 수수료</SnapshotHeader>
+              <SnapshotHeader align="right" accent>
+                지급액
+              </SnapshotHeader>
+            </div>
+            {participants.map((participant) => (
+              <div
+                className="grid items-center border-b border-[#f1eee2] px-5 py-3.5 last:border-b-0 sm:px-6"
+                key={participant.id}
+                style={{ gridTemplateColumns: snapshotGridColumns }}
+              >
+                <div className="truncate text-[14px] font-semibold text-[#1a1b12]">
+                  {participant.displayName}
+                </div>
+                <div>
+                  <span
+                    className={cn(
+                      "mono inline-flex rounded-[5px] px-[7px] py-0.5 text-[9.5px] font-semibold",
+                      getParticipantTypeBadgeClass(participant.participantType),
+                    )}
+                  >
                     {participantTypeLabels[participant.participantType]}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-700">
-                    {settlementTypeLabels[participant.settlementType]}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
-                    {participant.receiptCount}건
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
-                    {participant.saleLineCount}건
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-950">
-                    {formatWon(participant.netSalesAmount)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
+                  </span>
+                </div>
+                <div className="mono text-[11.5px] text-[#8a8775]">
+                  {settlementTypeLabels[participant.settlementType]}
+                </div>
+                <div className="num text-right text-[13px] text-[#56564a]">
+                  {participant.receiptCount}건
+                </div>
+                <div className="num text-right text-[13px] text-[#56564a]">
+                  {participant.saleLineCount}건
+                </div>
+                <div className="num text-right text-[14px] font-bold text-[#1a1b12]">
+                  {formatWon(participant.netSalesAmount)}
+                </div>
+                <div className="text-right">
+                  <span className="num text-[13px] font-semibold text-[#1a1b12]">
                     {formatWon(participant.salesCommissionAmount)}
-                    <span className="ml-1 text-xs text-zinc-400">
-                      ({formatPercent(participant.salesCommissionRate)})
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
+                  </span>{" "}
+                  <span className="mono text-[10px] text-[#a8a593]">
+                    ({formatPercent(participant.salesCommissionRate)})
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={cn(
+                      "num text-[13px] font-semibold",
+                      participant.cardFeeAmount === 0
+                        ? "text-[#a8a593]"
+                        : "text-[#2d6fe0]",
+                    )}
+                  >
                     {formatWon(participant.cardFeeAmount)}
-                    <span className="ml-1 text-xs text-zinc-400">
-                      ({cardFeePayerLabels[participant.cardFeePayer]})
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-zinc-950">
-                    {formatWon(participant.payoutAmount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>{" "}
+                  <span
+                    className={cn(
+                      "mono text-[9.5px]",
+                      participant.cardFeePayer === "market"
+                        ? "text-[#a9791f]"
+                        : "text-[#a8a593]",
+                    )}
+                  >
+                    {cardFeePayerLabels[participant.cardFeePayer]}
+                  </span>
+                </div>
+                <div className="num text-right text-[15px] font-bold text-[#1f8a4d]">
+                  {formatWon(participant.payoutAmount)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </section>
   );
+}
+
+function SnapshotHeader({
+  accent = false,
+  align = "left",
+  children,
+}: {
+  accent?: boolean;
+  align?: "left" | "right";
+  children: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "mono text-[10px] tracking-[0.05em]",
+        accent ? "text-[#c7f94b]" : "text-[#9b9a86]",
+        align === "right" && "text-right",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function getParticipantTypeBadgeClass(type: string): string {
+  switch (type) {
+    case "staff":
+      return "bg-[#26271c] text-[#d7d3bf]";
+    case "special_booth":
+      return "bg-[#eef9d4] text-[#5c7a16]";
+    case "seller":
+    default:
+      return "bg-[#f1eee2] text-[#8a8775]";
+  }
 }

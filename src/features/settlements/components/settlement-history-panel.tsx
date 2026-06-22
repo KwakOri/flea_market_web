@@ -1,8 +1,21 @@
-import type { SettlementListItem } from "@/services/settlements.service";
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
-import { buttonVariants } from "@/lib/design-system";
-import { formatDateTime } from "@/lib/date-format";
+import { useSettlement } from "@/hooks/use-settlement-preview";
 import { formatWon } from "@/lib/money";
+import { cn } from "@/lib/utils";
+import type {
+  Settlement,
+  SettlementListItem,
+  SettlementParticipantSnapshot,
+} from "@/services/settlements.service";
+import type { ReactNode } from "react";
+
+type ParticipantDeltaRow = {
+  afterAmount: number | null;
+  beforeAmount: number | null;
+  delta: number | null;
+  key: string;
+  name: string;
+};
 
 export function SettlementHistoryPanel({
   history,
@@ -13,157 +26,451 @@ export function SettlementHistoryPanel({
   isLoading: boolean;
   onOpenSettlementDetail: (settlementId: string) => void;
 }) {
+  const sortedHistory = [...history].sort((a, b) => b.versionNo - a.versionNo);
+  const currentSettlementSummary =
+    sortedHistory.find((settlement) => settlement.status === "confirmed") ??
+    sortedHistory[0] ??
+    null;
+  const previousSettlementSummary = currentSettlementSummary
+    ? findPreviousSettlement(currentSettlementSummary, sortedHistory)
+    : null;
+  const currentSettlementQuery = useSettlement(currentSettlementSummary?.id ?? null);
+  const previousSettlementQuery = useSettlement(
+    previousSettlementSummary?.id ?? null,
+  );
+
   if (isLoading) {
-    return (
-      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
-        확정 이력을 불러오는 중입니다.
-      </div>
-    );
+    return <SettlementHistoryMessage>확정 이력을 불러오는 중입니다.</SettlementHistoryMessage>;
   }
 
   if (history.length === 0) {
-    return (
-      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
-        확정된 정산이 없습니다.
+    return <SettlementHistoryMessage>확정된 정산이 없습니다.</SettlementHistoryMessage>;
+  }
+
+  if (!currentSettlementSummary) {
+    return <SettlementHistoryMessage>확정된 정산이 없습니다.</SettlementHistoryMessage>;
+  }
+
+  const currentSettlement = currentSettlementQuery.data ?? currentSettlementSummary;
+  const previousSettlement =
+    previousSettlementQuery.data ?? previousSettlementSummary;
+  const payoutDelta = previousSettlement
+    ? currentSettlement.participantPayoutAmount -
+      previousSettlement.participantPayoutAmount
+    : null;
+
+  return (
+    <section className="grid gap-[22px]">
+      <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:gap-3.5">
+        <h3 className="dsp m-0 text-[30px] font-bold leading-tight text-[#1a1b12]">
+          정산 회차 상세
+        </h3>
+        <p className="mono text-[12px] text-[#8a8775]">
+          수정 정산은 이전 회차 대비 변경 이력으로 남습니다
+        </p>
       </div>
+
+      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="rounded-[18px] border border-[#e6e2d4] bg-white p-[14px] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+          <div className="dsp px-2 pb-3 pt-1 text-[14px] font-bold text-[#1a1b12]">
+            정산 회차
+          </div>
+          <div className="grid gap-1.5">
+            {sortedHistory.map((settlement) => (
+              <SettlementVersionButton
+                currentSettlement={currentSettlementSummary}
+                key={settlement.id}
+                previousSettlement={findPreviousSettlement(
+                  settlement,
+                  sortedHistory,
+                )}
+                settlement={settlement}
+                onOpenSettlementDetail={onOpenSettlementDetail}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-[18px]">
+          <div className="flex flex-col gap-5 rounded-[18px] bg-[#16170f] px-5 py-[22px] text-[#f3f0e2] md:flex-row md:items-center md:justify-between md:px-6">
+            <div className="min-w-0">
+              <p className="mono text-[11px] text-[#8d8c79]">
+                현재 회차 · v{currentSettlement.versionNo} (
+                {settlementStatusLabels[currentSettlement.status]})
+              </p>
+              <p className="dsp mt-1 text-[21px] font-bold leading-tight">
+                {formatPayoutDeltaTitle(payoutDelta)}
+              </p>
+              <p className="mono mt-1.5 truncate text-[12px] text-[#c7f94b]">
+                변경 사유 · {currentSettlement.memo?.trim() || "메모 없음"}
+              </p>
+            </div>
+            <div className="shrink-0 text-left md:text-right">
+              <p className="mono text-[10.5px] text-[#8d8c79]">
+                {previousSettlement
+                  ? `v${previousSettlement.versionNo} → v${currentSettlement.versionNo}`
+                  : `v${currentSettlement.versionNo}`}
+              </p>
+              <p className="num mt-1 text-[22px] font-bold leading-tight md:text-[24px]">
+                {previousSettlement
+                  ? `${formatWonWithoutSuffix(
+                      previousSettlement.participantPayoutAmount,
+                    )} → ${formatWonWithoutSuffix(
+                      currentSettlement.participantPayoutAmount,
+                    )}`
+                  : formatWon(currentSettlement.participantPayoutAmount)}
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+            <SettlementParticipantDeltaTable
+              currentSettlement={currentSettlementQuery.data ?? null}
+              currentSettlementSummary={currentSettlementSummary}
+              isLoading={
+                currentSettlementQuery.isLoading ||
+                (Boolean(previousSettlementSummary) &&
+                  previousSettlementQuery.isLoading)
+              }
+              previousSettlement={previousSettlementQuery.data ?? null}
+              previousSettlementSummary={previousSettlementSummary}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SettlementHistoryMessage({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      {children}
+    </div>
+  );
+}
+
+function SettlementVersionButton({
+  currentSettlement,
+  previousSettlement,
+  settlement,
+  onOpenSettlementDetail,
+}: {
+  currentSettlement: SettlementListItem;
+  previousSettlement: SettlementListItem | null;
+  settlement: SettlementListItem;
+  onOpenSettlementDetail: (settlementId: string) => void;
+}) {
+  const isCurrent = settlement.id === currentSettlement.id;
+  const delta = previousSettlement
+    ? settlement.participantPayoutAmount -
+      previousSettlement.participantPayoutAmount
+    : null;
+
+  return (
+    <button
+      aria-label={`v${settlement.versionNo} 정산 상세 열기`}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-[12px] border px-3 py-[13px] text-left transition-colors",
+        isCurrent
+          ? "border-[#cfe89a] bg-[#eef9d4]"
+          : "border-[#eee9da] bg-[#fcfbf6] hover:bg-[#f8f6ec]",
+        settlement.status === "voided" && "opacity-60",
+      )}
+      data-testid="settlement-history-row"
+      onClick={() => onOpenSettlementDetail(settlement.id)}
+      type="button"
+    >
+      <span
+        className={cn(
+          "dsp num text-[17px] font-bold",
+          isCurrent ? "text-[#16170f]" : "text-[#8a8775]",
+        )}
+      >
+        v{settlement.versionNo}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span
+          className={cn(
+            "block truncate text-[13px] font-semibold",
+            isCurrent ? "text-[#16170f]" : "text-[#56564a]",
+          )}
+        >
+          {formatVersionStatus(settlement, isCurrent)}
+        </span>
+        <span className="mono block truncate text-[10.5px] text-[#a8a593]">
+          {formatHistoryTimestamp(settlement.confirmedAt)}
+        </span>
+      </span>
+      <span
+        className={cn(
+          "num shrink-0 text-[13px] font-bold",
+          getDeltaTextClass(delta),
+        )}
+      >
+        {formatDelta(delta)}
+      </span>
+    </button>
+  );
+}
+
+function SettlementParticipantDeltaTable({
+  currentSettlement,
+  currentSettlementSummary,
+  isLoading,
+  previousSettlement,
+  previousSettlementSummary,
+}: {
+  currentSettlement: Settlement | null;
+  currentSettlementSummary: SettlementListItem;
+  isLoading: boolean;
+  previousSettlement: Settlement | null;
+  previousSettlementSummary: SettlementListItem | null;
+}) {
+  const rows = buildParticipantDeltaRows(currentSettlement, previousSettlement);
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[620px]">
+        <div
+          className="grid border-b border-[#eee9da] bg-[#fcfbf6] px-[22px] py-[13px]"
+          style={{
+            gridTemplateColumns:
+              "minmax(120px, 1.4fr) minmax(96px, 1fr) minmax(96px, 1fr) minmax(90px, 1fr)",
+          }}
+        >
+          <span className="mono text-[11px] font-bold text-[#8a8775]">
+            참가 부스
+          </span>
+          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+            {previousSettlementSummary
+              ? `v${previousSettlementSummary.versionNo} 지급`
+              : "이전 지급"}
+          </span>
+          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+            v{currentSettlementSummary.versionNo} 지급
+          </span>
+          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+            Δ 변경
+          </span>
+        </div>
+
+        {isLoading ? (
+          <div className="px-[22px] py-10 text-center text-sm text-[#8a8775]">
+            부스별 변경 내역을 불러오는 중입니다.
+          </div>
+        ) : rows.length > 0 ? (
+          rows.map((row) => (
+            <SettlementParticipantDeltaTableRow key={row.key} row={row} />
+          ))
+        ) : (
+          <div className="px-[22px] py-10 text-center text-sm text-[#8a8775]">
+            저장된 부스별 변경 내역이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SettlementParticipantDeltaTableRow({
+  row,
+}: {
+  row: ParticipantDeltaRow;
+}) {
+  const hasChanged = row.delta !== null && row.delta !== 0;
+
+  return (
+    <div
+      className={cn(
+        "grid items-center border-b border-[#f1eee2] px-[22px] py-[13px] last:border-b-0",
+        hasChanged ? "bg-[#fcfdf7]" : "bg-white",
+      )}
+      data-testid="settlement-history-delta-row"
+      style={{
+        gridTemplateColumns:
+          "minmax(120px, 1.4fr) minmax(96px, 1fr) minmax(96px, 1fr) minmax(90px, 1fr)",
+      }}
+    >
+      <div className="truncate text-[14px] font-semibold text-[#1a1b12]">
+        {row.name}
+      </div>
+      <div className="num text-right text-[13.5px] text-[#8a8775]">
+        {formatOptionalWon(row.beforeAmount)}
+      </div>
+      <div className="num text-right text-[14px] font-semibold text-[#1a1b12]">
+        {formatOptionalWon(row.afterAmount)}
+      </div>
+      <div
+        className={cn(
+          "num text-right text-[14px] font-bold",
+          getDeltaTextClass(row.delta),
+        )}
+      >
+        {formatDelta(row.delta)}
+      </div>
+    </div>
+  );
+}
+
+function buildParticipantDeltaRows(
+  currentSettlement: Settlement | null,
+  previousSettlement: Settlement | null,
+): ParticipantDeltaRow[] {
+  if (!currentSettlement) {
+    return [];
+  }
+
+  const previousParticipants = new Map(
+    (previousSettlement?.participants ?? []).map((participant) => [
+      getParticipantDeltaKey(participant),
+      participant,
+    ]),
+  );
+  const currentParticipants = new Map(
+    currentSettlement.participants.map((participant) => [
+      getParticipantDeltaKey(participant),
+      participant,
+    ]),
+  );
+
+  const currentRows = currentSettlement.participants.map((participant) => {
+    const key = getParticipantDeltaKey(participant);
+    const previousParticipant = previousParticipants.get(key) ?? null;
+    const beforeAmount = previousParticipant?.payoutAmount ?? null;
+    const afterAmount = participant.payoutAmount;
+
+    return {
+      afterAmount,
+      beforeAmount,
+      delta: previousSettlement
+        ? afterAmount - (beforeAmount ?? 0)
+        : null,
+      key,
+      name: participant.displayName,
+    };
+  });
+
+  const removedRows = [...previousParticipants.entries()]
+    .filter(([key]) => !currentParticipants.has(key))
+    .map(([key, participant]) => ({
+      afterAmount: null,
+      beforeAmount: participant.payoutAmount,
+      delta: previousSettlement ? 0 - participant.payoutAmount : null,
+      key,
+      name: participant.displayName,
+    }));
+
+  return [...currentRows, ...removedRows];
+}
+
+function getParticipantDeltaKey(
+  participant: SettlementParticipantSnapshot,
+): string {
+  return participant.participantId ?? participant.displayName;
+}
+
+function findPreviousSettlement(
+  settlement: SettlementListItem,
+  history: SettlementListItem[],
+): SettlementListItem | null {
+  if (settlement.baseSettlementId) {
+    const baseSettlement = history.find(
+      (candidate) => candidate.id === settlement.baseSettlementId,
     );
+
+    if (baseSettlement) {
+      return baseSettlement;
+    }
   }
 
   return (
-    <div className="border-t border-zinc-200">
-      <div className="px-4 py-3">
-        <h3 className="text-sm font-semibold text-zinc-950">정산 회차</h3>
-      </div>
-      <div className="grid gap-3 px-4 pb-4 md:hidden">
-        {history.map((settlement) => (
-          <SettlementHistoryCard
-            key={settlement.id}
-            settlement={settlement}
-            onOpenSettlementDetail={onOpenSettlementDetail}
-          />
-        ))}
-      </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
-        <table className="w-full min-w-[760px] border-collapse text-sm xl:min-w-[1000px]">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
-            <tr>
-              <th className="px-3 py-3 font-medium xl:px-4">회차</th>
-              <th className="px-3 py-3 font-medium xl:px-4">상태</th>
-              <th className="px-3 py-3 font-medium xl:px-4">확정 시각</th>
-              <th className="px-3 py-3 text-right font-medium xl:px-4">총매출</th>
-              <th className="px-3 py-3 text-right font-medium xl:px-4">지급 예정</th>
-              <th className="px-3 py-3 text-right font-medium xl:px-4">마켓 손익</th>
-              <th className="px-3 py-3 font-medium xl:px-4">메모</th>
-              <th className="px-3 py-3 text-right font-medium xl:px-4">관리</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {history.map((settlement) => (
-              <tr data-testid="settlement-history-row" key={settlement.id}>
-                <td className="px-3 py-3 font-medium text-zinc-950 xl:px-4">
-                  v{settlement.versionNo}
-                </td>
-                <td className="px-3 py-3 text-zinc-700 xl:px-4">
-                  {settlementStatusLabels[settlement.status]}
-                </td>
-                <td className="px-3 py-3 text-zinc-700 xl:px-4">
-                  {formatDateTime(settlement.confirmedAt)}
-                </td>
-                <td className="px-3 py-3 text-right font-medium text-zinc-950 xl:px-4">
-                  {formatWon(settlement.netSalesAmount)}
-                </td>
-                <td className="px-3 py-3 text-right text-zinc-700 xl:px-4">
-                  {formatWon(settlement.participantPayoutAmount)}
-                </td>
-                <td className="px-3 py-3 text-right text-zinc-700 xl:px-4">
-                  {formatWon(settlement.marketProfitAmount)}
-                </td>
-                <td className="max-w-[220px] truncate px-3 py-3 text-zinc-600 xl:max-w-[280px] xl:px-4">
-                  {settlement.memo ?? "-"}
-                </td>
-                <td className="px-3 py-3 text-right xl:px-4">
-                  <button
-                    className={buttonVariants({
-                      intent: "secondary",
-                      size: "sm",
-                    })}
-                    onClick={() => onOpenSettlementDetail(settlement.id)}
-                    type="button"
-                  >
-                    상세
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    history
+      .filter((candidate) => candidate.versionNo < settlement.versionNo)
+      .sort((a, b) => b.versionNo - a.versionNo)[0] ?? null
   );
 }
 
-function SettlementHistoryCard({
-  onOpenSettlementDetail,
-  settlement,
-}: {
-  onOpenSettlementDetail: (settlementId: string) => void;
-  settlement: SettlementListItem;
-}) {
-  return (
-    <article
-      className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-white p-4"
-      data-testid="settlement-history-card"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-display text-lg font-bold text-[#1a1b12]">
-            v{settlement.versionNo}
-          </p>
-          <p className="mt-1 text-sm text-[#56564a]">
-            {settlementStatusLabels[settlement.status]} ·{" "}
-            {formatDateTime(settlement.confirmedAt)}
-          </p>
-        </div>
-        <button
-          className={buttonVariants({ intent: "secondary", size: "sm" })}
-          onClick={() => onOpenSettlementDetail(settlement.id)}
-          type="button"
-        >
-          상세
-        </button>
-      </div>
-      <dl className="grid grid-cols-2 gap-2 text-sm">
-        <SettlementHistoryMetric
-          label="총매출"
-          value={formatWon(settlement.netSalesAmount)}
-        />
-        <SettlementHistoryMetric
-          label="지급 예정"
-          value={formatWon(settlement.participantPayoutAmount)}
-        />
-        <SettlementHistoryMetric
-          label="마켓 손익"
-          value={formatWon(settlement.marketProfitAmount)}
-        />
-        <SettlementHistoryMetric label="메모" value={settlement.memo ?? "-"} />
-      </dl>
-    </article>
-  );
+function formatVersionStatus(
+  settlement: SettlementListItem,
+  isCurrent: boolean,
+): string {
+  if (settlement.status === "voided") {
+    return settlementStatusLabels.voided;
+  }
+
+  if (isCurrent) {
+    return "확정 · 현재";
+  }
+
+  if (settlement.status === "superseded") {
+    return "확정 · 이전 회차";
+  }
+
+  return settlementStatusLabels[settlement.status];
 }
 
-function SettlementHistoryMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0 rounded-[10px] bg-[#fcfbf6] px-3 py-2">
-      <dt className="font-mono text-[10px] text-[#8a8775]">{label}</dt>
-      <dd className="mt-0.5 truncate font-display font-semibold text-[#1a1b12]">
-        {value}
-      </dd>
-    </div>
-  );
+function formatPayoutDeltaTitle(delta: number | null): string {
+  if (delta === null) {
+    return "최초 정산 회차";
+  }
+
+  if (delta > 0) {
+    return `총 지급액 ${formatDelta(delta)} 증가`;
+  }
+
+  if (delta < 0) {
+    return `총 지급액 ${formatDelta(delta)} 감소`;
+  }
+
+  return "총 지급액 변동 없음";
+}
+
+function formatDelta(delta: number | null): string {
+  if (delta === null) {
+    return "—";
+  }
+
+  if (delta === 0) {
+    return "±0원";
+  }
+
+  const sign = delta > 0 ? "+" : "-";
+
+  return `${sign}${formatWon(Math.abs(delta))}`;
+}
+
+function formatWonWithoutSuffix(amount: number): string {
+  return formatWon(amount).replace(/원$/, "");
+}
+
+function formatOptionalWon(amount: number | null): string {
+  return amount === null ? "—" : formatWon(amount);
+}
+
+function formatHistoryTimestamp(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+
+  return `${month}.${day} ${hours}:${minutes}`;
+}
+
+function getDeltaTextClass(delta: number | null): string {
+  if (delta === null || delta === 0) {
+    return "text-[#a8a593]";
+  }
+
+  return delta > 0 ? "text-[#1f8a4d]" : "text-[#cf3d3d]";
 }

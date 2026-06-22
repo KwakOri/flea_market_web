@@ -1,14 +1,6 @@
 import type { FormEvent } from "react";
 import { Ban } from "lucide-react";
 import type { Settlement } from "@/services/settlements.service";
-import {
-  buttonVariants,
-  inputClass,
-  panelVariants,
-  sectionHeaderClass,
-  sectionTitleClass,
-} from "@/lib/design-system";
-import { cn } from "@/lib/utils";
 
 export function SettlementManagement({
   isSubmitting,
@@ -26,40 +18,34 @@ export function SettlementManagement({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <section className={panelVariants()}>
-      <div className={sectionHeaderClass}>
-        <h2 className={sectionTitleClass}>회차 관리</h2>
-      </div>
-      <form
-        className="grid gap-2 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-        onSubmit={onSubmit}
-      >
-        <label className="grid gap-1 text-xs font-medium text-zinc-600">
+    <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-5 py-[22px] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6">
+      <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+        회차 관리
+      </h2>
+      <form className="mt-3.5 grid gap-3" onSubmit={onSubmit}>
+        <label className="mono text-[10.5px] tracking-[0.05em] text-[#8a8775]">
           무효 사유
+        </label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           <input
-            className={inputClass}
+            className="min-h-11 min-w-0 flex-1 rounded-[11px] border border-[#e0dbca] bg-[#fcfbf6] px-[15px] py-[13px] text-[14px] font-medium text-[#1a1b12] outline-none transition placeholder:text-[#a8a593] focus:border-[#16170f] focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             maxLength={1000}
             placeholder={`v${settlement.versionNo} 무효 사유`}
             value={memo}
             onChange={(event) => onMemoChange(event.target.value)}
           />
-        </label>
-        <button
-          className={cn(
-            buttonVariants(),
-            "self-end bg-red-700 hover:bg-red-800 focus-visible:ring-red-600",
-          )}
-          disabled={isSubmitting}
-          type="submit"
-        >
-          <Ban aria-hidden className="mr-2 h-4 w-4" />
-          {isSubmitting ? "처리 중" : "무효 처리"}
-        </button>
+          <button
+            className="inline-flex min-h-11 flex-none items-center justify-center gap-2 rounded-[11px] bg-[#16170f] px-5 text-[14px] font-bold text-[#ff7a6b] transition hover:bg-[#2a2b20] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            <Ban aria-hidden className="h-4 w-4" />
+            {isSubmitting ? "처리 중" : "무효 처리"}
+          </button>
+        </div>
         {message && (
-          <p className="text-sm font-medium text-red-700 md:col-span-2">
-            {message}
-          </p>
+          <p className="text-sm font-semibold text-[#cf3d3d]">{message}</p>
         )}
       </form>
     </section>

@@ -1,90 +1,152 @@
 import type { Settlement } from "@/services/settlements.service";
 import { formatFullDateTime } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
-import {
-  panelVariants,
-  sectionDescriptionClass,
-  sectionHeaderClass,
-  sectionTitleClass,
-} from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 
+type SummaryMetric = {
+  label: string;
+  tone?: "dark" | "green" | "blue" | "gold" | "default";
+  value: string;
+};
+
 export function SettlementSummary({ settlement }: { settlement: Settlement }) {
+  const metrics: SummaryMetric[] = [
+    {
+      label: "총매출",
+      tone: "dark",
+      value: formatWon(settlement.netSalesAmount),
+    },
+    {
+      label: "지급 예정",
+      tone: "green",
+      value: formatWon(settlement.participantPayoutAmount),
+    },
+    {
+      label: "마켓 손익",
+      value: formatWon(settlement.marketProfitAmount),
+    },
+    {
+      label: "판매 수수료",
+      value: formatWon(settlement.salesCommissionAmount),
+    },
+    {
+      label: "참가부스 부담 카드 수수료",
+      tone: "blue",
+      value: formatWon(settlement.cardFeeChargedToParticipantAmount),
+    },
+    {
+      label: "마켓 부담 카드 수수료",
+      tone: "gold",
+      value: formatWon(settlement.cardFeePaidByMarketAmount),
+    },
+  ];
+
   return (
-    <section className={panelVariants()}>
-      <div
-        className={cn(
-          sectionHeaderClass,
-          "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
-        )}
-      >
+    <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+      <div className="flex flex-col gap-[18px] border-b border-[#f1eee2] px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
-          <h2 className={sectionTitleClass}>정산 개요</h2>
-          <p className={sectionDescriptionClass}>
+          <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+            정산 개요
+          </h2>
+          <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-[#8a8775]">
             확정 시각 {formatFullDateTime(settlement.confirmedAt)}
           </p>
         </div>
-        <div className="text-left text-xs text-zinc-500 sm:text-right">
-          <p>기준 회차</p>
-          <p className="mt-1 font-mono text-zinc-700">
+        <div className="text-left sm:text-right">
+          <p className="mono text-[10px] tracking-[0.06em] text-[#8a8775]">
+            기준 회차
+          </p>
+          <p className="num mt-[3px] text-[15px] font-semibold text-[#a8a593]">
             {settlement.baseSettlementId
               ? shortId(settlement.baseSettlementId)
-              : "-"}
+              : "—"}
           </p>
         </div>
       </div>
-      <dl className="grid gap-px border-b border-zinc-200 bg-zinc-200 sm:grid-cols-2 xl:grid-cols-3">
-        <SettlementMetric
-          label="총매출"
-          value={formatWon(settlement.netSalesAmount)}
-        />
-        <SettlementMetric
-          label="지급 예정"
-          value={formatWon(settlement.participantPayoutAmount)}
-        />
-        <SettlementMetric
-          label="마켓 손익"
-          value={formatWon(settlement.marketProfitAmount)}
-        />
-        <SettlementMetric
-          label="판매 수수료"
-          value={formatWon(settlement.salesCommissionAmount)}
-        />
-        <SettlementMetric
-          label="참가부스 부담 카드 수수료"
-          value={formatWon(settlement.cardFeeChargedToParticipantAmount)}
-        />
-        <SettlementMetric
-          label="마켓 부담 카드 수수료"
-          value={formatWon(settlement.cardFeePaidByMarketAmount)}
-        />
+
+      <dl className="grid gap-px bg-[#f1eee2] sm:grid-cols-2 lg:grid-cols-3">
+        {metrics.map((metric) => (
+          <SettlementMetric key={metric.label} metric={metric} />
+        ))}
       </dl>
-      <dl className="grid gap-4 p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+
+      <dl className="grid gap-5 border-t border-[#f1eee2] bg-[#fcfbf6] px-5 py-[18px] sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <MetaItem label="참가부스" value={`${settlement.participantCount}개`} />
         <MetaItem label="영수증" value={`${settlement.receiptCount}건`} />
         <MetaItem label="판매 건수" value={`${settlement.saleLineCount}건`} />
-        <MetaItem label="메모" value={settlement.memo ?? "-"} />
+        <MetaItem label="메모" value={settlement.memo?.trim() || "—"} />
       </dl>
     </section>
   );
 }
 
-function SettlementMetric({ label, value }: { label: string; value: string }) {
+function SettlementMetric({ metric }: { metric: SummaryMetric }) {
+  const isDark = metric.tone === "dark";
+
   return (
-    <div className="bg-white px-4 py-3">
-      <dt className="text-xs font-medium text-zinc-500">{label}</dt>
-      <dd className="mt-1 text-lg font-semibold text-zinc-950">{value}</dd>
+    <div
+      className={cn(
+        "px-5 py-[18px] sm:px-6",
+        isDark ? "bg-[#16170f]" : metric.tone === "green" ? "bg-[#e6f4ec]" : "bg-white",
+      )}
+    >
+      <dt
+        className={cn(
+          "mono text-[10.5px] tracking-[0.05em]",
+          getMetricLabelClass(metric.tone),
+        )}
+      >
+        {metric.label}
+      </dt>
+      <dd
+        className={cn(
+          "num mt-[7px] text-[23px] font-bold leading-tight",
+          getMetricValueClass(metric.tone),
+        )}
+      >
+        {metric.value}
+      </dd>
     </div>
   );
 }
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs font-medium text-zinc-500">{label}</dt>
-      <dd className="mt-1 break-words font-medium text-zinc-900">{value}</dd>
+    <div className="min-w-0">
+      <dt className="mono text-[10.5px] tracking-[0.05em] text-[#8a8775]">
+        {label}
+      </dt>
+      <dd className="mt-1 break-words text-[15px] font-semibold text-[#1a1b12]">
+        {value}
+      </dd>
     </div>
   );
+}
+
+function getMetricLabelClass(tone: SummaryMetric["tone"]): string {
+  switch (tone) {
+    case "dark":
+      return "text-[#9b9a86]";
+    case "green":
+      return "text-[#1f8a4d]";
+    default:
+      return "text-[#8a8775]";
+  }
+}
+
+function getMetricValueClass(tone: SummaryMetric["tone"]): string {
+  switch (tone) {
+    case "dark":
+      return "text-white";
+    case "green":
+      return "text-[#1f8a4d]";
+    case "blue":
+      return "text-[#2d6fe0]";
+    case "gold":
+      return "text-[#a9791f]";
+    default:
+      return "text-[#16170f]";
+  }
 }
 
 function shortId(value: string): string {

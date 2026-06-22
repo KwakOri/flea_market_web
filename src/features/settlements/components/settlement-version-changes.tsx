@@ -5,12 +5,6 @@ import type {
 } from "@/services/settlements.service";
 import { formatFullDateTime } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
-import {
-  panelVariants,
-  sectionDescriptionClass,
-  sectionHeaderClass,
-  sectionTitleClass,
-} from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 
 type AmountDeltaKey = keyof SettlementAmountDeltas;
@@ -48,19 +42,19 @@ const amountDeltaFields: Array<{
 
 export function SettlementChanges({ changes }: { changes: SettlementChange[] }) {
   return (
-    <section className={panelVariants()}>
-      <div className={sectionHeaderClass}>
-        <h2 className={sectionTitleClass}>변경 내역</h2>
-        <p className={sectionDescriptionClass}>
-          회차 생성 시 저장된 변경 사유와 금액 변화입니다.
-        </p>
-      </div>
+    <section className="rounded-[18px] border border-[#e6e2d4] bg-white px-5 py-[22px] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6">
+      <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+        변경 내역
+      </h2>
+      <p className="mb-[18px] mt-1.5 text-[13px] text-[#8a8775]">
+        회차 생성 시 저장된 변경 사유와 금액 변화입니다.
+      </p>
       {changes.length === 0 ? (
-        <div className="px-4 py-10 text-center text-sm text-zinc-500">
+        <div className="rounded-[12px] bg-[#fcfbf6] px-4 py-10 text-center text-sm text-[#8a8775]">
           기록된 변경 내역이 없습니다.
         </div>
       ) : (
-        <div className="divide-y divide-zinc-100">
+        <div className="grid gap-5">
           {changes.map((change) => (
             <SettlementChangeRow change={change} key={change.id} />
           ))}
@@ -80,42 +74,54 @@ function SettlementChangeRow({ change }: { change: SettlementChange }) {
     .filter(({ value }) => value !== 0);
 
   return (
-    <article className="grid gap-3 px-4 py-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-zinc-950">
-            {settlementChangeTypeLabels[change.changeType]}
-          </p>
-          <p className="mt-1 text-sm text-zinc-600">
-            {change.description ?? "변경 설명이 없습니다."}
-          </p>
-        </div>
-        <time className="text-xs text-zinc-500" dateTime={change.createdAt}>
-          {formatFullDateTime(change.createdAt)}
-        </time>
+    <article className="flex gap-3.5">
+      <div className="flex flex-none flex-col items-center pt-[3px]">
+        <span className="h-[11px] w-[11px] rounded-full border-2 border-[#16170f] bg-[#c7f94b]" />
       </div>
-      {deltas.length === 0 ? (
-        <p className="text-sm text-zinc-500">금액 변경 없음</p>
-      ) : (
-        <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {deltas.map((delta) => (
-            <div
-              className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2"
-              key={delta.key}
-            >
-              <dt className="text-xs text-zinc-500">{delta.label}</dt>
-              <dd
-                className={cn(
-                  "mt-1 text-sm font-semibold",
-                  delta.value > 0 ? "text-emerald-700" : "text-red-700",
-                )}
+      <div className="-ml-1 flex-1 border-l border-[#f1eee2] pl-[18px]">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <span className="dsp text-[14.5px] font-bold text-[#1a1b12]">
+            {settlementChangeTypeLabels[change.changeType]}
+          </span>
+          <time
+            className="mono text-[11px] text-[#a8a593]"
+            dateTime={change.createdAt}
+          >
+            {formatFullDateTime(change.createdAt)}
+          </time>
+        </div>
+        <p className="mt-1.5 text-[13.5px] text-[#8a8775]">
+          {change.description?.trim() || "변경 설명이 없습니다."}
+        </p>
+        {deltas.length === 0 ? (
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-[7px] bg-[#f1eee2] px-2.5 py-1">
+            <span className="mono text-[11px] font-semibold text-[#8a8775]">
+              금액 변경 없음
+            </span>
+          </div>
+        ) : (
+          <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {deltas.map((delta) => (
+              <div
+                className="rounded-[9px] border border-[#eee9da] bg-[#fcfbf6] px-3 py-2"
+                key={delta.key}
               >
-                {formatSignedWon(delta.value)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
+                <dt className="mono text-[10px] text-[#8a8775]">
+                  {delta.label}
+                </dt>
+                <dd
+                  className={cn(
+                    "num mt-1 text-[13px] font-bold",
+                    delta.value > 0 ? "text-[#1f8a4d]" : "text-[#cf3d3d]",
+                  )}
+                >
+                  {formatSignedWon(delta.value)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
     </article>
   );
 }
