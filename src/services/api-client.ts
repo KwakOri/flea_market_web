@@ -1,5 +1,6 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "api";
 
 type ApiErrorBody = {
   message?: string | string[];
@@ -26,6 +27,11 @@ export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  if (isMockDataSource()) {
+    const { handleMockApiRequest } = await import("@/mocks/mock-api");
+    return handleMockApiRequest<T>(path, init);
+  }
+
   const headers = new Headers(init.headers);
 
   if (init.body && !headers.has("Content-Type")) {
@@ -55,6 +61,11 @@ export async function apiDownload(
   fallbackFilename: string,
   init: RequestInit = {},
 ): Promise<ApiDownloadResult> {
+  if (isMockDataSource()) {
+    const { handleMockApiDownload } = await import("@/mocks/mock-api");
+    return handleMockApiDownload(path, fallbackFilename);
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     cache: "no-store",
@@ -78,6 +89,10 @@ export async function apiDownload(
       resolveFilenameFromDisposition(response.headers.get("Content-Disposition")) ??
       fallbackFilename,
   };
+}
+
+function isMockDataSource(): boolean {
+  return DATA_SOURCE === "mock";
 }
 
 async function parseErrorBody(response: Response): Promise<ApiErrorBody | null> {
