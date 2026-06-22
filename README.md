@@ -2,6 +2,11 @@
 
 Next.js frontend for the flea market settlement app.
 
+## Requirements
+
+- Node.js 20.9.0 or newer
+- npm
+
 ## Designer Preview Mode
 
 Use mock mode when running this frontend without the backend/API server.
@@ -10,10 +15,11 @@ Use mock mode when running this frontend without the backend/API server.
 cp .env.example .env.local
 ```
 
-Set the frontend data source to mock:
+The example env already uses mock mode:
 
 ```env
 NEXT_PUBLIC_DATA_SOURCE=mock
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NEXT_PUBLIC_MOCK_PERSISTENCE=localStorage
 ```
 
@@ -29,7 +35,7 @@ settlement, and log screens can render without local Supabase or the Nest API.
 
 ## API Mode
 
-Use API mode when connecting this frontend back to the local or remote backend.
+Use API mode only when connecting this frontend back to the local or remote backend.
 
 ```env
 NEXT_PUBLIC_DATA_SOURCE=api
