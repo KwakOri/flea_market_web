@@ -76,7 +76,7 @@ function SettlementChangeRow({ change }: { change: SettlementChange }) {
   return (
     <article className="flex gap-3.5">
       <div className="flex flex-none flex-col items-center pt-[3px]">
-        <span className="h-[11px] w-[11px] rounded-full border-2 border-ink bg-[#c7f94b]" />
+        <span className="h-[11px] w-[11px] rounded-full border-2 border-ink bg-brand-spring" />
       </div>
       <div className="-ml-1 flex-1 border-l border-hairline pl-[18px]">
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

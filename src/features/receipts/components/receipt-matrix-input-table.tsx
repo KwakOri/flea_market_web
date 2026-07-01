@@ -7,7 +7,7 @@ import { parseOptionalReceiptAmount } from "@/lib/receipt-matrix";
 import { cn } from "@/lib/utils";
 
 const amountInputFrameClass =
-  "flex w-[140px] items-center justify-end gap-[3px] rounded-[9px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-ink focus-within:bg-[#f7fbe9]";
+  "flex w-[140px] items-center justify-end gap-[3px] rounded-[9px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-ink focus-within:bg-brand-tint";
 
 const amountInputClass =
   "num min-w-0 flex-1 bg-transparent text-right text-[15px] font-bold outline-none placeholder:text-muted-soft";
@@ -80,7 +80,7 @@ export function ReceiptMatrixInputTable({
                       className={cn(
                         amountInputFrameClass,
                         hasAmount
-                          ? "border-ink bg-[#f7fbe9]"
+                          ? "border-ink bg-brand-tint"
                           : "border-hairline bg-surface",
                       )}
                     >
@@ -128,7 +128,7 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
       className={cn(
         "grid gap-3 rounded-[14px] border px-3 py-3",
         hasAmount
-          ? "border-[#c7f94b] bg-surface-raised"
+          ? "border-brand bg-surface-raised"
           : "border-hairline bg-surface",
       )}
     >
@@ -151,7 +151,7 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
             amountInputFrameClass,
             "shrink-0",
             hasAmount
-              ? "border-ink bg-[#f7fbe9]"
+              ? "border-ink bg-brand-tint"
               : "border-hairline bg-surface",
           )}
         >

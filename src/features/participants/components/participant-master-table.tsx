@@ -144,7 +144,7 @@ function ParticipantMasterCard({
         {onEditParticipant && (
           <button
             aria-label={`${participant.displayName} 관리`}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             onClick={() => onEditParticipant(participant)}
             type="button"
           >

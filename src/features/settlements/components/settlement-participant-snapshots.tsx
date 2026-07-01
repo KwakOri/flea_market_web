@@ -139,7 +139,7 @@ function SnapshotHeader({
     <span
       className={cn(
         "mono text-[10px] tracking-[0.05em]",
-        accent ? "text-[#c7f94b]" : "text-muted-soft",
+        accent ? "text-brand-spring" : "text-muted-soft",
         align === "right" && "text-right",
       )}
     >
@@ -153,7 +153,7 @@ function getParticipantTypeBadgeClass(type: string): string {
     case "staff":
       return "bg-[#26271c] text-[#d7d3bf]";
     case "special_booth":
-      return "bg-[#eef9d4] text-[#5c7a16]";
+      return "bg-brand-tint text-brand";
     case "seller":
     default:
       return "bg-canvas-soft text-muted";

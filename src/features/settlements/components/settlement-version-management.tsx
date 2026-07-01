@@ -28,7 +28,7 @@ export function SettlementManagement({
         </label>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           <input
-            className="min-h-11 min-w-0 flex-1 rounded-[11px] border border-border bg-surface px-[15px] py-[13px] text-[14px] font-medium text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-11 min-w-0 flex-1 rounded-[11px] border border-border bg-surface px-[15px] py-[13px] text-[14px] font-medium text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             maxLength={1000}
             placeholder={`v${settlement.versionNo} 무효 사유`}

@@ -49,7 +49,7 @@ export function SettlementPreviewTable({
               <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
                 카드 수수료
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold text-[#c7f94b] xl:px-6">
+              <th className="px-4 py-3.5 text-center font-semibold text-brand-spring xl:px-6">
                 지급 예정
               </th>
             </tr>
@@ -78,7 +78,7 @@ function SettlementPreviewCard({
 }) {
   return (
     <button
-      className="grid gap-3 rounded-[16px] border border-hairline bg-surface p-4 text-left shadow-[0_1px_3px_rgba(26,27,18,0.05)] transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+      className="grid gap-3 rounded-[16px] border border-hairline bg-surface p-4 text-left shadow-[0_1px_3px_rgba(26,27,18,0.05)] transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       data-testid="settlement-card"
       onClick={() => onSelectParticipant(participant.participantId)}
       type="button"
@@ -163,7 +163,7 @@ function SettlementPreviewRow({
 }) {
   return (
     <tr
-      className="cursor-pointer transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c7f94b]"
+      className="cursor-pointer transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
       data-testid="settlement-row"
       onClick={() => onSelectParticipant(participant.participantId)}
       onKeyDown={(event) => {

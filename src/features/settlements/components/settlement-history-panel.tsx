@@ -101,7 +101,7 @@ export function SettlementHistoryPanel({
               <p className="dsp mt-1 text-[21px] font-bold leading-tight">
                 {formatPayoutDeltaTitle(payoutDelta)}
               </p>
-              <p className="mono mt-1.5 truncate text-[12px] text-[#c7f94b]">
+              <p className="mono mt-1.5 truncate text-[12px] text-brand-spring">
                 변경 사유 · {currentSettlement.memo?.trim() || "메모 없음"}
               </p>
             </div>
@@ -177,7 +177,7 @@ function SettlementVersionButton({
       className={cn(
         "flex w-full items-center gap-3 rounded-[12px] border px-3 py-[13px] text-left transition-colors",
         isCurrent
-          ? "border-[#cfe89a] bg-[#eef9d4]"
+          ? "border-brand-tint-strong bg-brand-tint"
           : "border-hairline bg-surface hover:bg-canvas-soft",
         settlement.status === "voided" && "opacity-60",
       )}

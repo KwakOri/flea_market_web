@@ -133,7 +133,7 @@ export function FeeApplicationMatrix({
                 </div>
                 <button
                   aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   onClick={() => onEditParticipant(participant)}
                   title="부스별 수수료 설정"
                   type="button"
@@ -172,7 +172,7 @@ export function FeeApplicationMatrix({
             <span>참가 부스</span>
             <span>전체 기본값</span>
             <span>플리마켓 기본값</span>
-            <span className="text-[#c7f94b]">이 부스 설정</span>
+            <span className="text-brand-spring">이 부스 설정</span>
           </div>
           <div className="divide-y divide-hairline">
             {participants.map((participant) => {
@@ -216,7 +216,7 @@ export function FeeApplicationMatrix({
                     action={
                       <button
                         aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         onClick={() => onEditParticipant(participant)}
                         title="부스별 수수료 설정"
                         type="button"

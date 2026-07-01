@@ -42,7 +42,7 @@ export function ReceiptPaymentPanel({
             className={cn(
               "rounded-md px-2.5 py-1 text-xs font-bold transition",
               paymentMode === "single"
-                ? "bg-[#c7f94b] text-[#16170f]"
+                ? "bg-brand text-on-brand"
                 : "text-muted",
             )}
             onClick={() => setPaymentMode("single")}
@@ -54,7 +54,7 @@ export function ReceiptPaymentPanel({
             className={cn(
               "rounded-md px-2.5 py-1 text-xs font-bold transition",
               paymentMode === "split"
-                ? "bg-[#c7f94b] text-[#16170f]"
+                ? "bg-brand text-on-brand"
                 : "text-muted",
             )}
             onClick={() => setPaymentMode("split")}

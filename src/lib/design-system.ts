@@ -7,11 +7,11 @@ export const appShellClass =
   "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
 
 export const buttonVariants = cva(
-  "inline-flex h-10 items-center justify-center rounded-[10px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b] focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex h-10 items-center justify-center rounded-[10px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       intent: {
-        primary: "bg-[#16170f] text-[#c7f94b] hover:bg-[#2a2b20]",
+        primary: "bg-brand text-on-brand hover:bg-brand-hover",
         secondary:
           "border border-border bg-surface text-ink hover:bg-canvas-soft",
         quiet: "text-body hover:bg-canvas-soft hover:text-ink",
@@ -29,7 +29,7 @@ export const buttonVariants = cva(
 );
 
 export const inputVariants = cva(
-  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
+  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -49,7 +49,7 @@ export const inputVariants = cva(
 );
 
 export const selectVariants = cva(
-  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
+  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -72,11 +72,11 @@ export const dashboardTabListClass =
   "flex w-full max-w-full flex-wrap rounded-[14px] border border-border bg-surface p-1 xl:inline-flex xl:w-auto";
 
 export const dashboardTabVariants = cva(
-  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[10px] px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b] focus-visible:ring-offset-2 sm:min-w-28",
+  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[10px] px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:min-w-28",
   {
     variants: {
       active: {
-        true: "bg-[#c7f94b] text-[#16170f]",
+        true: "bg-brand text-on-brand",
         false: "text-muted hover:bg-canvas-soft hover:text-ink",
       },
     },

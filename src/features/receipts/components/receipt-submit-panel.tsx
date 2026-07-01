@@ -49,12 +49,12 @@ export function ReceiptSubmitPanel({
       </div>
       <div className="flex min-w-0 justify-between gap-3 border-t border-white/10 py-1.5 text-[12.5px]">
         <span className="text-muted-soft">남은 금액</span>
-        <span className="truncate font-display font-bold text-[#c7f94b]">
+        <span className="truncate font-display font-bold text-brand-spring">
           {formatWon(paymentMode === "split" ? paymentRemaining : 0)}
         </span>
       </div>
       <button
-        className="mt-3.5 w-full rounded-xl border-0 bg-[#c7f94b] p-3 text-[15px] font-bold text-[#16170f] transition hover:bg-[#d4ff5e] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3.5 w-full rounded-xl border-0 bg-brand-spring p-3 text-[15px] font-bold text-brand-deep transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={
           !hasParticipants ||
           isSubmitting ||
