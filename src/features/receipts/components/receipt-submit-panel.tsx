@@ -24,7 +24,7 @@ export function ReceiptSubmitPanel({
   const waitingForSplitAmount = paymentMode === "split" && paymentRemaining !== 0;
 
   return (
-    <section className="min-w-0 rounded-[18px] bg-[#16170f] p-5 text-[#f3f0e2] sm:p-[22px]">
+    <section className="min-w-0 rounded-[18px] bg-brand-deep p-5 text-on-brand-deep sm:p-[22px]">
       <div className="mb-3.5 flex items-center gap-2.5">
         <span
           className={cn(
@@ -42,13 +42,13 @@ export function ReceiptSubmitPanel({
           <div className="font-display text-base font-bold">
             {waitingForSplitAmount ? "검증 대기" : "검증 완료"}
           </div>
-          <div className="font-mono text-[10.5px] tracking-[0.04em] text-[#8d8c79]">
+          <div className="font-mono text-[10.5px] tracking-[0.04em] text-muted-soft">
             입력 합계 = 결제 합계
           </div>
         </div>
       </div>
-      <div className="flex min-w-0 justify-between gap-3 border-t border-[#2c2d22] py-1.5 text-[12.5px]">
-        <span className="text-[#9b9a86]">남은 금액</span>
+      <div className="flex min-w-0 justify-between gap-3 border-t border-white/10 py-1.5 text-[12.5px]">
+        <span className="text-muted-soft">남은 금액</span>
         <span className="truncate font-display font-bold text-[#c7f94b]">
           {formatWon(paymentMode === "split" ? paymentRemaining : 0)}
         </span>

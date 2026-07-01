@@ -29,22 +29,22 @@ export function ParticipantMasterDialog({
   const submitLabel = isCreateMode ? "추가" : "저장";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/45 p-4">
       <section
         aria-labelledby="participant-master-dialog-title"
         aria-modal="true"
-        className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-lg bg-surface-raised shadow-xl"
         role="dialog"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3">
+        <div className="flex items-start justify-between gap-3 border-b border-hairline px-4 py-3">
           <div>
             <h2
-              className="text-base font-semibold text-zinc-950"
+              className="text-base font-semibold text-ink"
               id="participant-master-dialog-title"
             >
               {title}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-muted">
               부스 기본 정보와 연락처
             </p>
           </div>
@@ -65,7 +65,7 @@ export function ParticipantMasterDialog({
           onSubmit={isCreateMode ? onCreateSubmit : onUpdateSubmit}
         >
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
-            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            <label className="grid gap-1 text-xs font-medium text-body">
               부스명
               <input
                 className={inputClass}
@@ -77,7 +77,7 @@ export function ParticipantMasterDialog({
                 type="text"
               />
             </label>
-            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            <label className="grid gap-1 text-xs font-medium text-body">
               유형
               <select
                 className={selectClass}
@@ -92,7 +92,7 @@ export function ParticipantMasterDialog({
             </label>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            <label className="grid gap-1 text-xs font-medium text-body">
               담당자
               <input
                 className={inputClass}
@@ -103,7 +103,7 @@ export function ParticipantMasterDialog({
                 type="text"
               />
             </label>
-            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            <label className="grid gap-1 text-xs font-medium text-body">
               연락처
               <input
                 className={inputClass}
@@ -114,7 +114,7 @@ export function ParticipantMasterDialog({
                 type="tel"
               />
             </label>
-            <label className="grid gap-1 text-xs font-medium text-zinc-600 sm:col-span-2">
+            <label className="grid gap-1 text-xs font-medium text-body sm:col-span-2">
               이메일
               <input
                 className={inputClass}
@@ -127,7 +127,7 @@ export function ParticipantMasterDialog({
             </label>
           </div>
           {!isCreateMode && (
-            <label className="grid gap-1 text-xs font-medium text-zinc-600">
+            <label className="grid gap-1 text-xs font-medium text-body">
               상태
               <select
                 className={selectClass}
@@ -140,7 +140,7 @@ export function ParticipantMasterDialog({
               </select>
             </label>
           )}
-          <label className="grid gap-1 text-xs font-medium text-zinc-600">
+          <label className="grid gap-1 text-xs font-medium text-body">
             메모
             <textarea
               className={cn(inputClass, "min-h-24 resize-none py-2")}
@@ -151,7 +151,7 @@ export function ParticipantMasterDialog({
             />
           </label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted">
               부스 기본 정보는 플리마켓 참가 설정에서 다시 연결해 사용합니다.
             </p>
             <div className="flex flex-wrap justify-end gap-2">
@@ -173,7 +173,7 @@ export function ParticipantMasterDialog({
             </div>
           </div>
           {message && (
-            <p className="text-sm font-medium text-red-700">{message}</p>
+            <p className="text-sm font-medium text-error">{message}</p>
           )}
         </form>
       </section>

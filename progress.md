@@ -58,13 +58,14 @@
 - [x] 공통 셸(헤더) + 홈 `/management` — 체크포인트 1
 - [x] `/settings` 설정 폼 — 체크포인트 2
 - [x] `/markets` 마켓 목록 (+상태 배지 STEP3 시작) — 체크포인트 3
-- [ ] `/markets` 마켓 **상세**(선택 시) + 상세 하위: 참가부스 / 수수료(fees) / 영수증(receipts) / 매출(sales) / 정산(settlements) / 로그(logs)
-- [ ] `/booths` 부스(셀러) 관리 목록 + 상세
-- [ ] `/receipts` 영수증 조회 + 상세
-- [ ] `/sales` 매출 입력 (+금액 색 STEP4)
-- [ ] `/settlements` 정산 목록 + 상세 + 회차(version) 상세 (+금액 색 STEP4)
+- [x] `/booths` 부스(셀러) 관리 목록 + 다이얼로그 — 체크포인트 4
+- [x] 영수증 조회 `/markets/[id]/receipts` (매트릭스 다크헤더) — 체크포인트 5
+- [x] 영수증 입력 `/markets/[id]/sales` (입력매트릭스+결제+제출, 금액색 시작) — 체크포인트 6
+- [ ] 정산 `/markets/[id]/settlements` + 회차 상세 (+금액색 STEP4 본격: 지급/수수료/환불)
+- [ ] 마켓 상세 하위 나머지: 참가부스(participants) / 수수료 현황(fees) / 로그(logs)
+- [ ] 영수증 수정 `/markets/[id]/receipts/[id]/edit`
 - [ ] `/login` 로그인 화면
-- [ ] **다크 내비 레일**(왼쪽 세로 메뉴) — ⏸️ 라임 결정 후 (아래 참고)
+- [ ] **다크 내비 레일**(왼쪽 세로) — ⏸️ 라임 결정 후. (매트릭스 다크헤더도 같은 계열)
 
 > 화면을 돌면서 자연스럽게 **STEP 3(상태 배지)**, **STEP 4(금액 색)**도 그 화면에서 함께 처리합니다.
 > 관련 색-상태 연결 파일: `market-display.ts`, `settlement-display.ts`, `participant-type-badge.tsx`, `settlement-metric.tsx` 등.

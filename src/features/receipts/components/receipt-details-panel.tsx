@@ -44,9 +44,9 @@ export function ReceiptDetailsPanel({
         );
 
   return (
-    <div className="grid min-w-0 gap-4 border-b border-dashed border-[#e0dbca] bg-[#fcfbf6] px-4 py-5 sm:px-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
+    <div className="grid min-w-0 gap-4 border-b border-dashed border-border bg-surface px-4 py-5 sm:px-6 md:grid-cols-[minmax(180px,0.75fr)_minmax(180px,0.75fr)_minmax(0,1fr)]">
       <div className="min-w-0">
-        <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+        <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.06em] text-muted">
           판매 시각
         </div>
         {receiptDateTimeEnabled ? (
@@ -102,7 +102,7 @@ export function ReceiptDetailsPanel({
         )}
       </div>
       <label className="min-w-0">
-        <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+        <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-muted">
           영수증 번호
         </span>
         <input
@@ -117,7 +117,7 @@ export function ReceiptDetailsPanel({
         />
       </label>
       <label className="min-w-0">
-        <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+        <span className="mb-1.5 block font-mono text-[10.5px] tracking-[0.06em] text-muted">
           메모
         </span>
         <input

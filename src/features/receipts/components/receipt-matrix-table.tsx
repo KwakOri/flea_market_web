@@ -32,7 +32,7 @@ export function ReceiptMatrixTable({
 
   if (receipts.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         등록된 영수증이 없습니다.
       </div>
     );
@@ -98,7 +98,7 @@ export function ReceiptMatrixTable({
       <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-t-[18px] md:block">
         <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[18px]">
           <div
-            className="z-20 grid items-center rounded-tl-[18px] border-b border-r border-[#2c2d22] bg-[#16170f] font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
+            className="z-20 grid items-center rounded-tl-[18px] border-b border-r border-brand-deep bg-brand-deep font-mono text-[10.5px] tracking-[0.06em] text-muted-soft"
             style={{ gridTemplateColumns: fixedGridTemplate }}
           >
             <div className="px-4 text-center font-semibold">판매 시각</div>
@@ -107,14 +107,14 @@ export function ReceiptMatrixTable({
           </div>
 
           <div
-            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden rounded-tr-[18px] border-b border-[#2c2d22] bg-[#16170f]"
+            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden rounded-tr-[18px] border-b border-brand-deep bg-brand-deep"
             data-testid="receipt-booth-header"
             onScroll={handleBoothHeaderScroll}
             ref={boothHeaderRef}
           >
             {participants.length > 0 && (
               <div
-                className="grid h-full min-w-max items-center font-mono text-[10.5px] tracking-[0.06em] text-[#9b9a86]"
+                className="grid h-full min-w-max items-center font-mono text-[10.5px] tracking-[0.06em] text-muted-soft"
                 style={{ gridTemplateColumns: boothGridTemplate }}
               >
                 {participants.map((participant) => (
@@ -130,12 +130,12 @@ export function ReceiptMatrixTable({
           </div>
 
           <div
-            className="scrollbar-hidden overflow-x-hidden overflow-y-auto border-r border-[#f1eee2] bg-white"
+            className="scrollbar-hidden overflow-x-hidden overflow-y-auto border-r border-hairline bg-surface"
             data-testid="receipt-fixed-pane"
             onScroll={handleFixedBodyScroll}
             ref={fixedBodyRef}
           >
-            <div className="divide-y divide-[#f1eee2]">
+            <div className="divide-y divide-hairline">
               {receipts.map((receipt) => {
                 return (
                   <div
@@ -150,10 +150,10 @@ export function ReceiptMatrixTable({
                       onDeleteReceipt={onDeleteReceipt}
                       onEditReceipt={onEditReceipt}
                     />
-                    <div className="px-4 text-center text-[#56564a]">
+                    <div className="px-4 text-center text-body">
                       <ReceiptPaymentSplits receipt={receipt} />
                     </div>
-                    <div className="px-4 text-center font-display text-[15px] font-bold text-[#1a1b12]">
+                    <div className="px-4 text-center font-display text-[15px] font-bold text-amount-default">
                       {formatWon(receipt.totalAmount)}
                     </div>
                   </div>
@@ -163,17 +163,17 @@ export function ReceiptMatrixTable({
           </div>
 
           <div
-            className="min-w-0 overflow-auto bg-white"
+            className="min-w-0 overflow-auto bg-surface"
             data-testid="receipt-booth-scroll"
             onScroll={handleBoothBodyScroll}
             ref={boothBodyRef}
           >
             {participants.length === 0 ? (
-              <div className="flex h-full min-h-[248px] items-center justify-center px-4 text-sm text-[#8a8775]">
+              <div className="flex h-full min-h-[248px] items-center justify-center px-4 text-sm text-muted">
                 마켓에 연결된 참가부스가 없습니다.
               </div>
             ) : (
-              <div className="min-w-max divide-y divide-[#f1eee2]">
+              <div className="min-w-max divide-y divide-hairline">
                 {receipts.map((receipt) => {
                   const amountsByParticipant =
                     getReceiptAmountsByParticipant(receipt);
@@ -186,7 +186,7 @@ export function ReceiptMatrixTable({
                     >
                       {participants.map((participant) => (
                         <div
-                          className="px-4 text-center font-display text-[13.5px] text-[#56564a]"
+                          className="px-4 text-center font-display text-[13.5px] text-body"
                           key={participant.id}
                         >
                           {formatOptionalWon(
@@ -228,17 +228,17 @@ function ReceiptMobileCard({
   );
 
   return (
-    <article className="grid gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <article className="grid gap-3 rounded-[16px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[11px] text-[#8a8775]">
+          <p className="font-mono text-[11px] text-muted">
             {formatReceiptDateTime(receipt.soldAt)}
           </p>
-          <h3 className="mt-1 truncate text-[15px] font-semibold text-[#1a1b12]">
+          <h3 className="mt-1 truncate text-[15px] font-semibold text-ink">
             {receipt.receiptNo ?? "영수증번호 없음"}
           </h3>
         </div>
-        <p className="shrink-0 text-right font-display text-[17px] font-bold text-[#1a1b12]">
+        <p className="shrink-0 text-right font-display text-[17px] font-bold text-amount-default">
           {formatWon(receipt.totalAmount)}
         </p>
       </div>
@@ -248,24 +248,24 @@ function ReceiptMobileCard({
         onDeleteReceipt={onDeleteReceipt}
         onEditReceipt={onEditReceipt}
       />
-      <div className="rounded-[10px] bg-[#fcfbf6] px-3 py-2 text-sm text-[#56564a]">
+      <div className="rounded-[10px] bg-canvas-soft px-3 py-2 text-sm text-body">
         <ReceiptPaymentSplits receipt={receipt} />
       </div>
       {activeLines.length === 0 ? (
-        <p className="rounded-[10px] bg-[#fcfbf6] px-3 py-3 text-center text-sm text-[#8a8775]">
+        <p className="rounded-[10px] bg-canvas-soft px-3 py-3 text-center text-sm text-muted">
           부스별 판매 금액이 없습니다.
         </p>
       ) : (
         <dl className="grid gap-1.5">
           {activeLines.map(([participantId, amount]) => (
             <div
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] bg-[#fcfbf6] px-3 py-2 text-sm"
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] bg-canvas-soft px-3 py-2 text-sm"
               key={participantId}
             >
-              <dt className="truncate text-[#56564a]">
+              <dt className="truncate text-body">
                 {participantNameById.get(participantId) ?? participantId}
               </dt>
-              <dd className="font-display font-semibold text-[#1a1b12]">
+              <dd className="font-display font-semibold text-amount-default">
                 {formatWon(amount)}
               </dd>
             </div>
@@ -289,11 +289,11 @@ function ReceiptTimeAndNumber({
 }) {
   return (
     <div className="grid min-w-0 gap-1 px-3 text-center">
-      <span className="whitespace-nowrap font-display text-[13px] text-[#56564a]">
+      <span className="whitespace-nowrap font-display text-[13px] text-body">
         {formatReceiptDateTime(receipt.soldAt)}
       </span>
       <div className="flex min-w-0 items-center justify-center gap-1">
-        <span className="min-w-0 max-w-[72px] truncate font-mono text-[11.5px] font-semibold text-[#1a1b12]">
+        <span className="min-w-0 max-w-[72px] truncate font-mono text-[11.5px] font-semibold text-ink">
           {receipt.receiptNo ?? "-"}
         </span>
         <ReceiptActionButtons
@@ -341,7 +341,7 @@ function ReceiptActionButtons({
         aria-label={`영수증 ${receiptLabel} 삭제`}
         className={cn(
           buttonVariants({ intent: "secondary", size: "sm" }),
-          "border-red-200 text-red-700 hover:bg-red-50",
+          "border-error/40 text-error hover:bg-error-tint",
           compact ? "h-6 w-6 rounded-md px-0" : "h-8 w-8 px-0",
         )}
         disabled={actionsDisabled}
@@ -378,7 +378,7 @@ function ReceiptPaymentSplits({ receipt }: { receipt: Receipt }) {
           >
             <Icon
               aria-hidden="true"
-              className="h-4 w-4 flex-none text-[#8a8775]"
+              className="h-4 w-4 flex-none text-muted"
               strokeWidth={2}
             />
             <span>{formatWon(paymentSplit.amount)}</span>

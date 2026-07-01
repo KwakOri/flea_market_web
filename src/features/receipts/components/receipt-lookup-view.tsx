@@ -34,12 +34,12 @@ export function ReceiptLookupView({
       />
       <section className={panelVariants()}>
         {receiptMessage && (
-          <p className="border-b border-[#f1eee2] px-5 py-3 text-sm font-semibold text-[#cf3d3d]">
+          <p className="border-b border-hairline px-5 py-3 text-sm font-semibold text-error">
             {receiptMessage}
           </p>
         )}
         {isLoading ? (
-          <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
+          <div className="px-4 py-12 text-center text-sm text-muted">
             영수증을 불러오는 중입니다.
           </div>
         ) : (

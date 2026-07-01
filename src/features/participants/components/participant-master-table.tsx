@@ -17,7 +17,7 @@ export function ParticipantMasterTable({
 }) {
   if (participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         등록된 참가부스가 없습니다.
       </div>
     );
@@ -38,7 +38,7 @@ export function ParticipantMasterTable({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <table className="w-full min-w-[980px] border-collapse text-sm">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
+          <thead className="bg-surface-sunken text-left text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">부스명</th>
               <th className="px-4 py-3 font-medium">유형</th>
@@ -55,22 +55,22 @@ export function ParticipantMasterTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-hairline">
             {participants.map((participant) => (
               <tr data-testid="participant-master-row" key={participant.id}>
-                <td className="px-4 py-3 font-medium text-zinc-950">
+                <td className="px-4 py-3 font-medium text-ink">
                   {participant.displayName}
                 </td>
-                <td className="px-4 py-3 text-zinc-700">
+                <td className="px-4 py-3 text-body">
                   {participantTypeLabels[participant.participantType]}
                 </td>
-                <td className="px-4 py-3 text-zinc-700">
+                <td className="px-4 py-3 text-body">
                   {participant.contactName ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-zinc-700">
+                <td className="px-4 py-3 text-body">
                   {participant.phone ?? "-"}
                 </td>
-                <td className="max-w-[220px] truncate px-4 py-3 text-zinc-700">
+                <td className="max-w-[220px] truncate px-4 py-3 text-body">
                   {participant.email ?? "-"}
                 </td>
                 <td className="px-4 py-3">
@@ -81,11 +81,11 @@ export function ParticipantMasterTable({
                     {linkedParticipantIds.has(participant.id) ? (
                       <LinkStatusBadge />
                     ) : (
-                      <span className="text-zinc-400">-</span>
+                      <span className="text-muted-soft">-</span>
                     )}
                   </td>
                 )}
-                <td className="max-w-[260px] truncate px-4 py-3 text-zinc-600">
+                <td className="max-w-[260px] truncate px-4 py-3 text-body">
                   {participant.memo ?? "-"}
                 </td>
                 {onEditParticipant && (
@@ -125,16 +125,16 @@ function ParticipantMasterCard({
 }) {
   return (
     <article
-      className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-white p-4"
+      className="grid gap-3 rounded-[14px] border border-hairline bg-surface p-4"
       data-testid="participant-master-card"
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold text-[#181a12]">
+          <h3 className="truncate text-[15px] font-semibold text-ink">
             {participant.displayName}
           </h3>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full bg-[#f2efe4] px-2 py-1 text-xs font-medium text-[#56564a]">
+            <span className="rounded-full bg-canvas-soft px-2 py-1 text-xs font-medium text-body">
               {participantTypeLabels[participant.participantType]}
             </span>
             <ParticipantStatusBadge status={participant.status} />
@@ -144,7 +144,7 @@ function ParticipantMasterCard({
         {onEditParticipant && (
           <button
             aria-label={`${participant.displayName} 관리`}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#d8d3c2] bg-[#fcfbf6] text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
             onClick={() => onEditParticipant(participant)}
             type="button"
           >
@@ -177,8 +177,8 @@ function ParticipantStatusBadge({ status }: { status: Participant["status"] }) {
       className={cn(
         "rounded-full px-2 py-1 text-xs font-medium",
         status === "active"
-          ? "bg-emerald-100 text-emerald-800"
-          : "bg-zinc-100 text-zinc-500",
+          ? "bg-success-tint text-success"
+          : "bg-canvas-soft text-muted",
       )}
     >
       {status === "active" ? "활성" : "비활성"}
@@ -188,7 +188,7 @@ function ParticipantStatusBadge({ status }: { status: Participant["status"] }) {
 
 function LinkStatusBadge() {
   return (
-    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+    <span className="rounded-full bg-success-tint px-2 py-1 text-xs font-medium text-success">
       연결됨
     </span>
   );
@@ -202,9 +202,9 @@ function ParticipantMasterMetric({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-[10px] bg-[#fcfbf6] px-3 py-2">
-      <dt className="text-[#8a8775]">{label}</dt>
-      <dd className="truncate font-medium text-[#1a1b12]">{value}</dd>
+    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-[10px] bg-surface px-3 py-2">
+      <dt className="text-muted">{label}</dt>
+      <dd className="truncate font-medium text-ink">{value}</dd>
     </div>
   );
 }
