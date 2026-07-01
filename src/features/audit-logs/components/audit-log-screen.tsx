@@ -362,7 +362,7 @@ function LogResultPill({ result }: { result: AuditLogResult }) {
       className={cn(
         "rounded-md px-2 py-1 font-mono text-[10.5px] font-bold",
         result === "success"
-          ? "bg-[#e6f4ec] text-[#1f8a4d]"
+          ? "bg-success-tint text-success"
           : "bg-error-tint text-error",
       )}
     >

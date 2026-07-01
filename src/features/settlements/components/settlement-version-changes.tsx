@@ -112,7 +112,7 @@ function SettlementChangeRow({ change }: { change: SettlementChange }) {
                 <dd
                   className={cn(
                     "num mt-1 text-[13px] font-bold",
-                    delta.value > 0 ? "text-[#1f8a4d]" : "text-error",
+                    delta.value > 0 ? "text-success" : "text-error",
                   )}
                 >
                   {formatSignedWon(delta.value)}

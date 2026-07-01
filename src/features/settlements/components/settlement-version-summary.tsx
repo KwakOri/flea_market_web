@@ -87,7 +87,7 @@ function SettlementMetric({ metric }: { metric: SummaryMetric }) {
     <div
       className={cn(
         "px-5 py-[18px] sm:px-6",
-        isDark ? "bg-brand-deep" : metric.tone === "green" ? "bg-[#e6f4ec]" : "bg-surface",
+        isDark ? "bg-brand-deep" : metric.tone === "green" ? "bg-success-tint" : "bg-surface",
       )}
     >
       <dt
@@ -128,7 +128,7 @@ function getMetricLabelClass(tone: SummaryMetric["tone"]): string {
     case "dark":
       return "text-muted-soft";
     case "green":
-      return "text-[#1f8a4d]";
+      return "text-success";
     default:
       return "text-muted";
   }
@@ -139,9 +139,9 @@ function getMetricValueClass(tone: SummaryMetric["tone"]): string {
     case "dark":
       return "text-on-brand-deep";
     case "green":
-      return "text-[#1f8a4d]";
+      return "text-success";
     case "blue":
-      return "text-[#2d6fe0]";
+      return "text-info";
     case "gold":
       return "text-warning";
     default:

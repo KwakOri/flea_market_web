@@ -66,7 +66,7 @@ export function ParticipantSettlementDualChart({
         </div>
         <div className="flex flex-wrap gap-3 text-xs font-medium text-body">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-[#7ba23f]" />
             판매 금액
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export function ParticipantSettlementDualChart({
                   {participant.saleLineCount}건
                 </title>
                 <rect
-                  fill="#10b981"
+                  fill="#7ba23f"
                   height={barHeight}
                   rx="4"
                   width={barWidth}

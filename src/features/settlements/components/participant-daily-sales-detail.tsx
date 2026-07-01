@@ -229,7 +229,7 @@ function ParticipantDailySalesChart({
                 {point.saleCount}건
               </title>
               <rect
-                fill="#10b981"
+                fill="#7ba23f"
                 height={barHeight}
                 rx="4"
                 width={barWidth}

@@ -18,7 +18,7 @@ export function SettlementMetric({
     blue: {
       card: "border-hairline bg-surface",
       label: "text-muted",
-      value: "text-[#2d6fe0]",
+      value: "text-info",
     },
     dark: {
       card: "border-brand-deep bg-brand-deep",
@@ -31,9 +31,9 @@ export function SettlementMetric({
       value: "text-amount-default",
     },
     green: {
-      card: "border-[#bfe3cd] bg-[#e6f4ec]",
-      label: "text-[#1f8a4d]",
-      value: "text-[#1f8a4d]",
+      card: "border-success/40 bg-success-tint",
+      label: "text-success",
+      value: "text-success",
     },
   }[tone];
 

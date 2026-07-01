@@ -472,5 +472,5 @@ function getDeltaTextClass(delta: number | null): string {
     return "text-muted-soft";
   }
 
-  return delta > 0 ? "text-[#1f8a4d]" : "text-error";
+  return delta > 0 ? "text-success" : "text-error";
 }

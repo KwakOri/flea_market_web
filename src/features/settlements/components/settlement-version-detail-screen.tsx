@@ -176,7 +176,7 @@ export function SettlementVersionDetailScreen({
                   "h-[7px] w-[7px] rounded-full",
                   settlement.status === "voided"
                     ? "bg-error"
-                    : "bg-[#1f8a4d]",
+                    : "bg-success",
                 )}
               />
               <span className="mono text-[11.5px] font-bold tracking-[0.04em]">
@@ -220,7 +220,7 @@ function getSettlementStatusPillClass(status: string): string {
     return "border-error/40 bg-error-tint text-error";
   }
 
-  return "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f8a4d]";
+  return "border-success/40 bg-success-tint text-success";
 }
 
 function getErrorMessage(error: unknown): string {

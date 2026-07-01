@@ -159,10 +159,10 @@ input.num {
 @keyframes okpulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(31, 138, 77, 0);
+    box-shadow: 0 0 0 0 rgba(78, 115, 39, 0);
   }
 
   50% {
-    box-shadow: 0 0 0 4px rgba(31, 138, 77, 0.1);
+    box-shadow: 0 0 0 4px rgba(78, 115, 39, 0.1);
   }
 }

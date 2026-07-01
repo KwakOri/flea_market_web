@@ -95,7 +95,7 @@ function SettlementPreviewCard({
             </span>
           </span>
         </span>
-        <span className="text-right font-display text-[15px] font-bold text-[#1f8a4d]">
+        <span className="text-right font-display text-[15px] font-bold text-success">
           {formatWon(participant.payoutAmount)}
         </span>
       </span>
@@ -207,7 +207,7 @@ function SettlementPreviewRow({
           {formatPercent(participant.salesCommissionRate)}
         </span>
       </td>
-      <td className="px-4 py-4 text-right font-display text-[13.5px] font-semibold text-[#2d6fe0] xl:px-6">
+      <td className="px-4 py-4 text-right font-display text-[13.5px] font-semibold text-info xl:px-6">
         {formatWon(participant.cardFeeAmount)}
         <span className="ml-1 font-mono text-[10px] text-muted-soft">
           {formatPercent(participant.cardFeeRate)}
@@ -216,7 +216,7 @@ function SettlementPreviewRow({
           {participant.cardFeePayer === "participant" ? "참가부스" : "마켓"}
         </span>
       </td>
-      <td className="px-4 py-4 text-right font-display text-[15px] font-bold text-[#1f8a4d] xl:px-6">
+      <td className="px-4 py-4 text-right font-display text-[15px] font-bold text-success xl:px-6">
         {formatWon(participant.payoutAmount)}
       </td>
     </tr>

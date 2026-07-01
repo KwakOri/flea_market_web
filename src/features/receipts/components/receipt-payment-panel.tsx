@@ -76,7 +76,7 @@ export function ReceiptPaymentPanel({
                 className={cn(
                   "flex items-center gap-2.5 rounded-[8px] border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
                   isActive
-                    ? "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f6e40]"
+                    ? "border-success/40 bg-success-tint text-success"
                     : "border-hairline bg-surface text-muted hover:bg-canvas-soft",
                 )}
                 disabled={!hasParticipants}

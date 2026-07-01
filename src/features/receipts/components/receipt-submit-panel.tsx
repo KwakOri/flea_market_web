@@ -29,7 +29,7 @@ export function ReceiptSubmitPanel({
         <span
           className={cn(
             "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full",
-            waitingForSplitAmount ? "bg-[#c47d12]" : "bg-[#1f8a4d]",
+            waitingForSplitAmount ? "bg-[#c47d12]" : "bg-success",
           )}
         >
           <CheckCircle2

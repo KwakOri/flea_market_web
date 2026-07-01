@@ -48,9 +48,9 @@ export function DashboardHeader({
               뒤로
             </button>
           )}
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#bfe3cd] bg-[#e6f4ec] px-3 py-1.5">
-            <span className="h-[7px] w-[7px] rounded-full bg-[#1f8a4d] [animation:okpulse_2.4s_infinite]" />
-            <span className="font-mono text-[11px] font-semibold tracking-[0.04em] text-[#1f8a4d]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-success/40 bg-success-tint px-3 py-1.5">
+            <span className="h-[7px] w-[7px] rounded-full bg-success [animation:okpulse_2.4s_infinite]" />
+            <span className="font-mono text-[11px] font-semibold tracking-[0.04em] text-success">
               {statusLabel}
             </span>
           </div>

@@ -98,7 +98,7 @@ export function SettlementParticipantSnapshots({
                       "num text-[13px] font-semibold",
                       participant.cardFeeAmount === 0
                         ? "text-muted-soft"
-                        : "text-[#2d6fe0]",
+                        : "text-info",
                     )}
                   >
                     {formatWon(participant.cardFeeAmount)}
@@ -114,7 +114,7 @@ export function SettlementParticipantSnapshots({
                     {cardFeePayerLabels[participant.cardFeePayer]}
                   </span>
                 </div>
-                <div className="num text-right text-[15px] font-bold text-[#1f8a4d]">
+                <div className="num text-right text-[15px] font-bold text-success">
                   {formatWon(participant.payoutAmount)}
                 </div>
               </div>

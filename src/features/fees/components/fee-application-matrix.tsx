@@ -22,7 +22,7 @@ const feeApplicationCellVariants = cva(
   {
     variants: {
       active: {
-        true: "border-[#1f8a4d] bg-[#e6f4ec]",
+        true: "border-success bg-success-tint",
         false: "border-hairline bg-surface opacity-30 hover:opacity-50",
       },
     },
@@ -34,7 +34,7 @@ const feeApplicationStatusTextVariants = cva(
   {
     variants: {
       active: {
-        true: "font-bold text-[#1f8a4d]",
+        true: "font-bold text-success",
         false: "font-medium text-muted-soft",
       },
     },
@@ -46,7 +46,7 @@ const feeSettingFieldRowVariants = cva(
   {
     variants: {
       active: {
-        true: "bg-surface shadow-sm ring-1 ring-[#bfe3cd]",
+        true: "bg-surface shadow-sm ring-1 ring-success/40",
         false: "",
       },
     },
@@ -58,7 +58,7 @@ const feeSettingFieldStatusVariants = cva(
   {
     variants: {
       active: {
-        true: "font-semibold text-[#1f8a4d]",
+        true: "font-semibold text-success",
         false: "font-normal text-muted-soft",
       },
     },

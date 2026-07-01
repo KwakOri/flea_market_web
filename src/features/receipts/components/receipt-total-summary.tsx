@@ -51,14 +51,14 @@ function ReceiptTotalCell({
     <div
       className={cn(
         "min-w-0 px-4 py-4 sm:px-6",
-        accent ? "bg-[#e6f4ec]" : "bg-surface",
+        accent ? "bg-success-tint" : "bg-surface",
       )}
       data-testid={testId}
     >
       <div
         className={cn(
           "font-mono text-[10.5px] tracking-[0.06em]",
-          accent ? "text-[#1f8a4d]" : "text-muted",
+          accent ? "text-success" : "text-muted",
         )}
       >
         {label}
@@ -66,7 +66,7 @@ function ReceiptTotalCell({
       <div
         className={cn(
           "num mt-1 truncate text-[22px] font-bold",
-          accent ? "text-[#1f8a4d]" : "text-amount-default",
+          accent ? "text-success" : "text-amount-default",
         )}
       >
         {value}
