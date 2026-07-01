@@ -65,9 +65,11 @@
 - [x] 정산 드릴다운/회차 상세: daily-sales-detail · snapshots · version-summary/changes/management/detail-screen — 체크포인트 8
       (※ 회차 상세 전체화면은 mock에 확정 정산이 없어 화면 확인 불가, 코드는 완료)
 - [x] 마켓 상세 하위: 참가부스 연결(list·picker·dialog·product) / 수수료 현황(fees) / 로그(logs) — 체크포인트 9
-- [ ] 영수증 수정 `/markets/[id]/receipts/[id]/edit`
-- [ ] `/login` 로그인 화면
+- [x] 영수증 수정 `/markets/[id]/receipts/[id]/edit` (매출입력 재사용, 무변경 확인) — 체크포인트 10
+- [x] `/login` 로그인 화면 (mock 자동인증으로 화면확인 불가, 코드 완료)
 - [ ] **다크 내비 레일**(왼쪽 세로) — ⏸️ 라임 결정 후. (매트릭스 다크헤더도 같은 계열)
+
+> ✅ **색상 리스킨(STEP 2~5) 사실상 완료.** 남은 것: 다크 레일(라임 결정 의존) + 아래 STEP 6/보류 결정들.
 
 > 화면을 돌면서 자연스럽게 **STEP 3(상태 배지)**, **STEP 4(금액 색)**도 그 화면에서 함께 처리합니다.
 > 관련 색-상태 연결 파일: `market-display.ts`, `settlement-display.ts`, `participant-type-badge.tsx`, `settlement-metric.tsx` 등.
