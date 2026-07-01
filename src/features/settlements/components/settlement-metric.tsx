@@ -40,7 +40,7 @@ export function SettlementMetric({
   return (
     <div
       className={cn(
-        "min-w-0 rounded-[16px] border p-4 sm:p-[18px]",
+        "min-w-0 rounded-[12px] border p-4 sm:p-[18px]",
         toneClass.card,
       )}
     >

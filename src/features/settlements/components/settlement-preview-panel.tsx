@@ -110,7 +110,7 @@ export function SettlementPreviewPanel({
         />
       </dl>
       <form
-        className="grid min-w-0 gap-3 rounded-[16px] border border-hairline bg-surface p-3.5 shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
+        className="grid min-w-0 gap-3 rounded-[12px] border border-hairline bg-surface p-3.5 shadow-card md:grid-cols-[minmax(0,1fr)_auto_auto]"
         data-testid="settlement-confirm-form"
         onSubmit={onConfirm}
       >

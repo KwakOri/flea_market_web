@@ -72,7 +72,7 @@ export function DashboardHeader({
         {showSummary ? (
           <DashboardSummary items={summaryItems} />
         ) : (
-          <div className="hidden rounded-[14px] border border-border bg-surface px-[18px] py-2.5 sm:block">
+          <div className="hidden rounded-[12px] border border-border bg-surface px-[18px] py-2.5 sm:block">
             <div className="font-mono text-[10px] tracking-[0.06em] text-muted">
               OPERATOR
             </div>
@@ -88,7 +88,7 @@ export function DashboardHeader({
 
 function DashboardSummary({ items }: { items: DashboardSummaryItem[] }) {
   return (
-    <div className="grid w-full min-w-0 grid-cols-2 items-stretch overflow-hidden rounded-[14px] border border-border bg-surface sm:grid-cols-4 xl:flex xl:w-auto">
+    <div className="grid w-full min-w-0 grid-cols-2 items-stretch overflow-hidden rounded-[12px] border border-border bg-surface sm:grid-cols-4 xl:flex xl:w-auto">
       {items.map((item, index) => (
         <div
           className={cn(

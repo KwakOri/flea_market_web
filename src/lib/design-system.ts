@@ -7,7 +7,7 @@ export const appShellClass =
   "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
 
 export const buttonVariants = cva(
-  "inline-flex h-10 items-center justify-center rounded-[10px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex h-10 items-center justify-center rounded-[8px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       intent: {
@@ -29,7 +29,7 @@ export const buttonVariants = cva(
 );
 
 export const inputVariants = cva(
-  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
+  "rounded-[8px] border border-border bg-surface text-sm text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -49,7 +49,7 @@ export const inputVariants = cva(
 );
 
 export const selectVariants = cva(
-  "rounded-[10px] border border-border bg-surface text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
+  "rounded-[8px] border border-border bg-surface text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -69,10 +69,10 @@ export const selectVariants = cva(
 );
 
 export const dashboardTabListClass =
-  "flex w-full max-w-full flex-wrap rounded-[14px] border border-border bg-surface p-1 xl:inline-flex xl:w-auto";
+  "flex w-full max-w-full flex-wrap rounded-[12px] border border-border bg-surface p-1 xl:inline-flex xl:w-auto";
 
 export const dashboardTabVariants = cva(
-  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[10px] px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:min-w-28",
+  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[8px] px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:min-w-28",
   {
     variants: {
       active: {
@@ -87,7 +87,7 @@ export const dashboardTabVariants = cva(
 );
 
 export const panelVariants = cva(
-  "min-w-0 rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)]",
+  "min-w-0 rounded-[12px] border border-hairline bg-surface shadow-card",
   {
     variants: {
       padding: {
@@ -103,7 +103,7 @@ export const panelVariants = cva(
 );
 
 export const statCardVariants = cva(
-  "min-h-[92px] min-w-0 rounded-[16px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]",
+  "min-h-[92px] min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card",
 );
 
 export const sectionHeaderClass = "border-b border-hairline px-5 py-4";

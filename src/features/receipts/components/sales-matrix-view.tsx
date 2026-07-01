@@ -53,7 +53,7 @@ export function SalesMatrixView({
         key={formKey}
         onSubmit={onSubmit}
       >
-        <section className="min-w-0 overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+        <section className="min-w-0 overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
           <ReceiptDetailsPanel
             hasParticipants={hasParticipants}
             memoDefaultValue={memoDefaultValue}

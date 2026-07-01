@@ -106,7 +106,7 @@ export function FeeApplicationMatrix({
   const hasMarketSettings = Boolean(marketSettings?.id);
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-surface">
+    <div className="overflow-hidden rounded-[12px] bg-surface">
       <div className="grid gap-3 p-3 md:hidden">
         {participants.map((participant) => {
           const activeScope = getParticipantFeePolicySource(
@@ -118,7 +118,7 @@ export function FeeApplicationMatrix({
 
           return (
             <article
-              className="grid gap-3 rounded-[14px] border border-hairline bg-canvas-soft p-3"
+              className="grid gap-3 rounded-[12px] border border-hairline bg-canvas-soft p-3"
               data-testid="fee-status-card"
               key={participant.id}
             >
@@ -292,7 +292,7 @@ function FeeApplicationCell({
       {isUnavailable ? (
         <p
           className={cn(
-            "grid min-h-[94px] place-items-center rounded-[10px] bg-canvas-soft px-3 py-4 text-center text-sm leading-relaxed",
+            "grid min-h-[94px] place-items-center rounded-[8px] bg-canvas-soft px-3 py-4 text-center text-sm leading-relaxed",
             isActive ? "font-medium text-muted" : "font-normal text-muted-soft",
           )}
         >

@@ -71,7 +71,7 @@ export function SettlementHistoryPanel({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="rounded-[18px] border border-hairline bg-surface p-[14px] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+        <div className="rounded-[12px] border border-hairline bg-surface p-[14px] shadow-card">
           <div className="dsp px-2 pb-3 pt-1 text-[14px] font-bold text-ink">
             정산 회차
           </div>
@@ -92,7 +92,7 @@ export function SettlementHistoryPanel({
         </div>
 
         <div className="grid gap-[18px]">
-          <div className="flex flex-col gap-5 rounded-[18px] bg-brand-deep px-5 py-[22px] text-on-brand-deep md:flex-row md:items-center md:justify-between md:px-6">
+          <div className="flex flex-col gap-5 rounded-[12px] bg-brand-deep px-5 py-[22px] text-on-brand-deep md:flex-row md:items-center md:justify-between md:px-6">
             <div className="min-w-0">
               <p className="mono text-[11px] text-muted-soft">
                 현재 회차 · v{currentSettlement.versionNo} (
@@ -123,7 +123,7 @@ export function SettlementHistoryPanel({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+          <div className="overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
             <SettlementParticipantDeltaTable
               currentSettlement={currentSettlementQuery.data ?? null}
               currentSettlementSummary={currentSettlementSummary}
@@ -148,7 +148,7 @@ function SettlementHistoryMessage({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[18px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <div className="rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card">
       {children}
     </div>
   );

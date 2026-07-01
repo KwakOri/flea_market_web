@@ -34,10 +34,10 @@ export function ReceiptPaymentPanel({
   const receiptTotal = sumReceiptAmounts(receiptAmounts);
 
   return (
-    <section className="min-w-0 rounded-[18px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-5">
+    <section className="min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card sm:p-5">
       <div className="mb-3.5 flex min-w-0 items-center justify-between gap-3">
         <h3 className="font-display text-[15px] font-bold">결제수단 분할</h3>
-        <div className="inline-flex rounded-[9px] bg-canvas-soft p-[3px]">
+        <div className="inline-flex rounded-[8px] bg-canvas-soft p-[3px]">
           <button
             className={cn(
               "rounded-md px-2.5 py-1 text-xs font-bold transition",
@@ -74,7 +74,7 @@ export function ReceiptPaymentPanel({
             return (
               <button
                 className={cn(
-                  "flex items-center gap-2.5 rounded-[11px] border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                  "flex items-center gap-2.5 rounded-[8px] border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
                   isActive
                     ? "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f6e40]"
                     : "border-hairline bg-surface text-muted hover:bg-canvas-soft",
@@ -102,7 +102,7 @@ export function ReceiptPaymentPanel({
 
             return (
               <div
-                className="grid gap-2 rounded-[11px] border border-hairline bg-surface p-3"
+                className="grid gap-2 rounded-[8px] border border-hairline bg-surface p-3"
                 key={paymentMethod}
               >
                 <label

@@ -30,7 +30,7 @@ export function ParticipantDailySalesDetail({
 }) {
   if (!participant) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
         선택한 참가부스 정산 데이터를 찾을 수 없습니다.
       </section>
     );
@@ -38,7 +38,7 @@ export function ParticipantDailySalesDetail({
 
   if (isReceiptsLoading) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
         날짜별 판매 데이터를 불러오는 중입니다.
       </section>
     );
@@ -52,7 +52,7 @@ export function ParticipantDailySalesDetail({
   );
 
   return (
-    <section className="min-w-0 rounded-[18px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+    <section className="min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card sm:p-6">
       <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">
@@ -73,19 +73,19 @@ export function ParticipantDailySalesDetail({
             목록
           </button>
           <dl className="grid min-w-0 gap-2 sm:grid-cols-3">
-            <div className="min-w-0 rounded-[10px] border border-hairline bg-canvas-soft px-3 py-2">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
               <dt className="text-xs font-medium text-muted">총매출</dt>
               <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {formatWon(participant.netSalesAmount)}
               </dd>
             </div>
-            <div className="min-w-0 rounded-[10px] border border-hairline bg-canvas-soft px-3 py-2">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
               <dt className="text-xs font-medium text-muted">판매 건수</dt>
               <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {participant.saleLineCount}건
               </dd>
             </div>
-            <div className="min-w-0 rounded-[10px] border border-hairline bg-canvas-soft px-3 py-2">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
               <dt className="text-xs font-medium text-muted">평균 판매</dt>
               <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {formatWon(

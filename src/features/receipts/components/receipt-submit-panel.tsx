@@ -24,7 +24,7 @@ export function ReceiptSubmitPanel({
   const waitingForSplitAmount = paymentMode === "split" && paymentRemaining !== 0;
 
   return (
-    <section className="min-w-0 rounded-[18px] bg-brand-deep p-5 text-on-brand-deep sm:p-[22px]">
+    <section className="min-w-0 rounded-[12px] bg-brand-deep p-5 text-on-brand-deep sm:p-[22px]">
       <div className="mb-3.5 flex items-center gap-2.5">
         <span
           className={cn(

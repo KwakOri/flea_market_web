@@ -310,7 +310,7 @@ function AuditLogCard({
   marketName: string;
 }) {
   return (
-    <article className="rounded-[14px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <article className="rounded-[12px] border border-hairline bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] text-muted">

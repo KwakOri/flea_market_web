@@ -21,7 +21,7 @@ export function SettlementParticipantSnapshots({
   participants: Settlement["participants"];
 }) {
   return (
-    <section className="overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <section className="overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
       <div className="px-5 pb-4 pt-5 sm:px-6">
         <h2 className="dsp m-0 text-[17px] font-bold text-ink">
           부스별 정산 데이터

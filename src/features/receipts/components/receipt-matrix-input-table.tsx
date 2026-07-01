@@ -7,7 +7,7 @@ import { parseOptionalReceiptAmount } from "@/lib/receipt-matrix";
 import { cn } from "@/lib/utils";
 
 const amountInputFrameClass =
-  "flex w-[140px] items-center justify-end gap-[3px] rounded-[9px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-ink focus-within:bg-brand-tint";
+  "flex w-[140px] items-center justify-end gap-[3px] rounded-[8px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-ink focus-within:bg-brand-tint";
 
 const amountInputClass =
   "num min-w-0 flex-1 bg-transparent text-right text-[15px] font-bold outline-none placeholder:text-muted-soft";
@@ -126,7 +126,7 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
   return (
     <article
       className={cn(
-        "grid gap-3 rounded-[14px] border px-3 py-3",
+        "grid gap-3 rounded-[12px] border px-3 py-3",
         hasAmount
           ? "border-brand bg-surface-raised"
           : "border-hairline bg-surface",

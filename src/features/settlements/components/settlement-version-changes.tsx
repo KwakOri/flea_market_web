@@ -42,7 +42,7 @@ const amountDeltaFields: Array<{
 
 export function SettlementChanges({ changes }: { changes: SettlementChange[] }) {
   return (
-    <section className="rounded-[18px] border border-hairline bg-surface px-5 py-[22px] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6">
+    <section className="rounded-[12px] border border-hairline bg-surface px-5 py-[22px] shadow-card sm:px-6">
       <h2 className="dsp m-0 text-[17px] font-bold text-ink">
         변경 내역
       </h2>
@@ -103,7 +103,7 @@ function SettlementChangeRow({ change }: { change: SettlementChange }) {
           <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {deltas.map((delta) => (
               <div
-                className="rounded-[9px] border border-hairline bg-canvas-soft px-3 py-2"
+                className="rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2"
                 key={delta.key}
               >
                 <dt className="mono text-[10px] text-muted">

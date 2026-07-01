@@ -125,7 +125,7 @@ function ParticipantMasterCard({
 }) {
   return (
     <article
-      className="grid gap-3 rounded-[14px] border border-hairline bg-surface p-4"
+      className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4"
       data-testid="participant-master-card"
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -144,7 +144,7 @@ function ParticipantMasterCard({
         {onEditParticipant && (
           <button
             aria-label={`${participant.displayName} 관리`}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             onClick={() => onEditParticipant(participant)}
             type="button"
           >
@@ -202,7 +202,7 @@ function ParticipantMasterMetric({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-[10px] bg-surface px-3 py-2">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-[8px] bg-surface px-3 py-2">
       <dt className="text-muted">{label}</dt>
       <dd className="truncate font-medium text-ink">{value}</dd>
     </div>

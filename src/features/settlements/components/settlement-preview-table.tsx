@@ -21,7 +21,7 @@ export function SettlementPreviewTable({
           />
         ))}
       </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:block">
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[12px] border border-hairline bg-surface shadow-card md:block">
         <table className="w-full min-w-[960px] border-collapse text-sm xl:min-w-[1180px]">
           <thead className="bg-brand-deep text-center font-mono text-[10px] uppercase tracking-[0.06em] text-muted-soft">
             <tr>
@@ -78,7 +78,7 @@ function SettlementPreviewCard({
 }) {
   return (
     <button
-      className="grid gap-3 rounded-[16px] border border-hairline bg-surface p-4 text-left shadow-[0_1px_3px_rgba(26,27,18,0.05)] transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4 text-left shadow-card transition hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       data-testid="settlement-card"
       onClick={() => onSelectParticipant(participant.participantId)}
       type="button"
@@ -143,7 +143,7 @@ function SettlementCardMetric({
   value: string;
 }) {
   return (
-    <span className="min-w-0 rounded-[10px] bg-canvas-soft px-3 py-2">
+    <span className="min-w-0 rounded-[8px] bg-canvas-soft px-3 py-2">
       <span className="block font-mono text-[10px] text-muted">
         {label}
       </span>

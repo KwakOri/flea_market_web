@@ -17,7 +17,7 @@ export function ParticipantSettlementDualChart({
 
   if (!hasSales) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
         상점별 판매 데이터가 없습니다.
       </section>
     );
@@ -54,7 +54,7 @@ export function ParticipantSettlementDualChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <section className="min-w-0 rounded-[18px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+    <section className="min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card sm:p-6">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">

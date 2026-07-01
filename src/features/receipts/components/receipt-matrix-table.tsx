@@ -228,7 +228,7 @@ function ReceiptMobileCard({
   );
 
   return (
-    <article className="grid gap-3 rounded-[16px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <article className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4 shadow-card">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] text-muted">
@@ -248,18 +248,18 @@ function ReceiptMobileCard({
         onDeleteReceipt={onDeleteReceipt}
         onEditReceipt={onEditReceipt}
       />
-      <div className="rounded-[10px] bg-canvas-soft px-3 py-2 text-sm text-body">
+      <div className="rounded-[8px] bg-canvas-soft px-3 py-2 text-sm text-body">
         <ReceiptPaymentSplits receipt={receipt} />
       </div>
       {activeLines.length === 0 ? (
-        <p className="rounded-[10px] bg-canvas-soft px-3 py-3 text-center text-sm text-muted">
+        <p className="rounded-[8px] bg-canvas-soft px-3 py-3 text-center text-sm text-muted">
           부스별 판매 금액이 없습니다.
         </p>
       ) : (
         <dl className="grid gap-1.5">
           {activeLines.map(([participantId, amount]) => (
             <div
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] bg-canvas-soft px-3 py-2 text-sm"
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] bg-canvas-soft px-3 py-2 text-sm"
               key={participantId}
             >
               <dt className="truncate text-body">

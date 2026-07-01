@@ -75,7 +75,7 @@ function ProductCard({
 }) {
   return (
     <article
-      className="grid gap-3 rounded-[14px] border border-hairline bg-surface p-4"
+      className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4"
       data-testid="product-card"
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
