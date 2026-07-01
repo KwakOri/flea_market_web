@@ -1,4 +1,5 @@
 @import "tailwindcss";
+/* 웹폰트(Pretendard·JetBrains Mono)는 layout.tsx의 <link>로 로드 (STEP6) */
 
 *,
 *::before,
@@ -6,141 +7,23 @@
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 100;
-  src: url("../fonts/Paperlogy-1Thin.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 200;
-  src: url("../fonts/Paperlogy-2ExtraLight.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 300;
-  src: url("../fonts/Paperlogy-3Light.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/Paperlogy-4Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 500;
-  src: url("../fonts/Paperlogy-5Medium.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 600;
-  src: url("../fonts/Paperlogy-6SemiBold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 700;
-  src: url("../fonts/Paperlogy-7Bold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 800;
-  src: url("../fonts/Paperlogy-8ExtraBold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 900;
-  src: url("../fonts/Paperlogy-9Black.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Space Grotesk";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400 700;
-  src: url("../fonts/SpaceGrotesk-Variable.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/IBMPlexMono-400.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 500;
-  src: url("../fonts/IBMPlexMono-500.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 600 700;
-  src: url("../fonts/IBMPlexMono-600.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Space Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/SpaceMono-Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Space Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 700;
-  src: url("../fonts/SpaceMono-Bold.ttf") format("truetype");
-}
-
 :root {
   /* base canvas/ink now point at tambang tokens (STEP1 리스킨) */
   --background: #f7f4ec;
   --foreground: #2a2e22;
+  /* STEP6: Pretendard 단일 패밀리(본문·UI·숫자), mono만 JetBrains Mono */
   --font-paperlogy:
-    "Paperlogy", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   --font-display-stack:
-    "Space Grotesk", "Paperlogy", -apple-system, BlinkMacSystemFont, system-ui,
-    sans-serif;
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, sans-serif;
   --font-mono-stack:
-    "IBM Plex Mono", "Space Mono", "Paperlogy", ui-monospace, SFMono-Regular,
-    Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
   --font-number-stack:
-    "Space Grotesk", "IBM Plex Mono", "Paperlogy", ui-monospace, SFMono-Regular,
-    Menlo, Monaco, Consolas, monospace;
+    "Pretendard Variable", Pretendard, ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, monospace;
 }
 
 @theme inline {
