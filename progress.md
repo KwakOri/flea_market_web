@@ -61,8 +61,9 @@
 - [x] `/booths` 부스(셀러) 관리 목록 + 다이얼로그 — 체크포인트 4
 - [x] 영수증 조회 `/markets/[id]/receipts` (매트릭스 다크헤더) — 체크포인트 5
 - [x] 영수증 입력 `/markets/[id]/sales` (입력매트릭스+결제+제출, 금액색 시작) — 체크포인트 6
-- [ ] 정산 `/markets/[id]/settlements` + 회차 상세 (+금액색 STEP4 본격: 지급/수수료/환불)
-- [ ] 마켓 상세 하위 나머지: 참가부스(participants) / 수수료 현황(fees) / 로그(logs)
+- [x] 정산 메인 `/markets/[id]/settlements` (지표·차트·표·히스토리, STEP4 금액색) — 체크포인트 7
+- [ ] 정산 드릴다운/회차: participant-daily-sales-detail · settlement-participant-snapshots · settlement-version-* (회차 상세 화면)
+- [ ] 마켓 상세 하위 나머지: 참가부스(participant-picker 등) / 수수료 현황(fees) / 로그(logs)
 - [ ] 영수증 수정 `/markets/[id]/receipts/[id]/edit`
 - [ ] `/login` 로그인 화면
 - [ ] **다크 내비 레일**(왼쪽 세로) — ⏸️ 라임 결정 후. (매트릭스 다크헤더도 같은 계열)
@@ -115,6 +116,8 @@
 
 - **개발 서버 켜기**: 터미널에서 `npm run dev` → 브라우저에서 `http://localhost:3000` 접속.
   (이미 켜져 있으면 코드 저장 시 자동으로 새로고침됨 = HMR)
+- **색이 안 먹는 것처럼 보이면** (예: 다크 카드가 투명): Turbopack CSS 캐시 문제일 수 있음 →
+  dev 서버 끄고 `rm -rf .next` 후 다시 `npm run dev`. (특히 git 브랜치를 왔다갔다 한 뒤)
 - **데이터 모드**: `.env.local`에 `NEXT_PUBLIC_DATA_SOURCE=mock` → **가짜 데이터로 동작**(진짜 서버 없이 화면 확인 가능). 그래서 로그인 없이 바로 홈이 보임.
 - **색 토큰이 정의된 곳**: `src/app/globals.css`의 `@theme inline { ... }` 블록.
   여기서 예: `--color-brand: #4e7327;` → 화면에서 `bg-brand`, `text-brand` 처럼 쓸 수 있음.

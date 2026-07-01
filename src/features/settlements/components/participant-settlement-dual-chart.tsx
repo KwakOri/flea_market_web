@@ -17,7 +17,7 @@ export function ParticipantSettlementDualChart({
 
   if (!hasSales) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[18px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
         상점별 판매 데이터가 없습니다.
       </section>
     );
@@ -54,23 +54,23 @@ export function ParticipantSettlementDualChart({
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+    <section className="min-w-0 rounded-[18px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-[#1a1b12]">
+          <h3 className="text-sm font-semibold text-ink">
             상점별 판매 현황
           </h3>
-          <p className="mt-1 text-xs text-[#8a8775]">
+          <p className="mt-1 text-xs text-muted">
             플리마켓 기간 내 판매 금액과 판매 건수를 함께 확인합니다.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs font-medium text-[#56564a]">
+        <div className="flex flex-wrap gap-3 text-xs font-medium text-body">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />
             판매 금액
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-[#18181b]" />
+            <span className="h-0.5 w-4 rounded-full bg-ink" />
             판매 건수
           </span>
         </div>
@@ -194,7 +194,7 @@ export function ParticipantSettlementDualChart({
           <polyline
             fill="none"
             points={points}
-            stroke="#18181b"
+            stroke="#2a2e22"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2.5"
@@ -211,11 +211,11 @@ export function ParticipantSettlementDualChart({
                   cy={y}
                   fill="#ffffff"
                   r="5"
-                  stroke="#18181b"
+                  stroke="#2a2e22"
                   strokeWidth="2"
                 />
                 <text
-                  fill="#18181b"
+                  fill="#2a2e22"
                   fontSize="10"
                   fontWeight="600"
                   textAnchor="middle"
