@@ -154,7 +154,7 @@ function ParticipantDailySalesChart({
         width={chartWidth}
       >
         <line
-          stroke="#d8d3c2"
+          stroke="#d5d0bf"
           strokeWidth="1"
           x1={chartLeft}
           x2={chartWidth - chartRight}
@@ -169,7 +169,7 @@ function ParticipantDailySalesChart({
           return (
             <g key={tick}>
               <line
-                stroke="#f1eee2"
+                stroke="#e7e2d4"
                 strokeWidth="1"
                 x1={chartLeft}
                 x2={chartWidth - chartRight}
@@ -177,7 +177,7 @@ function ParticipantDailySalesChart({
                 y2={y}
               />
               <text
-                fill="#8a8775"
+                fill="#686d5c"
                 fontSize="11"
                 textAnchor="end"
                 x={chartLeft - 10}
@@ -186,7 +186,7 @@ function ParticipantDailySalesChart({
                 {formatCompactWon(amountValue)}
               </text>
               <text
-                fill="#8a8775"
+                fill="#686d5c"
                 fontSize="11"
                 textAnchor="start"
                 x={chartWidth - chartRight + 10}
@@ -198,7 +198,7 @@ function ParticipantDailySalesChart({
           );
         })}
         <text
-          fill="#56564a"
+          fill="#494f3e"
           fontSize="12"
           fontWeight="600"
           textAnchor="start"
@@ -208,7 +208,7 @@ function ParticipantDailySalesChart({
           금액
         </text>
         <text
-          fill="#56564a"
+          fill="#494f3e"
           fontSize="12"
           fontWeight="600"
           textAnchor="end"
@@ -237,7 +237,7 @@ function ParticipantDailySalesChart({
                 y={y}
               />
               <text
-                fill="#56564a"
+                fill="#494f3e"
                 fontSize="11"
                 fontWeight="600"
                 textAnchor="middle"
@@ -247,7 +247,7 @@ function ParticipantDailySalesChart({
                 {formatChartDateLabel(point.date)}
               </text>
               <text
-                fill="#8a8775"
+                fill="#686d5c"
                 fontSize="10"
                 textAnchor="middle"
                 x={x}
