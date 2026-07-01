@@ -123,14 +123,14 @@ export function AuditLogScreen({
 
       <section className={panelVariants()}>
         <form
-          className="grid gap-3 border-b border-[#eee9da] px-4 py-4 sm:grid-cols-2 lg:grid-cols-[minmax(180px,1.1fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(120px,0.7fr)_minmax(180px,1fr)_auto] lg:items-end"
+          className="grid gap-3 border-b border-hairline px-4 py-4 sm:grid-cols-2 lg:grid-cols-[minmax(180px,1.1fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(120px,0.7fr)_minmax(180px,1fr)_auto] lg:items-end"
           onSubmit={(event) => {
             event.preventDefault();
             setFilters(draftFilters);
           }}
         >
           <label className="grid gap-1.5">
-            <span className="font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+            <span className="font-mono text-[10.5px] tracking-[0.06em] text-muted">
               플리마켓
             </span>
             <select
@@ -180,7 +180,7 @@ export function AuditLogScreen({
           />
 
           <label className="grid gap-1.5">
-            <span className="font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+            <span className="font-mono text-[10.5px] tracking-[0.06em] text-muted">
               검색
             </span>
             <input
@@ -221,7 +221,7 @@ export function AuditLogScreen({
             </div>
             <div className="hidden overflow-x-auto md:block">
               <table className="min-w-[920px] w-full border-collapse">
-                <thead className="bg-[#16170f] text-left font-mono text-[10px] uppercase tracking-[0.06em] text-[#9b9a86]">
+                <thead className="bg-brand-deep text-left font-mono text-[10px] uppercase tracking-[0.06em] text-muted-soft">
                   <tr>
                     <th className="px-5 py-4 font-semibold">시각</th>
                     <th className="px-5 py-4 font-semibold">구분</th>
@@ -231,30 +231,30 @@ export function AuditLogScreen({
                     <th className="px-5 py-4 font-semibold">대상</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#f1eee2] bg-white text-sm">
+                <tbody className="divide-y divide-hairline bg-surface text-sm">
                   {logs.map((log) => (
                     <tr key={log.id}>
-                      <td className="whitespace-nowrap px-5 py-4 font-mono text-[11.5px] text-[#8a8775]">
+                      <td className="whitespace-nowrap px-5 py-4 font-mono text-[11.5px] text-muted">
                         {formatFullDateTime(log.occurredAt)}
                       </td>
                       <td className="px-5 py-4">
                         <LogBadges log={log} />
                       </td>
                       <td className="min-w-[260px] px-5 py-4">
-                        <div className="font-semibold text-[#1a1b12]">
+                        <div className="font-semibold text-ink">
                           {log.summary}
                         </div>
-                        <div className="mt-1 font-mono text-[10.5px] text-[#a8a593]">
+                        <div className="mt-1 font-mono text-[10.5px] text-muted-soft">
                           {formatMetadata(log.metadata)}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-[#56564a]">
+                      <td className="whitespace-nowrap px-5 py-4 text-body">
                         {log.actorDisplayName ?? "시스템"}
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-[#56564a]">
+                      <td className="whitespace-nowrap px-5 py-4 text-body">
                         {resolveMarketName(log, marketNameById)}
                       </td>
-                      <td className="px-5 py-4 font-mono text-[10.5px] text-[#8a8775]">
+                      <td className="px-5 py-4 font-mono text-[10.5px] text-muted">
                         {log.targetType ?? "-"}
                         {log.targetId ? ` · ${shortId(log.targetId)}` : ""}
                       </td>
@@ -283,7 +283,7 @@ function AuditSelect<TValue extends string>({
 }) {
   return (
     <label className="grid gap-1.5">
-      <span className="font-mono text-[10.5px] tracking-[0.06em] text-[#8a8775]">
+      <span className="font-mono text-[10.5px] tracking-[0.06em] text-muted">
         {label}
       </span>
       <select
@@ -310,13 +310,13 @@ function AuditLogCard({
   marketName: string;
 }) {
   return (
-    <article className="rounded-[14px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <article className="rounded-[14px] border border-hairline bg-surface p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[11px] text-[#8a8775]">
+          <p className="font-mono text-[11px] text-muted">
             {formatFullDateTime(log.occurredAt)}
           </p>
-          <h3 className="mt-1 text-[15px] font-semibold text-[#1a1b12]">
+          <h3 className="mt-1 text-[15px] font-semibold text-ink">
             {log.summary}
           </h3>
         </div>
@@ -325,17 +325,17 @@ function AuditLogCard({
       <div className="mt-3">
         <LogBadges log={log} />
       </div>
-      <dl className="mt-3 grid gap-1.5 text-sm text-[#56564a]">
+      <dl className="mt-3 grid gap-1.5 text-sm text-body">
         <div className="flex justify-between gap-3">
-          <dt className="text-[#8a8775]">담당자</dt>
+          <dt className="text-muted">담당자</dt>
           <dd className="text-right">{log.actorDisplayName ?? "시스템"}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[#8a8775]">플리마켓</dt>
+          <dt className="text-muted">플리마켓</dt>
           <dd className="text-right">{marketName}</dd>
         </div>
       </dl>
-      <p className="mt-3 font-mono text-[10.5px] text-[#a8a593]">
+      <p className="mt-3 font-mono text-[10.5px] text-muted-soft">
         {formatMetadata(log.metadata)}
       </p>
     </article>
@@ -345,10 +345,10 @@ function AuditLogCard({
 function LogBadges({ log }: { log: AuditLog }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="rounded-md bg-[#f1eee2] px-2 py-1 font-mono text-[10.5px] font-semibold text-[#56564a]">
+      <span className="rounded-md bg-canvas-soft px-2 py-1 font-mono text-[10.5px] font-semibold text-body">
         {categoryLabels[log.category]}
       </span>
-      <span className="rounded-md bg-[#fcfbf6] px-2 py-1 font-mono text-[10.5px] font-semibold text-[#8a8775]">
+      <span className="rounded-md bg-surface-sunken px-2 py-1 font-mono text-[10.5px] font-semibold text-muted">
         {actionLabels[log.action]}
       </span>
       <LogResultPill result={log.result} />
@@ -363,7 +363,7 @@ function LogResultPill({ result }: { result: AuditLogResult }) {
         "rounded-md px-2 py-1 font-mono text-[10.5px] font-bold",
         result === "success"
           ? "bg-[#e6f4ec] text-[#1f8a4d]"
-          : "bg-[#fbe9e9] text-[#cf3d3d]",
+          : "bg-error-tint text-error",
       )}
     >
       {resultLabels[result]}
@@ -373,7 +373,7 @@ function LogResultPill({ result }: { result: AuditLogResult }) {
 
 function LogStateMessage({ message }: { message: string }) {
   return (
-    <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
+    <div className="px-4 py-12 text-center text-sm text-muted">
       {message}
     </div>
   );

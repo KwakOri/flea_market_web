@@ -89,7 +89,7 @@ export function BoothProductManagementView({
           </div>
         </div>
         {participantMessage && !participantDialogOpen && (
-          <p className="border-t border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+          <p className="border-t border-hairline px-4 py-2 text-sm font-medium text-error">
             {participantMessage}
           </p>
         )}
@@ -173,7 +173,7 @@ export function BoothProductManagementView({
           </form>
         </div>
         {productMessage && (
-          <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+          <p className="border-b border-hairline px-4 py-2 text-sm font-medium text-error">
             {productMessage}
           </p>
         )}
