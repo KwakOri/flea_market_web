@@ -105,6 +105,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-paperlogy);
+  /* DESIGN 타이포: 본문 15px · 라인하이트 1.6 (한글 가독성 기준) */
+  font-size: 0.9375rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
