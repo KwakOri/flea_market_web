@@ -21,24 +21,24 @@ export function SettlementParticipantSnapshots({
   participants: Settlement["participants"];
 }) {
   return (
-    <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <section className="overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
       <div className="px-5 pb-4 pt-5 sm:px-6">
-        <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+        <h2 className="dsp m-0 text-[17px] font-bold text-ink">
           부스별 정산 데이터
         </h2>
-        <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-[#8a8775]">
+        <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-muted">
           확정 당시 저장된 참가부스별 스냅샷 {participantCount}개
         </p>
       </div>
       {participants.length === 0 ? (
-        <div className="px-5 py-10 text-center text-sm text-[#8a8775] sm:px-6">
+        <div className="px-5 py-10 text-center text-sm text-muted sm:px-6">
           저장된 부스별 정산 데이터가 없습니다.
         </div>
       ) : (
         <div className="overflow-x-auto">
           <div className="min-w-[1180px]">
             <div
-              className="grid bg-[#16170f] px-5 py-3 sm:px-6"
+              className="grid bg-brand-deep px-5 py-3 sm:px-6"
               style={{ gridTemplateColumns: snapshotGridColumns }}
             >
               <SnapshotHeader>참가부스</SnapshotHeader>
@@ -55,11 +55,11 @@ export function SettlementParticipantSnapshots({
             </div>
             {participants.map((participant) => (
               <div
-                className="grid items-center border-b border-[#f1eee2] px-5 py-3.5 last:border-b-0 sm:px-6"
+                className="grid items-center border-b border-hairline px-5 py-3.5 last:border-b-0 sm:px-6"
                 key={participant.id}
                 style={{ gridTemplateColumns: snapshotGridColumns }}
               >
-                <div className="truncate text-[14px] font-semibold text-[#1a1b12]">
+                <div className="truncate text-[14px] font-semibold text-ink">
                   {participant.displayName}
                 </div>
                 <div>
@@ -72,23 +72,23 @@ export function SettlementParticipantSnapshots({
                     {participantTypeLabels[participant.participantType]}
                   </span>
                 </div>
-                <div className="mono text-[11.5px] text-[#8a8775]">
+                <div className="mono text-[11.5px] text-muted">
                   {settlementTypeLabels[participant.settlementType]}
                 </div>
-                <div className="num text-right text-[13px] text-[#56564a]">
+                <div className="num text-right text-[13px] text-body">
                   {participant.receiptCount}건
                 </div>
-                <div className="num text-right text-[13px] text-[#56564a]">
+                <div className="num text-right text-[13px] text-body">
                   {participant.saleLineCount}건
                 </div>
-                <div className="num text-right text-[14px] font-bold text-[#1a1b12]">
+                <div className="num text-right text-[14px] font-bold text-amount-default">
                   {formatWon(participant.netSalesAmount)}
                 </div>
                 <div className="text-right">
-                  <span className="num text-[13px] font-semibold text-[#1a1b12]">
+                  <span className="num text-[13px] font-semibold text-amount-default">
                     {formatWon(participant.salesCommissionAmount)}
                   </span>{" "}
-                  <span className="mono text-[10px] text-[#a8a593]">
+                  <span className="mono text-[10px] text-muted-soft">
                     ({formatPercent(participant.salesCommissionRate)})
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export function SettlementParticipantSnapshots({
                     className={cn(
                       "num text-[13px] font-semibold",
                       participant.cardFeeAmount === 0
-                        ? "text-[#a8a593]"
+                        ? "text-muted-soft"
                         : "text-[#2d6fe0]",
                     )}
                   >
@@ -107,8 +107,8 @@ export function SettlementParticipantSnapshots({
                     className={cn(
                       "mono text-[9.5px]",
                       participant.cardFeePayer === "market"
-                        ? "text-[#a9791f]"
-                        : "text-[#a8a593]",
+                        ? "text-warning"
+                        : "text-muted-soft",
                     )}
                   >
                     {cardFeePayerLabels[participant.cardFeePayer]}
@@ -139,7 +139,7 @@ function SnapshotHeader({
     <span
       className={cn(
         "mono text-[10px] tracking-[0.05em]",
-        accent ? "text-[#c7f94b]" : "text-[#9b9a86]",
+        accent ? "text-[#c7f94b]" : "text-muted-soft",
         align === "right" && "text-right",
       )}
     >
@@ -156,6 +156,6 @@ function getParticipantTypeBadgeClass(type: string): string {
       return "bg-[#eef9d4] text-[#5c7a16]";
     case "seller":
     default:
-      return "bg-[#f1eee2] text-[#8a8775]";
+      return "bg-canvas-soft text-muted";
   }
 }

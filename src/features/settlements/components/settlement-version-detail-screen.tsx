@@ -146,7 +146,7 @@ export function SettlementVersionDetailScreen({
       <div className={appShellClass}>
         <div className="mx-auto w-full max-w-[1120px]">
           <button
-            className="mb-4 inline-flex items-center gap-[7px] text-[#8a8775] transition hover:text-[#16170f]"
+            className="mb-4 inline-flex items-center gap-[7px] text-muted transition hover:text-ink"
             onClick={handleBack}
             type="button"
           >
@@ -158,10 +158,10 @@ export function SettlementVersionDetailScreen({
 
           <div className="mb-[22px] flex flex-col gap-[18px] sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="dsp num m-0 text-[32px] font-bold leading-tight tracking-[-0.025em] text-[#1a1b12]">
+              <h1 className="dsp num m-0 text-[32px] font-bold leading-tight tracking-[-0.025em] text-ink">
                 v{settlement.versionNo} 정산
               </h1>
-              <p className="mt-[7px] text-[13.5px] text-[#8a8775]">
+              <p className="mt-[7px] text-[13.5px] text-muted">
                 확정된 정산 회차의 기준 데이터와 변경 내역을 확인합니다.
               </p>
             </div>
@@ -175,7 +175,7 @@ export function SettlementVersionDetailScreen({
                 className={cn(
                   "h-[7px] w-[7px] rounded-full",
                   settlement.status === "voided"
-                    ? "bg-[#cf3d3d]"
+                    ? "bg-error"
                     : "bg-[#1f8a4d]",
                 )}
               />
@@ -217,7 +217,7 @@ export function SettlementVersionDetailScreen({
 
 function getSettlementStatusPillClass(status: string): string {
   if (status === "voided") {
-    return "border-[#f3c3bc] bg-[#fbe9e9] text-[#cf3d3d]";
+    return "border-error/40 bg-error-tint text-error";
   }
 
   return "border-[#bfe3cd] bg-[#e6f4ec] text-[#1f8a4d]";

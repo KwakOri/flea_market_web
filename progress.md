@@ -62,7 +62,8 @@
 - [x] 영수증 조회 `/markets/[id]/receipts` (매트릭스 다크헤더) — 체크포인트 5
 - [x] 영수증 입력 `/markets/[id]/sales` (입력매트릭스+결제+제출, 금액색 시작) — 체크포인트 6
 - [x] 정산 메인 `/markets/[id]/settlements` (지표·차트·표·히스토리, STEP4 금액색) — 체크포인트 7
-- [ ] 정산 드릴다운/회차: participant-daily-sales-detail · settlement-participant-snapshots · settlement-version-* (회차 상세 화면)
+- [x] 정산 드릴다운/회차 상세: daily-sales-detail · snapshots · version-summary/changes/management/detail-screen — 체크포인트 8
+      (※ 회차 상세 전체화면은 mock에 확정 정산이 없어 화면 확인 불가, 코드는 완료)
 - [ ] 마켓 상세 하위 나머지: 참가부스(participant-picker 등) / 수수료 현황(fees) / 로그(logs)
 - [ ] 영수증 수정 `/markets/[id]/receipts/[id]/edit`
 - [ ] `/login` 로그인 화면
