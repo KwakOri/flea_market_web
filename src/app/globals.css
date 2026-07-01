@@ -127,8 +127,9 @@
 }
 
 :root {
-  --background: #e9e5d8;
-  --foreground: #1a1b12;
+  /* base canvas/ink now point at tambang tokens (STEP1 리스킨) */
+  --background: #f7f4ec;
+  --foreground: #2a2e22;
   --font-paperlogy:
     "Paperlogy", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-display-stack:
@@ -148,6 +149,62 @@
   --font-sans: var(--font-paperlogy);
   --font-mono: var(--font-mono-stack);
   --font-display: var(--font-display-stack);
+
+  /* ==== tambang design tokens (merged from tokens.css — STEP1) ==== */
+  /* --- 캔버스 & 표면 --- */
+  --color-canvas: #f7f4ec;
+  --color-canvas-soft: #f1ede2;
+  --color-surface: #fcfbf6;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f0ecdf;
+
+  /* --- 텍스트 --- */
+  --color-ink: #2a2e22;
+  --color-body: #494f3e;
+  --color-muted: #686d5c;
+  --color-muted-soft: #a6ab97; /* 플레이스홀더·비활성 전용 */
+
+  /* --- 라인 --- */
+  --color-hairline: #e7e2d4;
+  --color-border: #d5d0bf;
+  --color-border-strong: #bdb8a4;
+
+  /* --- 브랜드 연두 --- */
+  --color-brand: #4e7327;
+  --color-brand-hover: #436322;
+  --color-brand-spring: #a7c957; /* 장식·큰 면적만, 텍스트 금지 */
+  --color-brand-deep: #34431c;
+  --color-brand-tint: #ecf2db;
+  --color-brand-tint-strong: #e5eecf;
+
+  /* --- on-color --- */
+  --color-on-brand: #ffffff;
+  --color-on-brand-deep: #eef3dd;
+
+  /* --- 시맨틱 (색+라벨+아이콘 병행) --- */
+  --color-success: #4e7327;
+  --color-success-tint: #e4efcf;
+  --color-warning: #8a620b;
+  --color-warning-tint: #f6ebcf;
+  --color-error: #ae412c;
+  --color-error-tint: #f5ddd5;
+  --color-info: #3a7081;
+  --color-info-tint: #dcebef;
+
+  /* --- 정산 금액 의미색 --- */
+  --color-amount-default: #2a2e22;
+  --color-amount-payout: #4e7327;
+  --color-amount-fee: #686d5c;
+  --color-amount-negative: #ae412c;
+
+  /* --- 데이터 시각화(최소) --- */
+  --color-bar-track: #e7e2d4;
+  --color-bar-fill: #7ba23f;
+  --color-chart-grid: #e7e2d4;
+
+  /* --- 오버레이 --- */
+  --color-scrim: #2a2e22; /* 모달 배경 — 45% 알파로 사용 */
+  --color-focus-ring: #4e7327;
 }
 
 html,

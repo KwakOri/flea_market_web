@@ -30,7 +30,7 @@ export function FeeSettingsForm({
     >
       <FeeSettingsFields defaultValues={defaultValues ?? null} disabled={disabled} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           우선순위: 현재 플리마켓의 부스별 예외값, 플리마켓별 설정,
           전체 설정
         </p>
@@ -38,7 +38,7 @@ export function FeeSettingsForm({
           {submitLabel}
         </button>
       </div>
-      {message && <p className="text-sm font-medium text-red-700">{message}</p>}
+      {message && <p className="text-sm font-medium text-error">{message}</p>}
     </form>
   );
 }
@@ -58,7 +58,7 @@ export function FeeSettingsFields({
 
   return (
     <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+      <label className="grid gap-1 text-xs font-medium text-body">
         판매 수수료 %
         <input
           className={inputClass}
@@ -71,7 +71,7 @@ export function FeeSettingsFields({
           type="number"
         />
       </label>
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+      <label className="grid gap-1 text-xs font-medium text-body">
         카드 수수료 %
         <input
           className={inputClass}
@@ -84,7 +84,7 @@ export function FeeSettingsFields({
           type="number"
         />
       </label>
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+      <label className="grid gap-1 text-xs font-medium text-body">
         카드 수수료 부담
         <select
           className={selectClass}
@@ -97,7 +97,7 @@ export function FeeSettingsFields({
           <option value="participant">참가부스 부담</option>
         </select>
       </label>
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+      <label className="grid gap-1 text-xs font-medium text-body">
         참가비
         <input
           className={inputClass}

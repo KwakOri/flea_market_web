@@ -22,14 +22,14 @@ export const marketLifecycleFilters: Array<{
 export function getMarketStatusBadgeClass(status: MarketStatus): string {
   switch (status) {
     case "active":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-success-tint text-success";
     case "closed":
-      return "bg-zinc-100 text-zinc-700";
+      return "bg-canvas-soft text-muted";
     case "archived":
-      return "bg-slate-100 text-slate-700";
+      return "bg-canvas-soft text-muted";
     case "draft":
     default:
-      return "bg-amber-100 text-amber-800";
+      return "bg-info-tint text-info";
   }
 }
 

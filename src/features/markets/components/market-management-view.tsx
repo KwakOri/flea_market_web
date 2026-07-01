@@ -95,12 +95,12 @@ export function MarketManagementView({
           </div>
         </div>
         {marketMessage && (
-          <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+          <p className="border-b border-hairline px-4 py-2 text-sm font-medium text-error">
             {marketMessage}
           </p>
         )}
         <MarketDetailPanel market={selectedMarket} />
-        <div className="border-t border-zinc-200">
+        <div className="border-t border-hairline">
           <div className={sectionHeaderClass}>
             <h2 className={sectionTitleClass}>플리마켓 수수료 기본 설정</h2>
             <p className={sectionDescriptionClass}>

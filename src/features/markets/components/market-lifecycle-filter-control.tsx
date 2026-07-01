@@ -14,7 +14,7 @@ export function MarketLifecycleFilterControl({
   return (
     <div
       aria-label="플리마켓 상태 필터"
-      className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-100 p-1"
+      className="inline-flex w-fit rounded-lg border border-hairline bg-surface-sunken p-1"
       role="group"
     >
       {marketLifecycleFilters.map((filter) => {
@@ -24,10 +24,10 @@ export function MarketLifecycleFilterControl({
           <button
             aria-pressed={isActive}
             className={cn(
-              "h-9 rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2",
+              "h-9 rounded-md px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
               isActive
-                ? "bg-white text-zinc-950 shadow-sm ring-1 ring-zinc-200"
-                : "text-zinc-500 hover:bg-white/70 hover:text-zinc-950",
+                ? "bg-surface-raised text-ink shadow-sm ring-1 ring-hairline"
+                : "text-muted hover:bg-surface-raised/70 hover:text-ink",
             )}
             key={filter.value}
             onClick={() => onSelectFilter(filter.value)}

@@ -1,0 +1,71 @@
+/* ============================================================================
+ * tambang — 디자인 토큰 (Tailwind v4 · CSS-first)
+ * 정본: 레포의 DESIGN.md. 이 파일은 스택 반영 스냅샷.
+ *
+ * 스택 사실: Next 16 / Tailwind v4(@theme inline, JS config 없음) / shadcn 아님 / 다크모드 없음.
+ * → 라이트 단일. globals.css의 @theme 블록에 병합하면 bg-*/text-*/border-* 유틸이 생성됨.
+ *   (예: bg-canvas, text-ink, text-muted, border-hairline, bg-brand-tint ...)
+ *
+ * 모든 값은 접근성 게이트 통과본(2026-07 조정). 조정 토큰:
+ *   muted #767C68→#686D5C · warning #B5810E→#8A620B · error #BC4630→#AE412C
+ *   info #3C7385→#3A7081 · brand-tint-strong #DDE9BF→#E5EECF(배경)
+ *   (별칭 amount-fee=muted, amount-negative=error 동기화)
+ * muted-soft(#A6AB97)는 플레이스홀더·비활성 전용 — 본문 텍스트 사용 금지(대비 예외).
+ * ========================================================================== */
+
+@theme inline {
+  /* --- 캔버스 & 표면 --- */
+  --color-canvas: #F7F4EC;
+  --color-canvas-soft: #F1EDE2;
+  --color-surface: #FCFBF6;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-sunken: #F0ECDF;
+
+  /* --- 텍스트 --- */
+  --color-ink: #2A2E22;
+  --color-body: #494F3E;
+  --color-muted: #686D5C;
+  --color-muted-soft: #A6AB97;   /* 플레이스홀더·비활성 전용 */
+
+  /* --- 라인 --- */
+  --color-hairline: #E7E2D4;
+  --color-border: #D5D0BF;
+  --color-border-strong: #BDB8A4;
+
+  /* --- 브랜드 연두 --- */
+  --color-brand: #4E7327;
+  --color-brand-hover: #436322;
+  --color-brand-spring: #A7C957;      /* 장식·큰 면적만, 텍스트 금지 */
+  --color-brand-deep: #34431C;
+  --color-brand-tint: #ECF2DB;
+  --color-brand-tint-strong: #E5EECF;
+
+  /* --- on-color --- */
+  --color-on-brand: #FFFFFF;
+  --color-on-brand-deep: #EEF3DD;
+
+  /* --- 시맨틱 (색+라벨+아이콘 병행) --- */
+  --color-success: #4E7327;
+  --color-success-tint: #E4EFCF;
+  --color-warning: #8A620B;
+  --color-warning-tint: #F6EBCF;
+  --color-error: #AE412C;
+  --color-error-tint: #F5DDD5;
+  --color-info: #3A7081;
+  --color-info-tint: #DCEBEF;
+
+  /* --- 정산 금액 의미색 --- */
+  --color-amount-default: #2A2E22;
+  --color-amount-payout: #4E7327;
+  --color-amount-fee: #686D5C;
+  --color-amount-negative: #AE412C;
+
+  /* --- 데이터 시각화(최소) --- */
+  --color-bar-track: #E7E2D4;
+  --color-bar-fill: #7BA23F;
+  --color-chart-grid: #E7E2D4;
+
+  /* --- 오버레이 --- */
+  --color-scrim: #2A2E22;       /* 모달 배경 — 45% 알파로 사용 */
+  --color-focus-ring: #4E7327;
+}
