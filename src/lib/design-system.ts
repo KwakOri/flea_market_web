@@ -4,7 +4,7 @@ export const pageShellClass =
   "relative min-h-screen w-full min-w-0 overflow-x-clip bg-canvas text-ink";
 
 export const appShellClass =
-  "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
+  "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
 
 export const buttonVariants = cva(
   "inline-flex h-10 items-center justify-center rounded-[8px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
@@ -103,10 +103,10 @@ export const panelVariants = cva(
 );
 
 export const statCardVariants = cva(
-  "min-h-[92px] min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card",
+  "min-h-[92px] min-w-0 rounded-[12px] border border-hairline bg-surface p-5 shadow-card",
 );
 
-export const sectionHeaderClass = "border-b border-hairline px-5 py-4";
+export const sectionHeaderClass = "border-b border-hairline px-5 py-5";
 
 export const sectionTitleClass = "font-display text-base font-bold text-ink";
 
