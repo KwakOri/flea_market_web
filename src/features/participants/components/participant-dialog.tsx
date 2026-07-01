@@ -62,7 +62,7 @@ export function ParticipantDialog({
       <section
         aria-labelledby="participant-dialog-title"
         aria-modal="true"
-        className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[16px] bg-surface-raised shadow-xl"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[16px] bg-surface-raised shadow-modal"
         role="dialog"
       >
         <div className="flex items-start justify-between gap-3 border-b border-hairline px-4 py-3">

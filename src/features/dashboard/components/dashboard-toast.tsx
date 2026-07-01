@@ -23,7 +23,7 @@ export function DashboardToast({
       className="fixed bottom-4 right-4 z-[60] w-[calc(100%-2rem)] max-w-sm"
       role="status"
     >
-      <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-deep px-4 py-3 text-on-brand-deep shadow-lg">
+      <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-deep px-4 py-3 text-on-brand-deep shadow-popover">
         <CheckCircle2
           aria-hidden
           className="mt-0.5 h-5 w-5 flex-none text-brand-spring"
