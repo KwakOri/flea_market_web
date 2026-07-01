@@ -96,7 +96,7 @@ export function DashboardRail({
   return (
     <>
       <aside
-        className="fixed bottom-3 left-3 top-3 z-[60] hidden flex-col gap-1 overflow-hidden rounded-[12px] bg-brand-deep px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out md:flex"
+        className="fixed bottom-3 left-3 top-3 z-[60] hidden flex-col gap-1 overflow-hidden rounded-[12px] bg-[#1f2912] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out md:flex"
         onMouseEnter={openRail}
         onMouseLeave={closeRail}
         style={{ width: railOpen ? 248 : 76 }}
@@ -131,7 +131,7 @@ export function DashboardRail({
 
         <div className="flex-1" />
         <div className="flex h-12 flex-none items-center gap-3 px-2">
-          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-[8px] bg-brand-deep text-[13px] font-bold text-brand-spring">
+          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-[8px] bg-white/10 text-[13px] font-bold text-brand-spring">
             {user.displayName.charAt(0)}
           </div>
           <div
@@ -170,7 +170,7 @@ export function DashboardRail({
         aria-controls="mobile-dashboard-menu"
         aria-expanded={mobileMenuOpen}
         aria-label={mobileMenuOpen ? "모바일 메뉴 닫기" : "모바일 메뉴 열기"}
-        className="fixed right-4 top-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-[12px] bg-brand-deep text-brand-spring shadow-[0_8px_24px_rgba(20,21,12,0.2)] transition hover:bg-brand-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring md:hidden"
+        className="fixed right-4 top-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#1f2912] text-brand-spring shadow-[0_8px_24px_rgba(20,21,12,0.2)] transition hover:bg-[#1f2912] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring md:hidden"
         onClick={() => setMobileMenuOpen((isOpen) => !isOpen)}
         type="button"
       >
@@ -185,13 +185,13 @@ export function DashboardRail({
         <div className="fixed inset-0 z-[70] md:hidden">
           <button
             aria-label="모바일 메뉴 닫기"
-            className="absolute inset-0 bg-brand-deep/45 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-[#1f2912]/45 backdrop-blur-[2px]"
             onClick={() => setMobileMenuOpen(false)}
             type="button"
           />
           <aside
             aria-label="모바일 업무 메뉴"
-            className="absolute bottom-3 right-3 top-3 grid w-[min(320px,calc(100vw-1.5rem))] grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-[16px] bg-brand-deep p-4 shadow-[0_18px_60px_rgba(20,21,12,0.3)]"
+            className="absolute bottom-3 right-3 top-3 grid w-[min(320px,calc(100vw-1.5rem))] grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-[16px] bg-[#1f2912] p-4 shadow-[0_18px_60px_rgba(20,21,12,0.3)]"
             id="mobile-dashboard-menu"
           >
             <Link
