@@ -53,11 +53,11 @@ export function LoginClient({ nextPath }: { nextPath?: string }) {
       <div className={appShellClass}>
         <section className="mx-auto grid min-h-[70vh] w-full max-w-[440px] place-items-center">
           <div className={panelVariants()}>
-            <div className="border-b border-zinc-200 px-5 py-5">
-              <p className="text-[13px] font-semibold text-emerald-700">
+            <div className="border-b border-hairline px-5 py-5">
+              <p className="text-[13px] font-semibold text-brand">
                 Flea Market Settlement
               </p>
-              <h1 className="mt-2 text-2xl font-semibold text-zinc-950">
+              <h1 className="mt-2 text-2xl font-semibold text-ink">
                 로그인
               </h1>
             </div>
@@ -90,10 +90,10 @@ export function LoginClient({ nextPath }: { nextPath?: string }) {
                 로그인
               </button>
               {message && (
-                <p className="text-sm font-medium text-red-700">{message}</p>
+                <p className="text-sm font-medium text-error">{message}</p>
               )}
               {currentUser.isLoading && (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted">
                   사용자 정보를 확인하는 중입니다.
                 </p>
               )}
