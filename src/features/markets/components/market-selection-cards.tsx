@@ -1,9 +1,6 @@
 import { Pencil } from "lucide-react";
 import type { Market } from "@/services/markets.service";
-import {
-  getMarketStatusBadgeClass,
-  marketStatusLabels,
-} from "@/features/markets/lib/market-display";
+import { MarketStatusBadge } from "@/features/markets/components/market-status-badge";
 import { buttonVariants } from "@/lib/design-system";
 import {
   formatDate,
@@ -61,14 +58,7 @@ export function MarketSelectionCards({
                 <p className="text-xs font-semibold text-brand">
                   플리마켓
                 </p>
-                <span
-                  className={cn(
-                    "rounded-md px-2 py-1 text-xs font-semibold",
-                    getMarketStatusBadgeClass(market.status),
-                  )}
-                >
-                  {marketStatusLabels[market.status]}
-                </span>
+                <MarketStatusBadge status={market.status} />
               </div>
               <h3 className="mt-2 truncate text-lg font-semibold text-ink">
                 {market.name}

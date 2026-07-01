@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Check, X } from "lucide-react";
 import type {
   AuditLog,
   AuditLogAction,
@@ -360,12 +361,17 @@ function LogResultPill({ result }: { result: AuditLogResult }) {
   return (
     <span
       className={cn(
-        "rounded-md px-2 py-1 font-mono text-[10.5px] font-bold",
+        "inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-[10.5px] font-bold",
         result === "success"
           ? "bg-success-tint text-success"
           : "bg-error-tint text-error",
       )}
     >
+      {result === "success" ? (
+        <Check aria-hidden className="h-3 w-3 flex-none" strokeWidth={3} />
+      ) : (
+        <X aria-hidden className="h-3 w-3 flex-none" strokeWidth={3} />
+      )}
       {resultLabels[result]}
     </span>
   );

@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { CircleCheck, CircleSlash, Pencil } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { buttonVariants } from "@/lib/design-system";
@@ -175,12 +175,17 @@ function ParticipantStatusBadge({ status }: { status: Participant["status"] }) {
   return (
     <span
       className={cn(
-        "rounded-full px-2 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
         status === "active"
           ? "bg-success-tint text-success"
           : "bg-canvas-soft text-muted",
       )}
     >
+      {status === "active" ? (
+        <CircleCheck aria-hidden className="h-3 w-3 flex-none" strokeWidth={2.4} />
+      ) : (
+        <CircleSlash aria-hidden className="h-3 w-3 flex-none" strokeWidth={2.4} />
+      )}
       {status === "active" ? "활성" : "비활성"}
     </span>
   );

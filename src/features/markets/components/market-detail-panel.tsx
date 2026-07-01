@@ -1,14 +1,10 @@
 import type { Market } from "@/services/markets.service";
-import {
-  getMarketStatusBadgeClass,
-  marketStatusLabels,
-} from "@/features/markets/lib/market-display";
+import { MarketStatusBadge } from "@/features/markets/components/market-status-badge";
 import {
   formatDate,
   formatDateRange,
   formatMarketDuration,
 } from "@/lib/date-format";
-import { cn } from "@/lib/utils";
 
 export function MarketDetailPanel({
   market,
@@ -35,14 +31,7 @@ export function MarketDetailPanel({
         <div className="rounded-md border border-hairline bg-canvas-soft p-3">
           <dt className="text-xs font-medium text-muted">상태</dt>
           <dd className="mt-1">
-            <span
-              className={cn(
-                "rounded-md px-2 py-1 text-xs font-semibold",
-                getMarketStatusBadgeClass(market.status),
-              )}
-            >
-              {marketStatusLabels[market.status]}
-            </span>
+            <MarketStatusBadge status={market.status} />
           </dd>
         </div>
         <div className="rounded-md border border-hairline bg-canvas-soft p-3">
