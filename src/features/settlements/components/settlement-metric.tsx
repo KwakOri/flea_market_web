@@ -11,36 +11,36 @@ export function SettlementMetric({
 }) {
   const toneClass = {
     amber: {
-      card: "border-[#e6e2d4] bg-white",
-      label: "text-[#8a8775]",
-      value: "text-[#a9791f]",
+      card: "border-hairline bg-surface",
+      label: "text-muted",
+      value: "text-warning",
     },
     blue: {
-      card: "border-[#e6e2d4] bg-white",
-      label: "text-[#8a8775]",
-      value: "text-[#2d6fe0]",
+      card: "border-hairline bg-surface",
+      label: "text-muted",
+      value: "text-info",
     },
     dark: {
-      card: "border-[#16170f] bg-[#16170f]",
-      label: "text-[#9b9a86]",
-      value: "text-white",
+      card: "border-brand-deep bg-brand-deep",
+      label: "text-muted-soft",
+      value: "text-on-brand-deep",
     },
     default: {
-      card: "border-[#e6e2d4] bg-white",
-      label: "text-[#8a8775]",
-      value: "text-[#1a1b12]",
+      card: "border-hairline bg-surface",
+      label: "text-muted",
+      value: "text-amount-default",
     },
     green: {
-      card: "border-[#bfe3cd] bg-[#e6f4ec]",
-      label: "text-[#1f8a4d]",
-      value: "text-[#1f8a4d]",
+      card: "border-success/40 bg-success-tint",
+      label: "text-success",
+      value: "text-success",
     },
   }[tone];
 
   return (
     <div
       className={cn(
-        "min-w-0 rounded-[16px] border p-4 sm:p-[18px]",
+        "min-w-0 rounded-[12px] border p-4 sm:p-[18px]",
         toneClass.card,
       )}
     >

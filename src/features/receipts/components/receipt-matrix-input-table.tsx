@@ -7,10 +7,10 @@ import { parseOptionalReceiptAmount } from "@/lib/receipt-matrix";
 import { cn } from "@/lib/utils";
 
 const amountInputFrameClass =
-  "flex w-[140px] items-center justify-end gap-[3px] rounded-[9px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-[#16170f] focus-within:bg-[#f7fbe9]";
+  "flex w-[140px] items-center justify-end gap-[3px] rounded-[8px] border-[1.5px] px-3 py-2 transition-colors focus-within:border-ink focus-within:bg-brand-tint";
 
 const amountInputClass =
-  "num min-w-0 flex-1 bg-transparent text-right text-[15px] font-bold outline-none placeholder:text-[#c4c0ae]";
+  "num min-w-0 flex-1 bg-transparent text-right text-[15px] font-bold outline-none placeholder:text-muted-soft";
 
 export function ReceiptMatrixInputTable({
   participants,
@@ -24,7 +24,7 @@ export function ReceiptMatrixInputTable({
 
   if (participants.length === 0) {
     return (
-      <div className="px-6 py-12 text-center text-sm text-[#8a8775]">
+      <div className="px-6 py-12 text-center text-sm text-muted">
         마켓에 연결된 참가부스가 없습니다.
       </div>
     );
@@ -42,14 +42,14 @@ export function ReceiptMatrixInputTable({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-[#16170f] px-6 py-[11px]">
-            <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-surface-sunken px-6 py-3">
+            <span className="text-sm font-medium text-muted">
               참가 부스
             </span>
-            <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+            <span className="text-right text-sm font-medium text-muted">
               구매 금액
             </span>
-            <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-[#9b9a86]">
+            <span className="text-right text-sm font-medium text-muted">
               유형
             </span>
           </div>
@@ -62,15 +62,15 @@ export function ReceiptMatrixInputTable({
               return (
                 <div
                   className={cn(
-                    "grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] items-center border-b border-[#f1eee2] px-6 py-2.5",
-                    hasAmount ? "bg-[#fcfdf7]" : "bg-white",
+                    "grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] items-center border-b border-hairline px-6 py-2.5",
+                    hasAmount ? "bg-surface-raised" : "bg-surface",
                   )}
                   key={participant.id}
                 >
                   <div
                     className={cn(
                       "text-[14.5px] font-semibold",
-                      hasAmount ? "text-[#16170f]" : "text-[#56564a]",
+                      hasAmount ? "text-ink" : "text-body",
                     )}
                   >
                     {participant.displayName}
@@ -80,14 +80,14 @@ export function ReceiptMatrixInputTable({
                       className={cn(
                         amountInputFrameClass,
                         hasAmount
-                          ? "border-[#16170f] bg-[#f7fbe9]"
-                          : "border-[#e6e2d4] bg-[#fcfbf6]",
+                          ? "border-ink bg-brand-tint"
+                          : "border-hairline bg-surface",
                       )}
                     >
                       <input
                         className={cn(
                           amountInputClass,
-                          hasAmount ? "text-[#16170f]" : "text-[#c4c0ae]",
+                          hasAmount ? "text-ink" : "text-muted-soft",
                         )}
                         inputMode="numeric"
                         name={`amount-${participant.id}`}
@@ -98,7 +98,7 @@ export function ReceiptMatrixInputTable({
                         type="text"
                         value={amounts[participant.id] ?? ""}
                       />
-                      <span className="text-xs text-[#a8a593]">원</span>
+                      <span className="text-xs text-muted-soft">원</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -126,10 +126,10 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
   return (
     <article
       className={cn(
-        "grid gap-3 rounded-[14px] border px-3 py-3",
+        "grid gap-3 rounded-[12px] border px-3 py-3",
         hasAmount
-          ? "border-[#c7f94b] bg-[#fcfdf7]"
-          : "border-[#e6e2d4] bg-white",
+          ? "border-brand bg-surface-raised"
+          : "border-hairline bg-surface",
       )}
     >
       <div className="flex min-w-0 items-center justify-between gap-3">
@@ -137,7 +137,7 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
           <p
             className={cn(
               "truncate text-[14.5px] font-semibold",
-              hasAmount ? "text-[#16170f]" : "text-[#56564a]",
+              hasAmount ? "text-ink" : "text-body",
             )}
           >
             {participant.displayName}
@@ -151,14 +151,14 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
             amountInputFrameClass,
             "shrink-0",
             hasAmount
-              ? "border-[#16170f] bg-[#f7fbe9]"
-              : "border-[#e6e2d4] bg-[#fcfbf6]",
+              ? "border-ink bg-brand-tint"
+              : "border-hairline bg-surface",
           )}
         >
           <input
             className={cn(
               amountInputClass,
-              hasAmount ? "text-[#16170f]" : "text-[#c4c0ae]",
+              hasAmount ? "text-ink" : "text-muted-soft",
             )}
             inputMode="numeric"
             name={`mobile-amount-${participant.id}`}
@@ -169,7 +169,7 @@ function ReceiptMatrixInputCard({ participant }: { participant: Participant }) {
             type="text"
             value={amount}
           />
-          <span className="text-xs text-[#a8a593]">원</span>
+          <span className="text-xs text-muted-soft">원</span>
         </div>
       </div>
     </article>

@@ -62,17 +62,17 @@ export function SettlementHistoryPanel({
   return (
     <section className="grid gap-[22px]">
       <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:gap-3.5">
-        <h3 className="dsp m-0 text-[30px] font-bold leading-tight text-[#1a1b12]">
+        <h3 className="dsp m-0 text-[30px] font-bold leading-tight text-ink">
           정산 회차 상세
         </h3>
-        <p className="mono text-[12px] text-[#8a8775]">
+        <p className="mono text-[12px] text-muted">
           수정 정산은 이전 회차 대비 변경 이력으로 남습니다
         </p>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="rounded-[18px] border border-[#e6e2d4] bg-white p-[14px] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-          <div className="dsp px-2 pb-3 pt-1 text-[14px] font-bold text-[#1a1b12]">
+        <div className="rounded-[12px] border border-hairline bg-surface p-[14px] shadow-card">
+          <div className="dsp px-2 pb-3 pt-1 text-[14px] font-bold text-ink">
             정산 회차
           </div>
           <div className="grid gap-1.5">
@@ -92,21 +92,21 @@ export function SettlementHistoryPanel({
         </div>
 
         <div className="grid gap-[18px]">
-          <div className="flex flex-col gap-5 rounded-[18px] bg-[#16170f] px-5 py-[22px] text-[#f3f0e2] md:flex-row md:items-center md:justify-between md:px-6">
+          <div className="flex flex-col gap-5 rounded-[12px] bg-brand-deep px-5 py-[22px] text-on-brand-deep md:flex-row md:items-center md:justify-between md:px-6">
             <div className="min-w-0">
-              <p className="mono text-[11px] text-[#8d8c79]">
+              <p className="mono text-[11px] text-muted-soft">
                 현재 회차 · v{currentSettlement.versionNo} (
                 {settlementStatusLabels[currentSettlement.status]})
               </p>
               <p className="dsp mt-1 text-[21px] font-bold leading-tight">
                 {formatPayoutDeltaTitle(payoutDelta)}
               </p>
-              <p className="mono mt-1.5 truncate text-[12px] text-[#c7f94b]">
+              <p className="mono mt-1.5 truncate text-[12px] text-brand-spring">
                 변경 사유 · {currentSettlement.memo?.trim() || "메모 없음"}
               </p>
             </div>
             <div className="shrink-0 text-left md:text-right">
-              <p className="mono text-[10.5px] text-[#8d8c79]">
+              <p className="mono text-[10.5px] text-muted-soft">
                 {previousSettlement
                   ? `v${previousSettlement.versionNo} → v${currentSettlement.versionNo}`
                   : `v${currentSettlement.versionNo}`}
@@ -123,7 +123,7 @@ export function SettlementHistoryPanel({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+          <div className="overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
             <SettlementParticipantDeltaTable
               currentSettlement={currentSettlementQuery.data ?? null}
               currentSettlementSummary={currentSettlementSummary}
@@ -148,7 +148,7 @@ function SettlementHistoryMessage({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
+    <div className="rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card">
       {children}
     </div>
   );
@@ -177,8 +177,8 @@ function SettlementVersionButton({
       className={cn(
         "flex w-full items-center gap-3 rounded-[12px] border px-3 py-[13px] text-left transition-colors",
         isCurrent
-          ? "border-[#cfe89a] bg-[#eef9d4]"
-          : "border-[#eee9da] bg-[#fcfbf6] hover:bg-[#f8f6ec]",
+          ? "border-brand-tint-strong bg-brand-tint"
+          : "border-hairline bg-surface hover:bg-canvas-soft",
         settlement.status === "voided" && "opacity-60",
       )}
       data-testid="settlement-history-row"
@@ -188,7 +188,7 @@ function SettlementVersionButton({
       <span
         className={cn(
           "dsp num text-[17px] font-bold",
-          isCurrent ? "text-[#16170f]" : "text-[#8a8775]",
+          isCurrent ? "text-ink" : "text-muted",
         )}
       >
         v{settlement.versionNo}
@@ -197,12 +197,12 @@ function SettlementVersionButton({
         <span
           className={cn(
             "block truncate text-[13px] font-semibold",
-            isCurrent ? "text-[#16170f]" : "text-[#56564a]",
+            isCurrent ? "text-ink" : "text-body",
           )}
         >
           {formatVersionStatus(settlement, isCurrent)}
         </span>
-        <span className="mono block truncate text-[10.5px] text-[#a8a593]">
+        <span className="mono block truncate text-[10.5px] text-muted-soft">
           {formatHistoryTimestamp(settlement.confirmedAt)}
         </span>
       </span>
@@ -237,30 +237,30 @@ function SettlementParticipantDeltaTable({
     <div className="overflow-x-auto">
       <div className="min-w-[620px]">
         <div
-          className="grid border-b border-[#eee9da] bg-[#fcfbf6] px-[22px] py-[13px]"
+          className="grid border-b border-hairline bg-canvas-soft px-[22px] py-[13px]"
           style={{
             gridTemplateColumns:
               "minmax(120px, 1.4fr) minmax(96px, 1fr) minmax(96px, 1fr) minmax(90px, 1fr)",
           }}
         >
-          <span className="mono text-[11px] font-bold text-[#8a8775]">
+          <span className="mono text-[11px] font-bold text-muted">
             참가 부스
           </span>
-          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+          <span className="mono text-right text-[11px] font-bold text-muted">
             {previousSettlementSummary
               ? `v${previousSettlementSummary.versionNo} 지급`
               : "이전 지급"}
           </span>
-          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+          <span className="mono text-right text-[11px] font-bold text-muted">
             v{currentSettlementSummary.versionNo} 지급
           </span>
-          <span className="mono text-right text-[11px] font-bold text-[#8a8775]">
+          <span className="mono text-right text-[11px] font-bold text-muted">
             Δ 변경
           </span>
         </div>
 
         {isLoading ? (
-          <div className="px-[22px] py-10 text-center text-sm text-[#8a8775]">
+          <div className="px-[22px] py-10 text-center text-sm text-muted">
             부스별 변경 내역을 불러오는 중입니다.
           </div>
         ) : rows.length > 0 ? (
@@ -268,7 +268,7 @@ function SettlementParticipantDeltaTable({
             <SettlementParticipantDeltaTableRow key={row.key} row={row} />
           ))
         ) : (
-          <div className="px-[22px] py-10 text-center text-sm text-[#8a8775]">
+          <div className="px-[22px] py-10 text-center text-sm text-muted">
             저장된 부스별 변경 내역이 없습니다.
           </div>
         )}
@@ -287,8 +287,8 @@ function SettlementParticipantDeltaTableRow({
   return (
     <div
       className={cn(
-        "grid items-center border-b border-[#f1eee2] px-[22px] py-[13px] last:border-b-0",
-        hasChanged ? "bg-[#fcfdf7]" : "bg-white",
+        "grid items-center border-b border-hairline px-[22px] py-[13px] last:border-b-0",
+        hasChanged ? "bg-brand-tint" : "bg-surface",
       )}
       data-testid="settlement-history-delta-row"
       style={{
@@ -296,13 +296,13 @@ function SettlementParticipantDeltaTableRow({
           "minmax(120px, 1.4fr) minmax(96px, 1fr) minmax(96px, 1fr) minmax(90px, 1fr)",
       }}
     >
-      <div className="truncate text-[14px] font-semibold text-[#1a1b12]">
+      <div className="truncate text-[14px] font-semibold text-ink">
         {row.name}
       </div>
-      <div className="num text-right text-[13.5px] text-[#8a8775]">
+      <div className="num text-right text-[13.5px] text-muted">
         {formatOptionalWon(row.beforeAmount)}
       </div>
-      <div className="num text-right text-[14px] font-semibold text-[#1a1b12]">
+      <div className="num text-right text-[14px] font-semibold text-ink">
         {formatOptionalWon(row.afterAmount)}
       </div>
       <div
@@ -469,8 +469,8 @@ function formatHistoryTimestamp(value: string): string {
 
 function getDeltaTextClass(delta: number | null): string {
   if (delta === null || delta === 0) {
-    return "text-[#a8a593]";
+    return "text-muted-soft";
   }
 
-  return delta > 0 ? "text-[#1f8a4d]" : "text-[#cf3d3d]";
+  return delta > 0 ? "text-success" : "text-error";
 }

@@ -53,7 +53,7 @@ export function SettlementPreviewPanel({
 }) {
   if (isLoading) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         정산 데이터를 불러오는 중입니다.
       </div>
     );
@@ -61,7 +61,7 @@ export function SettlementPreviewPanel({
 
   if (!preview) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         마켓을 선택하면 정산 미리보기가 표시됩니다.
       </div>
     );
@@ -69,7 +69,7 @@ export function SettlementPreviewPanel({
 
   if (preview.participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         등록된 참가부스가 없습니다.
       </div>
     );
@@ -82,7 +82,7 @@ export function SettlementPreviewPanel({
     : null;
 
   return (
-    <div className="grid min-w-0 gap-[18px] p-4">
+    <div className="grid min-w-0 gap-6">
       <dl className="grid min-w-0 gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <SettlementMetric
           label="총매출"
@@ -110,7 +110,7 @@ export function SettlementPreviewPanel({
         />
       </dl>
       <form
-        className="grid min-w-0 gap-3 rounded-[16px] border border-[#e6e2d4] bg-white p-3.5 shadow-[0_1px_3px_rgba(26,27,18,0.05)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
+        className="grid min-w-0 gap-3 rounded-[12px] border border-hairline bg-surface p-3.5 shadow-card md:grid-cols-[minmax(0,1fr)_auto_auto]"
         data-testid="settlement-confirm-form"
         onSubmit={onConfirm}
       >
@@ -140,7 +140,7 @@ export function SettlementPreviewPanel({
           정산 확정
         </button>
         {message && (
-          <p className="text-sm font-semibold text-[#cf3d3d] md:col-span-3">
+          <p className="text-sm font-semibold text-error md:col-span-3">
             {message}
           </p>
         )}

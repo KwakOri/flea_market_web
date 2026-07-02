@@ -1,20 +1,20 @@
 import { cva } from "class-variance-authority";
 
 export const pageShellClass =
-  "relative min-h-screen w-full min-w-0 overflow-x-clip bg-[#e9e5d8] text-[#1a1b12]";
+  "relative min-h-screen w-full min-w-0 overflow-x-clip bg-canvas text-ink";
 
 export const appShellClass =
-  "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
+  "mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 pb-28 pt-5 sm:px-6 lg:px-8";
 
 export const buttonVariants = cva(
-  "inline-flex h-10 items-center justify-center rounded-[10px] px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b] focus-visible:ring-offset-2 focus-visible:ring-offset-[#e9e5d8] disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex h-10 items-center justify-center rounded-[8px] px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       intent: {
-        primary: "bg-[#16170f] text-[#c7f94b] hover:bg-[#2a2b20]",
+        primary: "bg-brand text-on-brand hover:bg-brand-hover",
         secondary:
-          "border border-[#d8d3c2] bg-[#fcfbf6] text-[#1a1b12] hover:bg-[#f1eee2]",
-        quiet: "text-[#56564a] hover:bg-[#f1eee2] hover:text-[#1a1b12]",
+          "border border-border bg-surface text-ink hover:bg-canvas-soft",
+        quiet: "text-body hover:bg-canvas-soft hover:text-ink",
       },
       size: {
         sm: "h-8 px-3 text-xs",
@@ -29,7 +29,7 @@ export const buttonVariants = cva(
 );
 
 export const inputVariants = cva(
-  "rounded-[10px] border border-[#e0dbca] bg-[#fcfbf6] text-sm text-[#1a1b12] outline-none transition placeholder:text-[#a8a593] focus:border-[#16170f] focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:bg-[#f1eee2] disabled:text-[#8a8775]",
+  "rounded-[8px] border border-border bg-surface text-sm text-ink outline-none transition placeholder:text-muted-soft focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -49,7 +49,7 @@ export const inputVariants = cva(
 );
 
 export const selectVariants = cva(
-  "rounded-[10px] border border-[#e0dbca] bg-[#fcfbf6] text-sm text-[#1a1b12] outline-none transition focus:border-[#16170f] focus:ring-2 focus:ring-[#eef9d4] disabled:cursor-not-allowed disabled:bg-[#f1eee2] disabled:text-[#8a8775]",
+  "rounded-[8px] border border-border bg-surface text-sm text-ink outline-none transition focus:border-ink focus:ring-2 focus:ring-brand-tint disabled:cursor-not-allowed disabled:bg-canvas-soft disabled:text-muted",
   {
     variants: {
       size: {
@@ -69,15 +69,15 @@ export const selectVariants = cva(
 );
 
 export const dashboardTabListClass =
-  "flex w-full max-w-full flex-wrap rounded-[14px] border border-[#d8d3c2] bg-[#fbf9f1] p-1 xl:inline-flex xl:w-auto";
+  "flex w-full max-w-full flex-wrap rounded-[12px] border border-border bg-surface p-1 xl:inline-flex xl:w-auto";
 
 export const dashboardTabVariants = cva(
-  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[10px] px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b] focus-visible:ring-offset-2 sm:min-w-28",
+  "inline-flex h-10 flex-none items-center justify-center whitespace-nowrap rounded-[8px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:min-w-28",
   {
     variants: {
       active: {
-        true: "bg-[#c7f94b] text-[#16170f]",
-        false: "text-[#8a8775] hover:bg-[#f1eee2] hover:text-[#1a1b12]",
+        true: "bg-brand text-on-brand",
+        false: "text-muted hover:bg-canvas-soft hover:text-ink",
       },
     },
     defaultVariants: {
@@ -87,7 +87,7 @@ export const dashboardTabVariants = cva(
 );
 
 export const panelVariants = cva(
-  "min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]",
+  "min-w-0 rounded-[12px] border border-hairline bg-surface shadow-card",
   {
     variants: {
       padding: {
@@ -103,15 +103,16 @@ export const panelVariants = cva(
 );
 
 export const statCardVariants = cva(
-  "min-h-[92px] min-w-0 rounded-[16px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)]",
+  "min-h-[92px] min-w-0 rounded-[12px] border border-hairline bg-surface p-5 shadow-card",
 );
 
-export const sectionHeaderClass = "border-b border-[#eee9da] px-5 py-4";
+export const sectionHeaderClass = "border-b border-hairline px-5 py-5";
 
 export const sectionTitleClass =
-  "font-display text-base font-bold text-[#1a1b12]";
+  "font-display text-[18px] font-semibold leading-[1.45] text-ink";
 
-export const sectionDescriptionClass = "mt-1 text-sm text-[#8a8775]";
+export const sectionDescriptionClass =
+  "mt-1 text-[13px] leading-[1.55] text-muted";
 
 export const inputClass = inputVariants();
 

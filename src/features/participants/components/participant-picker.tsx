@@ -45,7 +45,7 @@ export function ParticipantPicker({
 
   return (
     <div className="grid gap-3">
-      <label className="grid gap-1 text-xs font-medium text-zinc-600">
+      <label className="grid gap-1 text-xs font-medium text-body">
         참가부스 검색
         <input
           className={inputClass}
@@ -61,17 +61,17 @@ export function ParticipantPicker({
           value={search}
         />
       </label>
-      <div className="max-h-72 overflow-y-auto rounded-md border border-zinc-200 bg-white">
+      <div className="max-h-72 overflow-y-auto rounded-md border border-hairline bg-surface">
         {participants.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-zinc-500">
+          <div className="px-4 py-10 text-center text-sm text-muted">
             연결 가능한 참가부스가 없습니다.
           </div>
         ) : filteredParticipants.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-zinc-500">
+          <div className="px-4 py-10 text-center text-sm text-muted">
             검색 결과가 없습니다.
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-hairline">
             {filteredParticipants.map((participant) => {
               const isSelected = participant.id === selectedParticipantId;
               const secondaryText = [
@@ -86,9 +86,9 @@ export function ParticipantPicker({
                 <button
                   aria-pressed={isSelected}
                   className={cn(
-                    "grid w-full gap-2 px-4 py-3 text-left transition hover:bg-emerald-50/60",
+                    "grid w-full gap-2 px-4 py-3 text-left transition hover:bg-brand-tint",
                     isSelected &&
-                      "bg-emerald-50 ring-1 ring-inset ring-emerald-300",
+                      "bg-brand-tint-strong ring-1 ring-inset ring-brand",
                   )}
                   disabled={disabled}
                   key={participant.id}
@@ -97,11 +97,11 @@ export function ParticipantPicker({
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-zinc-950">
+                      <span className="block truncate text-sm font-semibold text-ink">
                         {participant.displayName}
                       </span>
                       {secondaryText && (
-                        <span className="mt-1 block truncate text-xs text-zinc-500">
+                        <span className="mt-1 block truncate text-xs text-muted">
                           {secondaryText}
                         </span>
                       )}
@@ -110,8 +110,8 @@ export function ParticipantPicker({
                       className={cn(
                         "shrink-0 rounded-full px-2 py-1 text-xs font-medium",
                         isSelected
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-zinc-100 text-zinc-600",
+                          ? "bg-success-tint text-success"
+                          : "bg-canvas-soft text-muted",
                       )}
                     >
                       {isSelected

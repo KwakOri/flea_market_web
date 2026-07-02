@@ -53,3 +53,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 개인 작업 문서 (공유 제외)
+MAPPING.md
+progress.md

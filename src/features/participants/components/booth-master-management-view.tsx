@@ -63,7 +63,7 @@ export function BoothMasterManagementView({
         </button>
       </div>
       {message && (
-        <p className="border-b border-zinc-200 px-4 py-2 text-sm font-medium text-red-700">
+        <p className="border-b border-hairline px-4 py-2 text-sm font-medium text-error">
           {message}
         </p>
       )}

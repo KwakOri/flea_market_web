@@ -12,7 +12,7 @@ export function ProductTable({
 }) {
   if (products.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         등록된 상품이 없습니다.
       </div>
     );
@@ -29,9 +29,9 @@ export function ProductTable({
           />
         ))}
       </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-b-[12px] md:block">
         <table className="w-full min-w-[760px] border-collapse text-sm">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
+          <thead className="bg-surface-sunken text-left text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">상품명</th>
               <th className="px-4 py-3 font-medium">SKU</th>
@@ -39,16 +39,16 @@ export function ProductTable({
               <th className="px-4 py-3 font-medium">상태</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-hairline">
             {products.map((product) => (
               <tr data-testid="product-row" key={product.id}>
-                <td className="px-4 py-3 font-medium text-zinc-950">
+                <td className="px-4 py-3 font-medium text-ink">
                   {product.name}
                 </td>
-                <td className="px-4 py-3 text-zinc-600">
+                <td className="px-4 py-3 text-body">
                   {product.sku ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-right font-medium text-zinc-950">
+                <td className="px-4 py-3 text-right font-medium text-amount-default">
                   {formatWon(product.priceAmount)}
                 </td>
                 <td className="px-4 py-3">
@@ -75,19 +75,19 @@ function ProductCard({
 }) {
   return (
     <article
-      className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-white p-4"
+      className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4"
       data-testid="product-card"
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold text-[#181a12]">
+          <h3 className="truncate text-[15px] font-semibold text-ink">
             {product.name}
           </h3>
-          <p className="mt-1 font-mono text-[10.5px] text-[#8a8775]">
+          <p className="mt-1 font-mono text-[10.5px] text-muted">
             {product.sku ?? "SKU 없음"}
           </p>
         </div>
-        <p className="shrink-0 font-display text-[16px] font-bold text-[#181a12]">
+        <p className="shrink-0 font-display text-[16px] font-bold text-amount-default">
           {formatWon(product.priceAmount)}
         </p>
       </div>

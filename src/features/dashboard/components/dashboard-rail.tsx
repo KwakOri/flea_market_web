@@ -96,20 +96,20 @@ export function DashboardRail({
   return (
     <>
       <aside
-        className="fixed bottom-3 left-3 top-3 z-[60] hidden flex-col gap-1 overflow-hidden rounded-[18px] bg-[#16170f] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out md:flex"
+        className="fixed bottom-3 left-3 top-3 z-[60] hidden flex-col gap-1 overflow-hidden rounded-[12px] bg-[#1f2912] px-3.5 py-[18px] shadow-[6px_0_30px_rgba(20,21,12,0.18)] transition-[width] duration-200 ease-out md:flex"
         onMouseEnter={openRail}
         onMouseLeave={closeRail}
         style={{ width: railOpen ? 248 : 76 }}
       >
         <Link
-          className="mb-3 flex h-11 flex-none items-center gap-3 rounded-[11px] pl-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+          className="mb-3 flex h-11 flex-none items-center gap-3 rounded-[8px] pl-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring"
           href="/management"
         >
-          <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-lg bg-[#c7f94b] font-display text-[17px] font-bold text-[#16170f]">
+          <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-lg bg-brand-spring font-display text-[17px] font-bold text-brand-deep">
             L
           </span>
           <span
-            className="whitespace-nowrap font-display text-[15px] font-semibold text-[#f3f0e2] transition-opacity"
+            className="whitespace-nowrap font-display text-[15px] font-semibold text-on-brand-deep transition-opacity"
             style={{ opacity: railOpen ? 1 : 0 }}
           >
             Ledger&nbsp;OS
@@ -131,18 +131,18 @@ export function DashboardRail({
 
         <div className="flex-1" />
         <div className="flex h-12 flex-none items-center gap-3 px-2">
-          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-[#2a2b20] text-[13px] font-bold text-[#c7f94b]">
+          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-[8px] bg-white/10 text-[13px] font-bold text-brand-spring">
             {user.displayName.charAt(0)}
           </div>
           <div
             className="min-w-0 whitespace-nowrap leading-tight transition-opacity"
             style={{ opacity: railOpen ? 1 : 0 }}
           >
-            <div className="truncate text-[13px] font-semibold text-[#f3f0e2]">
+            <div className="truncate text-[13px] font-semibold text-on-brand-deep">
               {user.displayName}
             </div>
             <div
-              className="truncate font-mono text-[10.5px] text-[#7d7c6a]"
+              className="truncate font-mono text-[10.5px] text-on-brand-deep/60"
               data-testid="user-email"
             >
               {user.email}
@@ -151,7 +151,7 @@ export function DashboardRail({
         </div>
         <button
           aria-label="로그아웃"
-          className="flex h-11 flex-none items-center gap-3 rounded-[11px] px-3 text-[#cfccba] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+          className="flex h-11 flex-none items-center gap-3 rounded-[8px] px-3 text-on-brand-deep/80 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring"
           disabled={logoutDisabled}
           onClick={onLogout}
           type="button"
@@ -170,7 +170,7 @@ export function DashboardRail({
         aria-controls="mobile-dashboard-menu"
         aria-expanded={mobileMenuOpen}
         aria-label={mobileMenuOpen ? "모바일 메뉴 닫기" : "모바일 메뉴 열기"}
-        className="fixed right-4 top-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#16170f] text-[#c7f94b] shadow-[0_8px_24px_rgba(20,21,12,0.2)] transition hover:bg-[#2a2b20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b] md:hidden"
+        className="fixed right-4 top-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#1f2912] text-brand-spring shadow-[0_8px_24px_rgba(20,21,12,0.2)] transition hover:bg-[#1f2912] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring md:hidden"
         onClick={() => setMobileMenuOpen((isOpen) => !isOpen)}
         type="button"
       >
@@ -185,39 +185,39 @@ export function DashboardRail({
         <div className="fixed inset-0 z-[70] md:hidden">
           <button
             aria-label="모바일 메뉴 닫기"
-            className="absolute inset-0 bg-[#16170f]/45 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-[#1f2912]/45 backdrop-blur-[2px]"
             onClick={() => setMobileMenuOpen(false)}
             type="button"
           />
           <aside
             aria-label="모바일 업무 메뉴"
-            className="absolute bottom-3 right-3 top-3 grid w-[min(320px,calc(100vw-1.5rem))] grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-[22px] bg-[#16170f] p-4 shadow-[0_18px_60px_rgba(20,21,12,0.3)]"
+            className="absolute bottom-3 right-3 top-3 grid w-[min(320px,calc(100vw-1.5rem))] grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-[16px] bg-[#1f2912] p-4 shadow-[0_18px_60px_rgba(20,21,12,0.3)]"
             id="mobile-dashboard-menu"
           >
             <Link
-              className="flex h-12 items-center gap-3 rounded-[13px] pr-12 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+              className="flex h-12 items-center gap-3 rounded-[12px] pr-12 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring"
               href="/management"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[11px] bg-[#c7f94b] font-display text-lg font-bold text-[#16170f]">
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[8px] bg-brand-spring font-display text-lg font-bold text-brand-deep">
                 L
               </span>
               <span className="min-w-0">
-                <span className="block truncate font-display text-[15px] font-semibold text-[#f3f0e2]">
+                <span className="block truncate font-display text-[15px] font-semibold text-on-brand-deep">
                   Ledger OS
                 </span>
-                <span className="block truncate font-mono text-[10.5px] text-[#7d7c6a]">
+                <span className="block truncate font-mono text-[10.5px] text-on-brand-deep/60">
                   {activeItem?.label ?? "메뉴"}
                 </span>
               </span>
             </Link>
 
-            <div className="mt-4 rounded-[14px] bg-[#222318] px-3 py-3">
-              <div className="text-[13px] font-semibold text-[#f3f0e2]">
+            <div className="mt-4 rounded-[12px] bg-black/20 px-3 py-3">
+              <div className="text-[13px] font-semibold text-on-brand-deep">
                 {user.displayName}
               </div>
               <div
-                className="mt-0.5 truncate font-mono text-[10.5px] text-[#8c8b76]"
+                className="mt-0.5 truncate font-mono text-[10.5px] text-on-brand-deep/60"
                 data-testid="mobile-user-email"
               >
                 {user.email}
@@ -242,7 +242,7 @@ export function DashboardRail({
 
             <button
               aria-label="로그아웃"
-              className="mt-4 flex h-11 items-center gap-3 rounded-[13px] px-3 text-sm font-semibold text-[#cfccba] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+              className="mt-4 flex h-11 items-center gap-3 rounded-[12px] px-3 text-sm font-semibold text-on-brand-deep/80 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring"
               disabled={logoutDisabled}
               onClick={onLogout}
               type="button"
@@ -292,10 +292,10 @@ function MobileDrawerLink({
     <Link
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-11 items-center gap-3 rounded-[13px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]",
+        "flex h-11 items-center gap-3 rounded-[12px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring",
         active
-          ? "bg-[#c7f94b] text-[#16170f]"
-          : "text-[#cfccba] hover:bg-white/10 hover:text-white",
+          ? "bg-brand-spring text-brand-deep"
+          : "text-on-brand-deep/80 hover:bg-white/10 hover:text-white",
       )}
       href={href}
       onClick={onNavigate}
@@ -323,10 +323,10 @@ function RailLink({
     <Link
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-[46px] flex-none items-center gap-3.5 rounded-[11px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]",
+        "flex h-[46px] flex-none items-center gap-3.5 rounded-[8px] px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring",
         active
-          ? "bg-[#c7f94b] text-[#16170f]"
-          : "text-[#cfccba] hover:bg-white/10 hover:text-white",
+          ? "bg-brand-spring text-brand-deep"
+          : "text-on-brand-deep/80 hover:bg-white/10 hover:text-white",
       )}
       href={href}
     >

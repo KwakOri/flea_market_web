@@ -42,21 +42,21 @@ export function SettlementSummary({ settlement }: { settlement: Settlement }) {
   ];
 
   return (
-    <section className="overflow-hidden rounded-[18px] border border-[#e6e2d4] bg-white shadow-[0_1px_3px_rgba(26,27,18,0.05)]">
-      <div className="flex flex-col gap-[18px] border-b border-[#f1eee2] px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+    <section className="overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
+      <div className="flex flex-col gap-[18px] border-b border-hairline px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
-          <h2 className="dsp m-0 text-[17px] font-bold text-[#1a1b12]">
+          <h2 className="dsp m-0 text-[17px] font-bold text-ink">
             정산 개요
           </h2>
-          <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-[#8a8775]">
+          <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-muted">
             확정 시각 {formatFullDateTime(settlement.confirmedAt)}
           </p>
         </div>
         <div className="text-left sm:text-right">
-          <p className="mono text-[10px] tracking-[0.06em] text-[#8a8775]">
+          <p className="mono text-[10px] tracking-[0.06em] text-muted">
             기준 회차
           </p>
-          <p className="num mt-[3px] text-[15px] font-semibold text-[#a8a593]">
+          <p className="num mt-[3px] text-[15px] font-semibold text-muted-soft">
             {settlement.baseSettlementId
               ? shortId(settlement.baseSettlementId)
               : "—"}
@@ -64,13 +64,13 @@ export function SettlementSummary({ settlement }: { settlement: Settlement }) {
         </div>
       </div>
 
-      <dl className="grid gap-px bg-[#f1eee2] sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid gap-px bg-hairline sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map((metric) => (
           <SettlementMetric key={metric.label} metric={metric} />
         ))}
       </dl>
 
-      <dl className="grid gap-5 border-t border-[#f1eee2] bg-[#fcfbf6] px-5 py-[18px] sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+      <dl className="grid gap-5 border-t border-hairline bg-surface px-5 py-[18px] sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <MetaItem label="참가부스" value={`${settlement.participantCount}개`} />
         <MetaItem label="영수증" value={`${settlement.receiptCount}건`} />
         <MetaItem label="판매 건수" value={`${settlement.saleLineCount}건`} />
@@ -87,7 +87,7 @@ function SettlementMetric({ metric }: { metric: SummaryMetric }) {
     <div
       className={cn(
         "px-5 py-[18px] sm:px-6",
-        isDark ? "bg-[#16170f]" : metric.tone === "green" ? "bg-[#e6f4ec]" : "bg-white",
+        isDark ? "bg-brand-deep" : metric.tone === "green" ? "bg-success-tint" : "bg-surface",
       )}
     >
       <dt
@@ -113,10 +113,10 @@ function SettlementMetric({ metric }: { metric: SummaryMetric }) {
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="mono text-[10.5px] tracking-[0.05em] text-[#8a8775]">
+      <dt className="mono text-[10.5px] tracking-[0.05em] text-muted">
         {label}
       </dt>
-      <dd className="mt-1 break-words text-[15px] font-semibold text-[#1a1b12]">
+      <dd className="mt-1 break-words text-[15px] font-semibold text-ink">
         {value}
       </dd>
     </div>
@@ -126,26 +126,26 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 function getMetricLabelClass(tone: SummaryMetric["tone"]): string {
   switch (tone) {
     case "dark":
-      return "text-[#9b9a86]";
+      return "text-muted-soft";
     case "green":
-      return "text-[#1f8a4d]";
+      return "text-success";
     default:
-      return "text-[#8a8775]";
+      return "text-muted";
   }
 }
 
 function getMetricValueClass(tone: SummaryMetric["tone"]): string {
   switch (tone) {
     case "dark":
-      return "text-white";
+      return "text-on-brand-deep";
     case "green":
-      return "text-[#1f8a4d]";
+      return "text-success";
     case "blue":
-      return "text-[#2d6fe0]";
+      return "text-info";
     case "gold":
-      return "text-[#a9791f]";
+      return "text-warning";
     default:
-      return "text-[#16170f]";
+      return "text-amount-default";
   }
 }
 

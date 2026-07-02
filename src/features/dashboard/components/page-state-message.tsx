@@ -9,7 +9,7 @@ export function PageStateMessage({ message }: { message: string }) {
     <main className={pageShellClass}>
       <div className={appShellClass}>
         <section className={panelVariants()}>
-          <div className="px-4 py-12 text-center text-sm text-zinc-500">
+          <div className="px-4 py-12 text-center text-sm text-muted">
             {message}
           </div>
         </section>

@@ -1,9 +1,6 @@
 import { Pencil } from "lucide-react";
 import type { Market } from "@/services/markets.service";
-import {
-  getMarketStatusBadgeClass,
-  marketStatusLabels,
-} from "@/features/markets/lib/market-display";
+import { MarketStatusBadge } from "@/features/markets/components/market-status-badge";
 import { buttonVariants } from "@/lib/design-system";
 import {
   formatDate,
@@ -27,22 +24,22 @@ export function MarketSelectionCards({
 }) {
   if (markets.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-zinc-100 border-t border-zinc-200">
+    <div className="divide-y divide-hairline border-t border-hairline">
       {markets.map((market) => {
         const isSelected = selectedMarketId === market.id;
 
         return (
           <article
             className={cn(
-              "grid cursor-pointer gap-4 px-4 py-4 transition hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_auto] lg:items-center",
-              isSelected && "bg-emerald-50",
+              "grid cursor-pointer gap-4 px-4 py-4 transition hover:bg-brand-tint/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)_auto] lg:items-center",
+              isSelected && "bg-brand-tint-strong",
             )}
             data-testid="receipt-market-row"
             key={market.id}
@@ -58,42 +55,35 @@ export function MarketSelectionCards({
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs font-semibold text-emerald-700">
+                <p className="text-xs font-semibold text-brand">
                   플리마켓
                 </p>
-                <span
-                  className={cn(
-                    "rounded-md px-2 py-1 text-xs font-semibold",
-                    getMarketStatusBadgeClass(market.status),
-                  )}
-                >
-                  {marketStatusLabels[market.status]}
-                </span>
+                <MarketStatusBadge status={market.status} />
               </div>
-              <h3 className="mt-2 truncate text-lg font-semibold text-zinc-950">
+              <h3 className="mt-2 truncate text-lg font-semibold text-ink">
                 {market.name}
               </h3>
-              <p className="mt-2 text-sm font-medium text-zinc-700">
+              <p className="mt-2 text-sm font-medium text-body">
                 {formatDateRange(market.startsOn, market.endsOn)}
               </p>
             </div>
 
             <dl className="grid gap-3 text-sm sm:grid-cols-[120px_140px_minmax(0,1fr)]">
               <div>
-                <dt className="text-xs font-medium text-zinc-500">진행일</dt>
-                <dd className="mt-1 font-medium text-zinc-800">
+                <dt className="text-xs font-medium text-muted">진행일</dt>
+                <dd className="mt-1 font-medium text-ink">
                   {formatMarketDuration(market.startsOn, market.endsOn)}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-zinc-500">등록일</dt>
-                <dd className="mt-1 font-medium text-zinc-800">
+                <dt className="text-xs font-medium text-muted">등록일</dt>
+                <dd className="mt-1 font-medium text-ink">
                   {formatDate(market.createdAt)}
                 </dd>
               </div>
               <div className="min-w-0">
-                <dt className="text-xs font-medium text-zinc-500">메모</dt>
-                <dd className="mt-1 truncate text-zinc-700">
+                <dt className="text-xs font-medium text-muted">메모</dt>
+                <dd className="mt-1 truncate text-body">
                   {market.description || "-"}
                 </dd>
               </div>

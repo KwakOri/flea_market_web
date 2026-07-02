@@ -30,7 +30,7 @@ export function ParticipantDailySalesDetail({
 }) {
   if (!participant) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
         선택한 참가부스 정산 데이터를 찾을 수 없습니다.
       </section>
     );
@@ -38,7 +38,7 @@ export function ParticipantDailySalesDetail({
 
   if (isReceiptsLoading) {
     return (
-      <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white px-4 py-10 text-center text-sm text-[#8a8775] shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:px-6 sm:py-12">
+      <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
         날짜별 판매 데이터를 불러오는 중입니다.
       </section>
     );
@@ -52,13 +52,13 @@ export function ParticipantDailySalesDetail({
   );
 
   return (
-    <section className="min-w-0 rounded-[18px] border border-[#e6e2d4] bg-white p-4 shadow-[0_1px_3px_rgba(26,27,18,0.05)] sm:p-6">
+    <section className="min-w-0 rounded-[12px] border border-hairline bg-surface p-4 shadow-card sm:p-6">
       <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-[#1a1b12]">
+          <h3 className="text-sm font-semibold text-ink">
             {participant.displayName} 날짜별 판매
           </h3>
-          <p className="mt-1 text-xs text-[#8a8775]">
+          <p className="mt-1 text-xs text-muted">
             {participantTypeLabels[participant.participantType]} ·{" "}
             {formatMarketDuration(market?.startsOn ?? null, market?.endsOn ?? null)}
           </p>
@@ -73,21 +73,21 @@ export function ParticipantDailySalesDetail({
             목록
           </button>
           <dl className="grid min-w-0 gap-2 sm:grid-cols-3">
-            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
-              <dt className="text-xs font-medium text-[#8a8775]">총매출</dt>
-              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
+              <dt className="text-xs font-medium text-muted">총매출</dt>
+              <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {formatWon(participant.netSalesAmount)}
               </dd>
             </div>
-            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
-              <dt className="text-xs font-medium text-[#8a8775]">판매 건수</dt>
-              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
+              <dt className="text-xs font-medium text-muted">판매 건수</dt>
+              <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {participant.saleLineCount}건
               </dd>
             </div>
-            <div className="min-w-0 rounded-[10px] border border-[#e6e2d4] bg-[#fcfbf6] px-3 py-2">
-              <dt className="text-xs font-medium text-[#8a8775]">평균 판매</dt>
-              <dd className="mt-1 truncate text-sm font-semibold text-[#1a1b12]">
+            <div className="min-w-0 rounded-[8px] border border-hairline bg-canvas-soft px-3 py-2">
+              <dt className="text-xs font-medium text-muted">평균 판매</dt>
+              <dd className="mt-1 truncate text-sm font-semibold text-amount-default">
                 {formatWon(
                   participant.saleLineCount > 0
                     ? Math.round(
@@ -114,7 +114,7 @@ function ParticipantDailySalesChart({
 
   if (!hasSales) {
     return (
-      <div className="py-10 text-center text-sm text-[#8a8775]">
+      <div className="py-10 text-center text-sm text-muted">
         날짜별 판매 데이터가 없습니다.
       </div>
     );
@@ -154,7 +154,7 @@ function ParticipantDailySalesChart({
         width={chartWidth}
       >
         <line
-          stroke="#d8d3c2"
+          className="stroke-border"
           strokeWidth="1"
           x1={chartLeft}
           x2={chartWidth - chartRight}
@@ -169,7 +169,7 @@ function ParticipantDailySalesChart({
           return (
             <g key={tick}>
               <line
-                stroke="#f1eee2"
+                className="stroke-chart-grid"
                 strokeWidth="1"
                 x1={chartLeft}
                 x2={chartWidth - chartRight}
@@ -177,7 +177,7 @@ function ParticipantDailySalesChart({
                 y2={y}
               />
               <text
-                fill="#8a8775"
+                className="fill-muted"
                 fontSize="11"
                 textAnchor="end"
                 x={chartLeft - 10}
@@ -186,7 +186,7 @@ function ParticipantDailySalesChart({
                 {formatCompactWon(amountValue)}
               </text>
               <text
-                fill="#8a8775"
+                className="fill-muted"
                 fontSize="11"
                 textAnchor="start"
                 x={chartWidth - chartRight + 10}
@@ -198,7 +198,7 @@ function ParticipantDailySalesChart({
           );
         })}
         <text
-          fill="#56564a"
+          className="fill-body"
           fontSize="12"
           fontWeight="600"
           textAnchor="start"
@@ -208,7 +208,7 @@ function ParticipantDailySalesChart({
           금액
         </text>
         <text
-          fill="#56564a"
+          className="fill-body"
           fontSize="12"
           fontWeight="600"
           textAnchor="end"
@@ -229,7 +229,7 @@ function ParticipantDailySalesChart({
                 {point.saleCount}건
               </title>
               <rect
-                fill="#10b981"
+                className="fill-bar-fill"
                 height={barHeight}
                 rx="4"
                 width={barWidth}
@@ -237,7 +237,7 @@ function ParticipantDailySalesChart({
                 y={y}
               />
               <text
-                fill="#56564a"
+                className="fill-body"
                 fontSize="11"
                 fontWeight="600"
                 textAnchor="middle"
@@ -247,7 +247,7 @@ function ParticipantDailySalesChart({
                 {formatChartDateLabel(point.date)}
               </text>
               <text
-                fill="#8a8775"
+                className="fill-muted"
                 fontSize="10"
                 textAnchor="middle"
                 x={x}
@@ -259,9 +259,9 @@ function ParticipantDailySalesChart({
           );
         })}
         <polyline
+          className="stroke-ink"
           fill="none"
           points={linePoints}
-          stroke="#18181b"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="2.5"
@@ -273,15 +273,14 @@ function ParticipantDailySalesChart({
           return (
             <g key={`${point.date}-count`}>
               <circle
+                className="fill-surface-raised stroke-ink"
                 cx={x}
                 cy={y}
-                fill="#ffffff"
                 r="5"
-                stroke="#18181b"
                 strokeWidth="2"
               />
               <text
-                fill="#18181b"
+                className="fill-ink"
                 fontSize="10"
                 fontWeight="600"
                 textAnchor="middle"

@@ -13,7 +13,6 @@ import {
 import type { Market } from "@/services/markets.service";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
 import { SettlementPreviewPanel } from "@/features/settlements/components/settlement-preview-panel";
-import { panelVariants } from "@/lib/design-system";
 import { downloadBlob } from "@/lib/download-blob";
 import { getErrorMessage } from "@/lib/error-message";
 import { getOptionalFormString } from "@/lib/form-data";
@@ -85,7 +84,6 @@ export function SettlementScreen({
         subtitle="확정 시 현재 정산 결과가 회차 스냅샷으로 저장됩니다."
         title="정산 프리뷰 / 확정"
       />
-      <section className={panelVariants()}>
         <SettlementPreviewPanel
           history={settlementHistory.data ?? []}
           isConfirming={createSettlementSnapshot.isPending}
@@ -118,7 +116,6 @@ export function SettlementScreen({
             }
           }}
         />
-      </section>
     </div>
   );
 }

@@ -11,11 +11,11 @@ export function getSettlementStatusBadgeClass(
 ): string {
   switch (status) {
     case "confirmed":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-success-tint text-success";
     case "superseded":
-      return "bg-zinc-100 text-zinc-700";
+      return "bg-canvas-soft text-muted";
     case "voided":
     default:
-      return "bg-red-100 text-red-800";
+      return "bg-error-tint text-error";
   }
 }

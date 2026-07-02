@@ -18,12 +18,12 @@ import { ParticipantTypeBadge } from "@/features/participants/components/partici
 import { cn } from "@/lib/utils";
 
 const feeApplicationCellVariants = cva(
-  "grid h-full min-h-0 content-start gap-2 rounded-xl border border-[#ece7d8] bg-white p-[13px] transition-opacity md:min-h-[154px]",
+  "grid h-full min-h-0 content-start gap-2 rounded-xl border border-hairline bg-surface p-[13px] transition-opacity md:min-h-[154px]",
   {
     variants: {
       active: {
-        true: "border-[#1f8a4d] bg-[#e6f4ec]",
-        false: "border-[#f2eee3] bg-[#fffdf8] opacity-30 hover:opacity-50",
+        true: "border-success bg-success-tint",
+        false: "border-hairline bg-surface opacity-30 hover:opacity-50",
       },
     },
   },
@@ -34,8 +34,8 @@ const feeApplicationStatusTextVariants = cva(
   {
     variants: {
       active: {
-        true: "font-bold text-[#1f8a4d]",
-        false: "font-medium text-[#d7d2c4]",
+        true: "font-bold text-success",
+        false: "font-medium text-muted-soft",
       },
     },
   },
@@ -46,7 +46,7 @@ const feeSettingFieldRowVariants = cva(
   {
     variants: {
       active: {
-        true: "bg-white shadow-sm ring-1 ring-[#bfe3cd]",
+        true: "bg-surface shadow-sm ring-1 ring-success/40",
         false: "",
       },
     },
@@ -58,8 +58,8 @@ const feeSettingFieldStatusVariants = cva(
   {
     variants: {
       active: {
-        true: "font-semibold text-[#1f8a4d]",
-        false: "font-normal text-[#ded9cb]",
+        true: "font-semibold text-success",
+        false: "font-normal text-muted-soft",
       },
     },
   },
@@ -80,7 +80,7 @@ export function FeeApplicationMatrix({
 }) {
   if (isLoading) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         수수료 적용 현황을 불러오는 중입니다.
       </div>
     );
@@ -88,7 +88,7 @@ export function FeeApplicationMatrix({
 
   if (participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-[#8a8775]">
+      <div className="px-4 py-12 text-center text-sm text-muted">
         연결된 참가부스가 없습니다.
       </div>
     );
@@ -106,7 +106,7 @@ export function FeeApplicationMatrix({
   const hasMarketSettings = Boolean(marketSettings?.id);
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-white">
+    <div className="overflow-hidden rounded-[12px] bg-surface">
       <div className="grid gap-3 p-3 md:hidden">
         {participants.map((participant) => {
           const activeScope = getParticipantFeePolicySource(
@@ -118,13 +118,13 @@ export function FeeApplicationMatrix({
 
           return (
             <article
-              className="grid gap-3 rounded-[14px] border border-[#e6e2d4] bg-[#fcfbf6] p-3"
+              className="grid gap-3 rounded-[12px] border border-hairline bg-canvas-soft p-3"
               data-testid="fee-status-card"
               key={participant.id}
             >
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-[#1a1b12]">
+                  <p className="truncate text-[15px] font-semibold text-ink">
                     {participant.displayName}
                   </p>
                   <p className="mt-2">
@@ -133,7 +133,7 @@ export function FeeApplicationMatrix({
                 </div>
                 <button
                   aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#d8d3c2] bg-white text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   onClick={() => onEditParticipant(participant)}
                   title="부스별 수수료 설정"
                   type="button"
@@ -168,13 +168,13 @@ export function FeeApplicationMatrix({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[1120px]">
-          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-[#16170f] px-[22px] py-[13px] text-center font-mono text-[10.5px] font-semibold tracking-[0.06em] text-[#9b9a86]">
+          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-surface-sunken px-[22px] py-3 text-center text-sm font-medium text-muted">
             <span>참가 부스</span>
             <span>전체 기본값</span>
             <span>플리마켓 기본값</span>
-            <span className="text-[#c7f94b]">이 부스 설정</span>
+            <span className="font-semibold text-brand">이 부스 설정</span>
           </div>
-          <div className="divide-y divide-[#f1eee2]">
+          <div className="divide-y divide-hairline">
             {participants.map((participant) => {
               const activeScope = getParticipantFeePolicySource(
                 participant,
@@ -190,7 +190,7 @@ export function FeeApplicationMatrix({
                   key={participant.id}
                 >
                   <div className="flex min-h-full flex-col items-center justify-center text-center">
-                    <p className="text-[14.5px] font-semibold text-[#1a1b12]">
+                    <p className="text-[14.5px] font-semibold text-ink">
                       {participant.displayName}
                     </p>
                     <p className="mt-2">
@@ -216,7 +216,7 @@ export function FeeApplicationMatrix({
                     action={
                       <button
                         aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#d8d3c2] bg-white text-[#1a1b12] transition hover:bg-[#f1eee2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c7f94b]"
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         onClick={() => onEditParticipant(participant)}
                         title="부스별 수수료 설정"
                         type="button"
@@ -274,8 +274,8 @@ function FeeApplicationCell({
           className={cn(
             "min-w-0 truncate text-xs",
             isActive
-              ? "font-semibold text-[#56564a]"
-              : "font-medium text-[#b8b3a4]",
+              ? "font-semibold text-body"
+              : "font-medium text-muted-soft",
           )}
         >
           {title}
@@ -292,8 +292,8 @@ function FeeApplicationCell({
       {isUnavailable ? (
         <p
           className={cn(
-            "grid min-h-[94px] place-items-center rounded-[10px] bg-[#fcfbf6] px-3 py-4 text-center text-sm leading-relaxed",
-            isActive ? "font-medium text-[#8a8775]" : "font-normal text-[#c9c4b7]",
+            "grid min-h-[94px] place-items-center rounded-[8px] bg-canvas-soft px-3 py-4 text-center text-sm leading-relaxed",
+            isActive ? "font-medium text-muted" : "font-normal text-muted-soft",
           )}
         >
           {unavailableMessage ?? "설정이 없습니다."}
@@ -309,7 +309,7 @@ function FeeApplicationCell({
                 <dt
                   className={cn(
                     "text-xs",
-                    isActive ? "font-normal text-[#8a8775]" : "font-light text-[#b8b3a4]",
+                    isActive ? "font-normal text-muted" : "font-light text-muted-soft",
                   )}
                 >
                   {field.label}
@@ -318,8 +318,8 @@ function FeeApplicationCell({
                   className={cn(
                     "truncate font-display",
                     isActive
-                      ? "font-semibold text-[#1a1b12]"
-                      : "font-medium text-[#8f8a7d]",
+                      ? "font-semibold text-ink"
+                      : "font-medium text-muted",
                   )}
                 >
                   {formatFeeFieldValue(

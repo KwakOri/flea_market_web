@@ -58,22 +58,22 @@ export function ParticipantDialog({
     : getParticipantFeeSettingsDefaults(editingParticipant);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/45 p-4">
       <section
         aria-labelledby="participant-dialog-title"
         aria-modal="true"
-        className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[16px] bg-surface-raised shadow-modal"
         role="dialog"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3">
+        <div className="flex items-start justify-between gap-3 border-b border-hairline px-4 py-3">
           <div>
             <h2
-              className="text-base font-semibold text-zinc-950"
+              className="text-base font-semibold text-ink"
               id="participant-dialog-title"
             >
               {title}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">{marketName}</p>
+            <p className="mt-1 text-sm text-muted">{marketName}</p>
           </div>
           <button
             aria-label="닫기"
@@ -109,9 +109,9 @@ export function ParticipantDialog({
             </div>
           ) : (
             <div className="grid gap-2 xl:grid-cols-[minmax(220px,1fr)_180px]">
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
-                <p className="text-xs font-medium text-zinc-500">참가부스</p>
-                <p className="mt-1 text-sm font-semibold text-zinc-950">
+              <div className="rounded-md border border-hairline bg-canvas-soft px-3 py-2">
+                <p className="text-xs font-medium text-muted">참가부스</p>
+                <p className="mt-1 text-sm font-semibold text-ink">
                   {editingParticipant?.displayName ?? "선택된 참가부스 없음"}
                 </p>
               </div>
@@ -124,12 +124,12 @@ export function ParticipantDialog({
           {selectedParticipant ? (
             <>
               {isCreateMode && (
-                <div className="grid gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-end">
+                <div className="grid gap-2 rounded-md border border-hairline bg-canvas-soft p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-end">
                   <div>
-                    <p className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-muted">
                       선택된 참가부스
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-zinc-950">
+                    <p className="mt-1 text-sm font-semibold text-ink">
                       {selectedParticipant.displayName}
                     </p>
                   </div>
@@ -140,10 +140,10 @@ export function ParticipantDialog({
                   />
                 </div>
               )}
-              <label className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700">
+              <label className="flex items-center gap-2 rounded-md border border-hairline bg-canvas-soft px-3 py-2 text-sm font-medium text-body">
                 <input
                   checked={feeOverrideEnabled}
-                  className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600"
+                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
                   disabled={settlementControlsDisabled}
                   name="feeSettingOverrideEnabled"
                   onChange={(event) => onFeeOverrideChange(event.target.checked)}
@@ -157,12 +157,12 @@ export function ParticipantDialog({
               />
             </>
           ) : (
-            <div className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+            <div className="rounded-md border border-dashed border-border bg-canvas-soft px-4 py-8 text-center text-sm text-muted">
               참가부스를 선택하면 정산 설정을 입력할 수 있습니다.
             </div>
           )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted">
               체크하지 않으면 플리마켓 기본값, 전체 기본값 순으로 적용됩니다.
               체크한 값은 현재 플리마켓의 참가부스에만 저장됩니다.
             </p>
@@ -189,7 +189,7 @@ export function ParticipantDialog({
             </div>
           </div>
           {message && (
-            <p className="text-sm font-medium text-red-700">{message}</p>
+            <p className="text-sm font-medium text-error">{message}</p>
           )}
         </form>
       </section>

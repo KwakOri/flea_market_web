@@ -23,18 +23,18 @@ export function DashboardToast({
       className="fixed bottom-4 right-4 z-[60] w-[calc(100%-2rem)] max-w-sm"
       role="status"
     >
-      <div className="flex items-start gap-3 rounded-md border border-emerald-700 bg-zinc-950 px-4 py-3 text-white shadow-lg">
+      <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-deep px-4 py-3 text-on-brand-deep shadow-popover">
         <CheckCircle2
           aria-hidden
-          className="mt-0.5 h-5 w-5 flex-none text-emerald-300"
+          className="mt-0.5 h-5 w-5 flex-none text-brand-spring"
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{toast.title}</p>
-          <p className="mt-1 text-sm text-zinc-200">{toast.message}</p>
+          <p className="mt-1 text-sm text-on-brand-deep">{toast.message}</p>
         </div>
         <button
           aria-label="토스트 닫기"
-          className="rounded p-1 text-zinc-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          className="rounded p-1 text-on-brand-deep transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-spring"
           onClick={onDismiss}
           type="button"
         >

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+/* 웹폰트(Pretendard·JetBrains Mono)는 layout.tsx의 <link>로 로드 (STEP6) */
 
 *,
 *::before,
@@ -6,140 +7,23 @@
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 100;
-  src: url("../fonts/Paperlogy-1Thin.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 200;
-  src: url("../fonts/Paperlogy-2ExtraLight.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 300;
-  src: url("../fonts/Paperlogy-3Light.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/Paperlogy-4Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 500;
-  src: url("../fonts/Paperlogy-5Medium.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 600;
-  src: url("../fonts/Paperlogy-6SemiBold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 700;
-  src: url("../fonts/Paperlogy-7Bold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 800;
-  src: url("../fonts/Paperlogy-8ExtraBold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Paperlogy";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 900;
-  src: url("../fonts/Paperlogy-9Black.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Space Grotesk";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400 700;
-  src: url("../fonts/SpaceGrotesk-Variable.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/IBMPlexMono-400.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 500;
-  src: url("../fonts/IBMPlexMono-500.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 600 700;
-  src: url("../fonts/IBMPlexMono-600.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Space Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 400;
-  src: url("../fonts/SpaceMono-Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Space Mono";
-  font-display: swap;
-  font-style: normal;
-  font-weight: 700;
-  src: url("../fonts/SpaceMono-Bold.ttf") format("truetype");
-}
-
 :root {
-  --background: #e9e5d8;
-  --foreground: #1a1b12;
+  /* base canvas/ink now point at tambang tokens (STEP1 리스킨) */
+  --background: #f7f4ec;
+  --foreground: #2a2e22;
+  /* STEP6: Pretendard 단일 패밀리(본문·UI·숫자), mono만 JetBrains Mono */
   --font-paperlogy:
-    "Paperlogy", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   --font-display-stack:
-    "Space Grotesk", "Paperlogy", -apple-system, BlinkMacSystemFont, system-ui,
-    sans-serif;
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, sans-serif;
   --font-mono-stack:
-    "IBM Plex Mono", "Space Mono", "Paperlogy", ui-monospace, SFMono-Regular,
-    Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
   --font-number-stack:
-    "Space Grotesk", "IBM Plex Mono", "Paperlogy", ui-monospace, SFMono-Regular,
-    Menlo, Monaco, Consolas, monospace;
+    "Pretendard Variable", Pretendard, ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, monospace;
 }
 
 @theme inline {
@@ -148,6 +32,76 @@
   --font-sans: var(--font-paperlogy);
   --font-mono: var(--font-mono-stack);
   --font-display: var(--font-display-stack);
+
+  /* --- 그림자(ELEVATION): ink 틴트 3단계 --- */
+  --shadow-card: 0 1px 2px rgba(42, 46, 34, 0.06), 0 1px 3px rgba(42, 46, 34, 0.05);
+  --shadow-popover: 0 4px 12px rgba(42, 46, 34, 0.1),
+    0 2px 4px rgba(42, 46, 34, 0.06);
+  --shadow-modal: 0 16px 40px rgba(42, 46, 34, 0.18),
+    0 4px 12px rgba(42, 46, 34, 0.1);
+
+  /* --- 모션(MOTION): DESIGN 이징/지속시간 --- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ==== tambang design tokens (merged from tokens.css — STEP1) ==== */
+  /* --- 캔버스 & 표면 --- */
+  --color-canvas: #f7f4ec;
+  --color-canvas-soft: #f1ede2;
+  --color-surface: #fcfbf6;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f0ecdf;
+
+  /* --- 텍스트 --- */
+  --color-ink: #2a2e22;
+  --color-body: #494f3e;
+  --color-muted: #686d5c;
+  --color-muted-soft: #a6ab97; /* 플레이스홀더·비활성 전용 */
+
+  /* --- 라인 --- */
+  --color-hairline: #e7e2d4;
+  --color-border: #d5d0bf;
+  --color-border-strong: #bdb8a4;
+
+  /* --- 브랜드 연두 --- */
+  --color-brand: #4e7327;
+  --color-brand-hover: #436322;
+  --color-brand-spring: #a7c957; /* 장식·큰 면적만, 텍스트 금지 */
+  --color-brand-deep: #34431c;
+  --color-brand-tint: #ecf2db;
+  --color-brand-tint-strong: #e5eecf;
+
+  /* --- on-color --- */
+  --color-on-brand: #ffffff;
+  --color-on-brand-deep: #eef3dd;
+
+  /* --- 시맨틱 (색+라벨+아이콘 병행) --- */
+  --color-success: #4e7327;
+  --color-success-tint: #e4efcf;
+  --color-warning: #8a620b;
+  --color-warning-tint: #f6ebcf;
+  --color-error: #ae412c;
+  --color-error-tint: #f5ddd5;
+  --color-info: #3a7081;
+  --color-info-tint: #dcebef;
+
+  /* --- 정산 금액 의미색 --- */
+  --color-amount-default: #2a2e22;
+  --color-amount-payout: #4e7327;
+  --color-amount-fee: #686d5c;
+  --color-amount-negative: #ae412c;
+
+  /* --- 데이터 시각화(최소) --- */
+  --color-bar-track: #e7e2d4;
+  --color-bar-fill: #7ba23f;
+  --color-chart-grid: #e7e2d4;
+
+  /* --- 오버레이 --- */
+  --color-scrim: #2a2e22; /* 모달 배경 — 45% 알파로 사용 */
+  --color-focus-ring: #4e7327;
 }
 
 html,
@@ -162,6 +116,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-paperlogy);
+  /* DESIGN 타이포: 본문 15px · 라인하이트 1.6 (한글 가독성 기준) */
+  font-size: 0.9375rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -213,13 +170,25 @@ input.num {
   font-weight: 700;
 }
 
+/* 접근성: 모션 감소 선호 시 애니메이션/트랜지션 제거 (DESIGN Accessibility) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @keyframes okpulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(31, 138, 77, 0);
+    box-shadow: 0 0 0 0 rgba(78, 115, 39, 0);
   }
 
   50% {
-    box-shadow: 0 0 0 4px rgba(31, 138, 77, 0.1);
+    box-shadow: 0 0 0 4px rgba(78, 115, 39, 0.1);
   }
 }

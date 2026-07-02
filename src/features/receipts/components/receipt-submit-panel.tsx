@@ -24,12 +24,12 @@ export function ReceiptSubmitPanel({
   const waitingForSplitAmount = paymentMode === "split" && paymentRemaining !== 0;
 
   return (
-    <section className="min-w-0 rounded-[18px] bg-[#16170f] p-5 text-[#f3f0e2] sm:p-[22px]">
+    <section className="min-w-0 rounded-[12px] bg-brand-deep p-5 text-on-brand-deep sm:p-[22px]">
       <div className="mb-3.5 flex items-center gap-2.5">
         <span
           className={cn(
             "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full",
-            waitingForSplitAmount ? "bg-[#c47d12]" : "bg-[#1f8a4d]",
+            waitingForSplitAmount ? "bg-[#c47d12]" : "bg-success",
           )}
         >
           <CheckCircle2
@@ -42,19 +42,19 @@ export function ReceiptSubmitPanel({
           <div className="font-display text-base font-bold">
             {waitingForSplitAmount ? "검증 대기" : "검증 완료"}
           </div>
-          <div className="font-mono text-[10.5px] tracking-[0.04em] text-[#8d8c79]">
+          <div className="font-mono text-[10.5px] tracking-[0.04em] text-muted-soft">
             입력 합계 = 결제 합계
           </div>
         </div>
       </div>
-      <div className="flex min-w-0 justify-between gap-3 border-t border-[#2c2d22] py-1.5 text-[12.5px]">
-        <span className="text-[#9b9a86]">남은 금액</span>
-        <span className="truncate font-display font-bold text-[#c7f94b]">
+      <div className="flex min-w-0 justify-between gap-3 border-t border-white/10 py-1.5 text-[12.5px]">
+        <span className="text-muted-soft">남은 금액</span>
+        <span className="truncate font-display font-bold text-brand-spring">
           {formatWon(paymentMode === "split" ? paymentRemaining : 0)}
         </span>
       </div>
       <button
-        className="mt-3.5 w-full rounded-xl border-0 bg-[#c7f94b] p-3 text-[15px] font-bold text-[#16170f] transition hover:bg-[#d4ff5e] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3.5 w-full rounded-xl border-0 bg-brand-spring p-3 text-[15px] font-bold text-brand-deep transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={
           !hasParticipants ||
           isSubmitting ||

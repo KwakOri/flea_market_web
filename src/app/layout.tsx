@@ -15,6 +15,17 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full antialiased">
       <body className="flex min-h-full min-w-0 flex-col overflow-x-clip">
+        {/* STEP6 웹폰트: React 19 스타일시트 호이스팅(precedence)으로 <head>에 자동 배치 */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+          precedence="default"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+          precedence="default"
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

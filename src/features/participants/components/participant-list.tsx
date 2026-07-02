@@ -33,7 +33,7 @@ export function ParticipantList({
 }) {
   if (participants.length === 0) {
     return (
-      <div className="border-t border-zinc-200 px-4 py-10 text-center text-sm text-zinc-500">
+      <div className="border-t border-hairline px-4 py-10 text-center text-sm text-muted">
         {emptyMessage}
       </div>
     );
@@ -41,7 +41,7 @@ export function ParticipantList({
 
   return (
     <div
-      className="divide-y divide-zinc-100 border-t border-zinc-200"
+      className="divide-y divide-hairline border-t border-hairline"
       data-testid="participant-list"
     >
       {participants.map((participant) => {
@@ -54,8 +54,8 @@ export function ParticipantList({
         return (
           <div
             className={cn(
-              "grid gap-3 px-4 py-3 transition hover:bg-emerald-50/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start",
-              selectedParticipantId === participant.id && "bg-emerald-50",
+              "grid gap-3 px-4 py-3 transition hover:bg-brand-tint sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start",
+              selectedParticipantId === participant.id && "bg-brand-tint-strong",
             )}
             data-testid="participant-row"
             key={participant.id}
@@ -67,10 +67,10 @@ export function ParticipantList({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium text-zinc-950">
+                  <p className="font-medium text-ink">
                     {participant.displayName}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p className="mt-1 text-xs text-muted">
                     {participantTypeLabels[participant.participantType]}
                   </p>
                 </div>
@@ -78,10 +78,10 @@ export function ParticipantList({
                   className={cn(
                     "rounded-full px-2 py-1 text-xs font-medium",
                     activeScope === "booth"
-                      ? "bg-amber-100 text-amber-800"
+                      ? "bg-warning-tint text-warning"
                       : activeScope === "market"
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-zinc-100 text-zinc-600",
+                        ? "bg-success-tint text-success"
+                        : "bg-canvas-soft text-muted",
                   )}
                 >
                   {feeSettingScopeLabels[activeScope]}
@@ -89,8 +89,8 @@ export function ParticipantList({
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <dt className="text-zinc-500">카드 수수료</dt>
-                  <dd className="mt-1 font-medium text-zinc-800">
+                  <dt className="text-muted">카드 수수료</dt>
+                  <dd className="mt-1 font-medium text-ink">
                     {formatParticipantFeeFieldDisplay(
                       participant,
                       globalSettings,
@@ -100,8 +100,8 @@ export function ParticipantList({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500">참가비</dt>
-                  <dd className="mt-1 font-medium text-zinc-800">
+                  <dt className="text-muted">참가비</dt>
+                  <dd className="mt-1 font-medium text-ink">
                     {formatParticipantFeeFieldDisplay(
                       participant,
                       globalSettings,
@@ -130,7 +130,7 @@ export function ParticipantList({
                   aria-label={`${participant.displayName} 삭제`}
                   className={cn(
                     buttonVariants({ intent: "secondary", size: "sm" }),
-                    "h-10 w-10 border-red-200 px-0 text-red-700 hover:bg-red-50",
+                    "h-10 w-10 border-error/40 px-0 text-error hover:bg-error-tint",
                   )}
                   disabled={deleteDisabled}
                   onClick={() => onDeleteParticipant(participant)}

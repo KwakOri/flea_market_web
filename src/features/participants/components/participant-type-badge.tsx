@@ -7,9 +7,9 @@ const participantTypeBadgeVariants = cva(
   {
     variants: {
       type: {
-        seller: "bg-[#f1eee2] text-[#8a8775]",
+        seller: "bg-canvas-soft text-muted",
         staff: "bg-[#26271c] text-[#d7d3bf]",
-        special_booth: "bg-[#eef9d4] text-[#5c7a16]",
+        special_booth: "bg-brand-tint text-brand",
       },
     },
   },
