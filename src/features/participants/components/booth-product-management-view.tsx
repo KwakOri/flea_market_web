@@ -62,7 +62,7 @@ export function BoothProductManagementView({
   );
 
   return (
-    <>
+    <div className="grid gap-6">
       <section className={panelVariants()}>
         <div
           className={cn(
@@ -179,6 +179,6 @@ export function BoothProductManagementView({
         )}
         <ProductTable products={products} onStatusChange={onProductStatusChange} />
       </section>
-    </>
+    </div>
   );
 }
