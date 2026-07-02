@@ -154,7 +154,7 @@ function ParticipantDailySalesChart({
         width={chartWidth}
       >
         <line
-          stroke="#d5d0bf"
+          className="stroke-border"
           strokeWidth="1"
           x1={chartLeft}
           x2={chartWidth - chartRight}
@@ -169,7 +169,7 @@ function ParticipantDailySalesChart({
           return (
             <g key={tick}>
               <line
-                stroke="#e7e2d4"
+                className="stroke-chart-grid"
                 strokeWidth="1"
                 x1={chartLeft}
                 x2={chartWidth - chartRight}
@@ -177,7 +177,7 @@ function ParticipantDailySalesChart({
                 y2={y}
               />
               <text
-                fill="#686d5c"
+                className="fill-muted"
                 fontSize="11"
                 textAnchor="end"
                 x={chartLeft - 10}
@@ -186,7 +186,7 @@ function ParticipantDailySalesChart({
                 {formatCompactWon(amountValue)}
               </text>
               <text
-                fill="#686d5c"
+                className="fill-muted"
                 fontSize="11"
                 textAnchor="start"
                 x={chartWidth - chartRight + 10}
@@ -198,7 +198,7 @@ function ParticipantDailySalesChart({
           );
         })}
         <text
-          fill="#494f3e"
+          className="fill-body"
           fontSize="12"
           fontWeight="600"
           textAnchor="start"
@@ -208,7 +208,7 @@ function ParticipantDailySalesChart({
           금액
         </text>
         <text
-          fill="#494f3e"
+          className="fill-body"
           fontSize="12"
           fontWeight="600"
           textAnchor="end"
@@ -229,7 +229,7 @@ function ParticipantDailySalesChart({
                 {point.saleCount}건
               </title>
               <rect
-                fill="#7ba23f"
+                className="fill-bar-fill"
                 height={barHeight}
                 rx="4"
                 width={barWidth}
@@ -237,7 +237,7 @@ function ParticipantDailySalesChart({
                 y={y}
               />
               <text
-                fill="#494f3e"
+                className="fill-body"
                 fontSize="11"
                 fontWeight="600"
                 textAnchor="middle"
@@ -247,7 +247,7 @@ function ParticipantDailySalesChart({
                 {formatChartDateLabel(point.date)}
               </text>
               <text
-                fill="#686d5c"
+                className="fill-muted"
                 fontSize="10"
                 textAnchor="middle"
                 x={x}
@@ -259,9 +259,9 @@ function ParticipantDailySalesChart({
           );
         })}
         <polyline
+          className="stroke-ink"
           fill="none"
           points={linePoints}
-          stroke="#2a2e22"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="2.5"
@@ -273,15 +273,14 @@ function ParticipantDailySalesChart({
           return (
             <g key={`${point.date}-count`}>
               <circle
+                className="fill-surface-raised stroke-ink"
                 cx={x}
                 cy={y}
-                fill="#ffffff"
                 r="5"
-                stroke="#2a2e22"
                 strokeWidth="2"
               />
               <text
-                fill="#2a2e22"
+                className="fill-ink"
                 fontSize="10"
                 fontWeight="600"
                 textAnchor="middle"

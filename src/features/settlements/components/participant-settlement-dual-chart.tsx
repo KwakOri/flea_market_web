@@ -66,7 +66,7 @@ export function ParticipantSettlementDualChart({
         </div>
         <div className="flex flex-wrap gap-3 text-xs font-medium text-body">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-[#7ba23f]" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-bar-fill" />
             판매 금액
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -85,7 +85,7 @@ export function ParticipantSettlementDualChart({
           width={chartWidth}
         >
           <line
-            stroke="#d5d0bf"
+            className="stroke-border"
             strokeWidth="1"
             x1={chartLeft}
             x2={chartWidth - chartRight}
@@ -100,7 +100,7 @@ export function ParticipantSettlementDualChart({
             return (
               <g key={tick}>
                 <line
-                  stroke="#e7e2d4"
+                  className="stroke-chart-grid"
                   strokeWidth="1"
                   x1={chartLeft}
                   x2={chartWidth - chartRight}
@@ -108,7 +108,7 @@ export function ParticipantSettlementDualChart({
                   y2={y}
                 />
                 <text
-                  fill="#686d5c"
+                  className="fill-muted"
                   fontSize="11"
                   textAnchor="end"
                   x={chartLeft - 10}
@@ -117,7 +117,7 @@ export function ParticipantSettlementDualChart({
                   {formatCompactWon(amountValue)}
                 </text>
                 <text
-                  fill="#686d5c"
+                  className="fill-muted"
                   fontSize="11"
                   textAnchor="start"
                   x={chartWidth - chartRight + 10}
@@ -129,7 +129,7 @@ export function ParticipantSettlementDualChart({
             );
           })}
           <text
-            fill="#494f3e"
+            className="fill-body"
             fontSize="12"
             fontWeight="600"
             textAnchor="start"
@@ -139,7 +139,7 @@ export function ParticipantSettlementDualChart({
             금액
           </text>
           <text
-            fill="#494f3e"
+            className="fill-body"
             fontSize="12"
             fontWeight="600"
             textAnchor="end"
@@ -162,7 +162,7 @@ export function ParticipantSettlementDualChart({
                   {participant.saleLineCount}건
                 </title>
                 <rect
-                  fill="#7ba23f"
+                  className="fill-bar-fill"
                   height={barHeight}
                   rx="4"
                   width={barWidth}
@@ -170,7 +170,7 @@ export function ParticipantSettlementDualChart({
                   y={y}
                 />
                 <text
-                  fill="#494f3e"
+                  className="fill-body"
                   fontSize="11"
                   fontWeight="600"
                   textAnchor="middle"
@@ -180,7 +180,7 @@ export function ParticipantSettlementDualChart({
                   {truncateChartLabel(participant.displayName)}
                 </text>
                 <text
-                  fill="#686d5c"
+                  className="fill-muted"
                   fontSize="10"
                   textAnchor="middle"
                   x={x}
@@ -192,9 +192,9 @@ export function ParticipantSettlementDualChart({
             );
           })}
           <polyline
+            className="stroke-ink"
             fill="none"
             points={points}
-            stroke="#2a2e22"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2.5"
@@ -207,15 +207,14 @@ export function ParticipantSettlementDualChart({
             return (
               <g key={`${participant.participantId}-count`}>
                 <circle
+                  className="fill-surface-raised stroke-ink"
                   cx={x}
                   cy={y}
-                  fill="#ffffff"
                   r="5"
-                  stroke="#2a2e22"
                   strokeWidth="2"
                 />
                 <text
-                  fill="#2a2e22"
+                  className="fill-ink"
                   fontSize="10"
                   fontWeight="600"
                   textAnchor="middle"
