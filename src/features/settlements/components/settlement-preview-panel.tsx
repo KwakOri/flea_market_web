@@ -53,7 +53,7 @@ export function SettlementPreviewPanel({
 }) {
   if (isLoading) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-muted">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         정산 데이터를 불러오는 중입니다.
       </div>
     );
@@ -61,7 +61,7 @@ export function SettlementPreviewPanel({
 
   if (!preview) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-muted">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         마켓을 선택하면 정산 미리보기가 표시됩니다.
       </div>
     );
@@ -69,7 +69,7 @@ export function SettlementPreviewPanel({
 
   if (preview.participants.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-muted">
+      <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
         등록된 참가부스가 없습니다.
       </div>
     );
@@ -82,7 +82,7 @@ export function SettlementPreviewPanel({
     : null;
 
   return (
-    <div className="grid min-w-0 gap-[18px] p-4">
+    <div className="grid min-w-0 gap-6">
       <dl className="grid min-w-0 gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <SettlementMetric
           label="총매출"
