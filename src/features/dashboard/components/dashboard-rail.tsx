@@ -19,6 +19,11 @@ import {
 import type { AuthUser } from "@/services/auth.service";
 import { useDashboardUiStore } from "@/stores/dashboard-ui.store";
 import type { DashboardView } from "@/features/dashboard/components/dashboard-shell.types";
+import {
+  FLEA_MARKET_MANAGE_LABEL,
+  PARTICIPATING_SELLER,
+  SELLER_MANAGE_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 const dashboardTabs: Array<{
@@ -27,7 +32,13 @@ const dashboardTabs: Array<{
   segment: string;
   view: DashboardView;
 }> = [
-  { icon: Store, label: "마켓관리", segment: "management", view: "management" },
+  {
+    icon: Store,
+    label: FLEA_MARKET_MANAGE_LABEL,
+    segment: "management",
+    view: "management",
+  },
+  { icon: Users, label: PARTICIPATING_SELLER, segment: "booths", view: "booths" },
   {
     icon: ClipboardList,
     label: "영수증 입력",
@@ -40,10 +51,9 @@ const dashboardTabs: Array<{
     segment: "receipts",
     view: "receiptLookup",
   },
-  { icon: BarChart3, label: "정산", segment: "settlements", view: "settlements" },
-  { icon: FileClock, label: "LOG", segment: "logs", view: "logs" },
   { icon: Percent, label: "수수료 정책", segment: "fees", view: "feeStatus" },
-  { icon: Users, label: "참가 부스", segment: "booths", view: "booths" },
+  { icon: BarChart3, label: "정산", segment: "settlements", view: "settlements" },
+  { icon: FileClock, label: "로그", segment: "logs", view: "logs" },
 ];
 
 const workspaceTabs: Array<{
@@ -52,8 +62,8 @@ const workspaceTabs: Array<{
   label: string;
   view: DashboardView;
 }> = [
-  { href: "/markets", icon: Store, label: "마켓 관리", view: "management" },
-  { href: "/booths", icon: Users, label: "부스 관리", view: "boothMasters" },
+  { href: "/markets", icon: Store, label: FLEA_MARKET_MANAGE_LABEL, view: "management" },
+  { href: "/booths", icon: Users, label: SELLER_MANAGE_LABEL, view: "boothMasters" },
   { href: "/settings", icon: Settings, label: "설정", view: "settings" },
 ];
 

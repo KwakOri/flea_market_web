@@ -48,6 +48,7 @@ import {
   persistMockState,
   resetMockState,
 } from "@/mocks/mock-db";
+import { FLEA_MARKET, PARTICIPATING_SELLER, SELLER } from "@/lib/terminology";
 
 type MockDownloadResult = {
   blob: Blob;
@@ -104,7 +105,7 @@ export async function handleMockApiDownload(
       fileName: filename,
       mode: "mock",
     },
-    summary: "부스별 정산 PDF 다운로드",
+    summary: `${SELLER}별 정산 PDF 다운로드`,
     targetId: marketId,
     targetType: "settlement_pdf_archive",
   });
@@ -434,7 +435,7 @@ function createMarket(payload: CreateMarketPayload): Market {
   const now = nowIsoString();
   const market: Market = {
     id: createMockId("market"),
-    name: payload.name?.trim() || "새 플리마켓",
+    name: payload.name?.trim() || `새 ${FLEA_MARKET}`,
     description: payload.description?.trim() || null,
     status: "draft",
     startsOn: payload.startsOn ?? null,
@@ -450,7 +451,7 @@ function createMarket(payload: CreateMarketPayload): Market {
     category: "market",
     marketId: market.id,
     metadata: { name: market.name, status: market.status },
-    summary: `플리마켓 ${market.name} 생성`,
+    summary: `${FLEA_MARKET} ${market.name} 생성`,
     targetId: market.id,
     targetType: "market",
   });
@@ -479,7 +480,7 @@ function updateMarket(marketId: string, payload: UpdateMarketPayload): Market {
     category: "market",
     marketId,
     metadata: { changedFields: Object.keys(payload), status: updatedMarket.status },
-    summary: `플리마켓 ${updatedMarket.name} 수정`,
+    summary: `${FLEA_MARKET} ${updatedMarket.name} 수정`,
     targetId: marketId,
     targetType: "market",
   });
@@ -494,7 +495,7 @@ function createParticipantMaster(payload: CreateParticipantPayload): Participant
     id: createMockId("participant"),
     marketId: null,
     marketParticipantId: null,
-    displayName: payload.displayName?.trim() || "새 부스",
+    displayName: payload.displayName?.trim() || `새 ${SELLER}`,
     participantType: payload.participantType ?? "seller",
     contactName: payload.contactName?.trim() || null,
     phone: payload.phone?.trim() || null,
@@ -514,7 +515,7 @@ function createParticipantMaster(payload: CreateParticipantPayload): Participant
       displayName: participant.displayName,
       participantType: participant.participantType,
     },
-    summary: `부스 마스터 ${participant.displayName} 생성`,
+    summary: `${SELLER} ${participant.displayName} 생성`,
     targetId: participant.id,
     targetType: "participant",
   });
@@ -556,7 +557,7 @@ function updateParticipantMaster(
       changedFields: Object.keys(payload),
       displayName: updatedParticipant.displayName,
     },
-    summary: `부스 마스터 ${updatedParticipant.displayName} 수정`,
+    summary: `${SELLER} ${updatedParticipant.displayName} 수정`,
     targetId: participantId,
     targetType: "participant",
   });
@@ -611,7 +612,7 @@ function createMarketParticipant(
         marketParticipant.settings?.feeSettingOverrideEnabled ?? false,
       participantType: marketParticipant.participantType,
     },
-    summary: `참가부스 ${marketParticipant.displayName} 연결`,
+    summary: `${PARTICIPATING_SELLER} ${marketParticipant.displayName} 연결`,
     targetId: marketParticipant.id,
     targetType: "participant",
   });
@@ -654,7 +655,7 @@ function updateMarketParticipant(
       feeSettingOverrideEnabled: updated.settings?.feeSettingOverrideEnabled ?? false,
       participantType: updated.participantType,
     },
-    summary: `참가부스 ${updated.displayName} 설정 수정`,
+    summary: `${PARTICIPATING_SELLER} ${updated.displayName} 설정 수정`,
     targetId: participantId,
     targetType: "participant",
   });
@@ -671,7 +672,7 @@ function deleteMarketParticipant(marketId: string, participantId: string) {
   );
 
   if (hasReceipt) {
-    throw badRequest("영수증 기록이 있는 참가부스는 삭제할 수 없습니다.");
+    throw badRequest(`영수증 기록이 있는 ${PARTICIPATING_SELLER}는 삭제할 수 없습니다.`);
   }
 
   const nextParticipants = state.marketParticipants.filter(
@@ -687,7 +688,7 @@ function deleteMarketParticipant(marketId: string, participantId: string) {
     action: "remove",
     category: "booth",
     marketId,
-    summary: "참가부스 연결 제거",
+    summary: `${PARTICIPATING_SELLER} 연결 제거`,
     targetId: participantId,
     targetType: "participant",
   });
@@ -892,7 +893,7 @@ function updateMarketSettlementSettings(
       ...payload,
       scope: "market",
     },
-    summary: "플리마켓 수수료 정책 수정",
+    summary: `${FLEA_MARKET} 수수료 정책 수정`,
     targetId: updated.id ?? marketId,
     targetType: "settlement_default_settings",
   });

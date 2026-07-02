@@ -19,6 +19,7 @@ import {
   getFormString,
   getOptionalFormString,
 } from "@/lib/form-data";
+import { PARTICIPATING_SELLER } from "@/lib/terminology";
 
 export function MarketParticipantDialogController({
   enabled,
@@ -81,7 +82,7 @@ export function MarketParticipantDialogController({
     const participantId = getOptionalFormString(formData, "participantId");
 
     if (!participantId) {
-      setMessage("연결할 참가부스를 선택해주세요.");
+      setMessage(`연결할 ${PARTICIPATING_SELLER}를 선택해주세요.`);
       return;
     }
 
@@ -113,7 +114,7 @@ export function MarketParticipantDialogController({
     setMessage(null);
 
     if (!editingParticipant) {
-      setMessage("수정할 참가부스를 선택해주세요.");
+      setMessage(`수정할 ${PARTICIPATING_SELLER}를 선택해주세요.`);
       return;
     }
 

@@ -2,6 +2,7 @@ import { CircleCheck, CircleSlash, Pencil } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { buttonVariants } from "@/lib/design-system";
+import { FLEA_MARKET, SELLER, SELLER_NAME_LABEL } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function ParticipantMasterTable({
@@ -18,7 +19,7 @@ export function ParticipantMasterTable({
   if (participants.length === 0) {
     return (
       <div className="px-4 py-12 text-center text-sm text-muted">
-        등록된 참가부스가 없습니다.
+        등록된 {SELLER}가 없습니다.
       </div>
     );
   }
@@ -40,14 +41,14 @@ export function ParticipantMasterTable({
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="bg-surface-sunken text-left text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">부스명</th>
+              <th className="px-4 py-3 font-medium">{SELLER_NAME_LABEL}</th>
               <th className="px-4 py-3 font-medium">유형</th>
               <th className="px-4 py-3 font-medium">담당자</th>
               <th className="px-4 py-3 font-medium">연락처</th>
               <th className="px-4 py-3 font-medium">이메일</th>
               <th className="px-4 py-3 font-medium">상태</th>
               {showLinkStatus && (
-                <th className="px-4 py-3 font-medium">선택 마켓</th>
+                <th className="px-4 py-3 font-medium">선택 {FLEA_MARKET}</th>
               )}
               <th className="px-4 py-3 font-medium">메모</th>
               {onEditParticipant && (

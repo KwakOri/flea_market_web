@@ -7,10 +7,11 @@ import {
   formatDateRange,
   formatMarketDuration,
 } from "@/lib/date-format";
+import { FLEA_MARKET } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function MarketSelectionCards({
-  emptyMessage = "등록된 마켓이 없습니다.",
+  emptyMessage = `등록된 ${FLEA_MARKET}이 없습니다.`,
   markets,
   selectedMarketId,
   onManageMarket,
@@ -56,7 +57,7 @@ export function MarketSelectionCards({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs font-semibold text-brand">
-                  플리마켓
+                  {FLEA_MARKET}
                 </p>
                 <MarketStatusBadge status={market.status} />
               </div>

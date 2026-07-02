@@ -6,6 +6,7 @@ import type { Product } from "@/services/products.service";
 import type { Receipt } from "@/services/receipts.service";
 import type { SettlementDefaultSettings } from "@/services/settlement-settings.service";
 import type { Settlement } from "@/services/settlements.service";
+import { FLEA_MARKET, MANAGER, SELLER } from "@/lib/terminology";
 
 export const mockUser: AuthUser = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -20,8 +21,8 @@ export const mockUser: AuthUser = {
 export const mockMarkets: Market[] = [
   {
     id: "22222222-2222-4222-8222-222222222201",
-    name: "2026 봄 플리마켓",
-    description: "UI 검수용 매출/영수증 샘플이 포함된 플리마켓",
+    name: `2026 봄 ${FLEA_MARKET}`,
+    description: `UI 검수용 매출/영수증 샘플이 포함된 ${FLEA_MARKET}`,
     status: "closed",
     startsOn: "2026-05-02",
     endsOn: "2026-05-08",
@@ -31,7 +32,7 @@ export const mockMarkets: Market[] = [
   },
   {
     id: "22222222-2222-4222-8222-222222222202",
-    name: "2026 여름 플리마켓",
+    name: `2026 여름 ${FLEA_MARKET}`,
     description: "진행 중 상태와 빈 화면을 함께 확인하기 위한 샘플",
     status: "active",
     startsOn: "2026-06-13",
@@ -47,7 +48,7 @@ export const mockParticipantMasters: Participant[] = [
     id: "44444444-4444-4444-8444-444444444401",
     displayName: "라온 문구점",
     participantType: "staff",
-    contactName: "운영 매니저",
+    contactName: MANAGER,
     phone: "010-1000-0001",
     email: "ops@example.local",
     memo: "현장 운영 및 정산 확인",
@@ -113,7 +114,7 @@ export const mockParticipantMasters: Participant[] = [
     contactName: "현장 운영팀",
     phone: "010-3000-0001",
     email: "exchange@example.local",
-    memo: "이벤트 교환권/프로모션 부스",
+    memo: `프로모션 교환권/프로모션 ${SELLER}`,
   }),
 ];
 
@@ -328,7 +329,7 @@ export const mockReceipts: Receipt[] = [
       "여름 소품 세트",
       "수공예 컵",
       "패브릭 키링",
-      "현장 이벤트 상품",
+      "현장 프로모션 상품",
     ],
     marketId: mockMarkets[1].id,
     participantIds: [
@@ -409,7 +410,7 @@ export const mockAuditLogs: AuditLog[] = [
     marketId: mockMarkets[0].id,
     targetType: "settlement_default_settings",
     targetId: mockMarketSettlementSettings[0].id,
-    summary: "플리마켓 수수료 정책 수정",
+    summary: `${FLEA_MARKET} 수수료 정책 수정`,
     metadata: {
       salesCommissionRate: 0.1,
       cardFeePayer: "participant",

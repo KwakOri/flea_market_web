@@ -4,6 +4,12 @@ import type { Market } from "@/services/markets.service";
 import type { MarketDialogMode } from "@/stores/dashboard-dialog.store";
 import { marketStatusLabels } from "@/features/markets/lib/market-display";
 import { buttonVariants, inputClass, selectClass } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_ADD_LABEL,
+  FLEA_MARKET_MANAGE_LABEL,
+  FLEA_MARKET_NAME_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function MarketDialog({
@@ -35,12 +41,12 @@ export function MarketDialog({
         <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold text-zinc-950">
-              {isEditMode ? "플리마켓 관리" : "플리마켓 추가"}
+              {isEditMode ? FLEA_MARKET_MANAGE_LABEL : FLEA_MARKET_ADD_LABEL}
             </h2>
             <p className="mt-1 text-sm text-zinc-500">
               {isEditMode
-                ? "플리마켓의 기본 정보와 진행 상태를 수정합니다."
-                : "새로운 플리마켓 이벤트를 등록합니다."}
+                ? `${FLEA_MARKET}의 기본 정보와 진행 상태를 수정합니다.`
+                : `새로운 ${FLEA_MARKET}을 등록합니다.`}
             </p>
           </div>
           <button
@@ -63,12 +69,12 @@ export function MarketDialog({
           onSubmit={isEditMode ? onUpdateSubmit : onCreateSubmit}
         >
           <label className="grid gap-2 text-sm font-medium text-zinc-700">
-            마켓명
+            {FLEA_MARKET_NAME_LABEL}
             <input
               className={inputClass}
               defaultValue={editingMarket?.name ?? ""}
               name="name"
-              placeholder="마켓명"
+              placeholder={FLEA_MARKET_NAME_LABEL}
               type="text"
             />
           </label>

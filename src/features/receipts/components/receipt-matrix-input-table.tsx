@@ -4,6 +4,7 @@ import type { Participant } from "@/services/participants.service";
 import { useReceiptMatrixStore } from "@/stores/receipt-matrix.store";
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
 import { parseOptionalReceiptAmount } from "@/lib/receipt-matrix";
+import { FLEA_MARKET, PARTICIPATING_SELLER } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 const amountInputFrameClass =
@@ -25,7 +26,7 @@ export function ReceiptMatrixInputTable({
   if (participants.length === 0) {
     return (
       <div className="px-6 py-12 text-center text-sm text-muted">
-        마켓에 연결된 참가부스가 없습니다.
+        {FLEA_MARKET}에 연결된 {PARTICIPATING_SELLER}가 없습니다.
       </div>
     );
   }
@@ -44,7 +45,7 @@ export function ReceiptMatrixInputTable({
         <div className="min-w-[640px]">
           <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-surface-sunken px-6 py-3">
             <span className="text-sm font-medium text-muted">
-              참가 부스
+              {PARTICIPATING_SELLER}
             </span>
             <span className="text-right text-sm font-medium text-muted">
               구매 금액

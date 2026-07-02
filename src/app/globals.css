@@ -131,6 +131,14 @@ select {
   font-variation-settings: inherit;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .scrollbar-hidden {
   scrollbar-width: none;
 }

@@ -37,6 +37,7 @@ import { SettlementScreen } from "@/features/settlements/components/settlement-s
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { formatDateRange } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
+import { FLEA_MARKET_UNSELECTED_LABEL } from "@/lib/terminology";
 
 function getDashboardBackHref(pathname: string): string | null {
   if (pathname === "/" || pathname === "/management") {
@@ -276,7 +277,7 @@ export function DashboardClient({
         <MarketParticipantDialogController
           enabled={Boolean(user && selectedMarketId)}
           marketId={selectedMarketId}
-          marketName={selectedMarket?.name ?? "마켓 미선택"}
+          marketName={selectedMarket?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
         />
         <DashboardToast
           toast={toast}

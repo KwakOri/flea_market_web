@@ -19,6 +19,13 @@ import {
   sectionHeaderClass,
   sectionTitleClass,
 } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_ADD_LABEL,
+  FLEA_MARKET_INFO_LABEL,
+  FLEA_MARKET_SELECT_LABEL,
+  SELLER,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function MarketManagementView({
@@ -71,9 +78,9 @@ export function MarketManagementView({
           )}
         >
           <div>
-            <h2 className={sectionTitleClass}>마켓 정보</h2>
+            <h2 className={sectionTitleClass}>{FLEA_MARKET_INFO_LABEL}</h2>
             <p className={sectionDescriptionClass}>
-              선택한 플리마켓의 기본 정보를 확인합니다.
+              선택한 {FLEA_MARKET}의 기본 정보를 확인합니다.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -90,7 +97,7 @@ export function MarketManagementView({
               className={buttonVariants({ intent: "secondary" })}
               href="/markets"
             >
-              마켓 선택
+              {FLEA_MARKET_SELECT_LABEL}
             </Link>
           </div>
         </div>
@@ -102,9 +109,9 @@ export function MarketManagementView({
         <MarketDetailPanel market={selectedMarket} />
         <div className="border-t border-hairline">
           <div className={sectionHeaderClass}>
-            <h2 className={sectionTitleClass}>플리마켓 수수료 기본 설정</h2>
+            <h2 className={sectionTitleClass}>{FLEA_MARKET} 수수료 기본 설정</h2>
             <p className={sectionDescriptionClass}>
-              현재 플리마켓 안의 부스별 예외값이 없으면 이 값이 전체 설정보다
+              현재 {FLEA_MARKET} 안의 {SELLER}별 예외값이 없으면 이 값이 전체 설정보다
               우선 적용됩니다.
             </p>
           </div>
@@ -129,9 +136,9 @@ export function MarketManagementView({
         )}
       >
         <div>
-          <h2 className={sectionTitleClass}>플리마켓 선택</h2>
+          <h2 className={sectionTitleClass}>{FLEA_MARKET_SELECT_LABEL}</h2>
           <p className={sectionDescriptionClass}>
-            작업할 플리마켓을 먼저 선택합니다.
+            작업할 {FLEA_MARKET}을 먼저 선택합니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -146,7 +153,7 @@ export function MarketManagementView({
             type="button"
           >
             <Plus aria-hidden className="mr-2 h-4 w-4" />
-            플리마켓 추가
+            {FLEA_MARKET_ADD_LABEL}
           </button>
         </div>
       </div>
@@ -156,7 +163,7 @@ export function MarketManagementView({
         </p>
       )}
       <MarketSelectionCards
-        emptyMessage="조건에 맞는 플리마켓이 없습니다."
+        emptyMessage={`조건에 맞는 ${FLEA_MARKET}이 없습니다.`}
         markets={filteredMarkets}
         selectedMarketId={null}
         onManageMarket={onEditMarket}

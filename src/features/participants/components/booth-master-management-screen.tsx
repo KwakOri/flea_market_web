@@ -20,6 +20,7 @@ import {
   getNullableFormString,
   getOptionalFormString,
 } from "@/lib/form-data";
+import { SELLER, SELLER_NAME_LABEL } from "@/lib/terminology";
 
 export function BoothMasterManagementScreen({
   enabled,
@@ -64,7 +65,7 @@ export function BoothMasterManagementScreen({
     const displayName = getFormString(formData, "displayName");
 
     if (!displayName.trim()) {
-      setMessage("참가부스명을 입력해주세요.");
+      setMessage(`${SELLER_NAME_LABEL}을 입력해주세요.`);
       return;
     }
 
@@ -95,7 +96,7 @@ export function BoothMasterManagementScreen({
     setMessage(null);
 
     if (!editingParticipantMaster) {
-      setMessage("수정할 부스를 선택해주세요.");
+      setMessage(`수정할 ${SELLER}를 선택해주세요.`);
       return;
     }
 
@@ -103,7 +104,7 @@ export function BoothMasterManagementScreen({
     const displayName = getFormString(formData, "displayName");
 
     if (!displayName.trim()) {
-      setMessage("부스명을 입력해주세요.");
+      setMessage(`${SELLER_NAME_LABEL}을 입력해주세요.`);
       return;
     }
 

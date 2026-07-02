@@ -4,10 +4,12 @@ import type {
   SettlementFeeSettings,
 } from "@/services/settlement-settings.service";
 import {
+  cardFeePayerLabels,
   feeSettingScopeLabels,
   type FeeSettingScope,
 } from "@/features/fees/lib/fee-policy";
 import { buttonVariants, inputClass, selectClass } from "@/lib/design-system";
+import { FLEA_MARKET, SELLER } from "@/lib/terminology";
 
 export function FeeSettingsForm({
   defaultValues,
@@ -31,7 +33,7 @@ export function FeeSettingsForm({
       <FeeSettingsFields defaultValues={defaultValues ?? null} disabled={disabled} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
-          우선순위: 현재 플리마켓의 부스별 예외값, 플리마켓별 설정,
+          우선순위: 현재 {FLEA_MARKET}의 {SELLER}별 예외값, {FLEA_MARKET}별 설정,
           전체 설정
         </p>
         <button className={buttonVariants()} disabled={disabled} type="submit">
@@ -93,8 +95,8 @@ export function FeeSettingsFields({
           name="cardFeePayer"
         >
           {allowInheritance && <option value="">{inheritanceLabel}</option>}
-          <option value="market">마켓 부담</option>
-          <option value="participant">참가부스 부담</option>
+          <option value="market">{cardFeePayerLabels.market}</option>
+          <option value="participant">{cardFeePayerLabels.participant}</option>
         </select>
       </label>
       <label className="grid gap-1 text-xs font-medium text-body">

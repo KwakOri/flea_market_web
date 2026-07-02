@@ -9,6 +9,7 @@ import { ReceiptMatrixInputTable } from "@/features/receipts/components/receipt-
 import { ReceiptPaymentPanel } from "@/features/receipts/components/receipt-payment-panel";
 import { ReceiptSubmitPanel } from "@/features/receipts/components/receipt-submit-panel";
 import { ReceiptTotalSummary } from "@/features/receipts/components/receipt-total-summary";
+import { FLEA_MARKET_UNSELECTED_LABEL, SELLER } from "@/lib/terminology";
 
 export function SalesMatrixView({
   formKey,
@@ -39,11 +40,11 @@ export function SalesMatrixView({
   return (
     <div className="min-w-0">
       <DashboardPageTitle
-        eyebrow={selectedMarket?.name ?? "마켓 미선택"}
+        eyebrow={selectedMarket?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
         subtitle={
           isEditing
-            ? "기존 영수증의 판매 시각, 결제, 부스별 금액을 수정합니다."
-            : "한 결제 묶음에서 여러 부스 판매 라인을 한 번에 기록합니다."
+            ? `기존 영수증의 판매 시각, 결제, ${SELLER}별 금액을 수정합니다.`
+            : `한 결제 묶음에서 여러 ${SELLER} 판매 라인을 한 번에 기록합니다.`
         }
         title={isEditing ? "영수증 수정" : "영수증 입력"}
       />

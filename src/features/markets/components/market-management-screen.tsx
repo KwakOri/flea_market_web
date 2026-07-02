@@ -23,6 +23,7 @@ import {
   getFormString,
   getOptionalFormString,
 } from "@/lib/form-data";
+import { FLEA_MARKET, FLEA_MARKET_NAME_LABEL } from "@/lib/terminology";
 
 export function MarketManagementScreen({
   enabled,
@@ -99,7 +100,7 @@ export function MarketManagementScreen({
     setMarketMessage(null);
 
     if (!editingMarket) {
-      setMarketMessage("수정할 플리마켓을 선택해주세요.");
+      setMarketMessage(`수정할 ${FLEA_MARKET}을 선택해주세요.`);
       return;
     }
 
@@ -107,7 +108,7 @@ export function MarketManagementScreen({
     const name = getFormString(formData, "name");
 
     if (!name.trim()) {
-      setMarketMessage("마켓명을 입력해주세요.");
+      setMarketMessage(`${FLEA_MARKET_NAME_LABEL}을 입력해주세요.`);
       return;
     }
 
@@ -154,8 +155,8 @@ export function MarketManagementScreen({
         getFeeSettingsPayload(new FormData(event.currentTarget)),
       );
       onSaved(
-        "플리마켓 수수료 저장 완료",
-        "플리마켓 수수료 기본값을 저장했습니다.",
+        `${FLEA_MARKET} 수수료 저장 완료`,
+        `${FLEA_MARKET} 수수료 기본값을 저장했습니다.`,
       );
     } catch (error) {
       setMarketFeeSettingsMessage(getErrorMessage(error));

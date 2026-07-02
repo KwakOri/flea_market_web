@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { FLEA_MARKET } from "@/lib/terminology";
 
 export const metadata: Metadata = {
   title: "Flea Market Settlement",
-  description: "플리마켓 매출과 정산을 관리하는 운영 도구",
+  description: `${FLEA_MARKET} 매출과 정산을 관리하는 운영 도구`,
 };
 
 export default function RootLayout({

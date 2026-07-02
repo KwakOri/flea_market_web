@@ -5,6 +5,7 @@ import {
   formatDateRange,
   formatMarketDuration,
 } from "@/lib/date-format";
+import { FLEA_MARKET_INFO_LABEL, FLEA_MARKET_NAME_LABEL } from "@/lib/terminology";
 
 export function MarketDetailPanel({
   market,
@@ -14,7 +15,7 @@ export function MarketDetailPanel({
   if (!market) {
     return (
       <div className="px-4 py-12 text-center text-sm text-muted">
-        마켓 정보를 불러오는 중입니다.
+        {FLEA_MARKET_INFO_LABEL}를 불러오는 중입니다.
       </div>
     );
   }
@@ -23,7 +24,7 @@ export function MarketDetailPanel({
     <div className="p-4">
       <dl className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
         <div className="rounded-md border border-hairline bg-canvas-soft p-3">
-          <dt className="text-xs font-medium text-muted">마켓명</dt>
+          <dt className="text-xs font-medium text-muted">{FLEA_MARKET_NAME_LABEL}</dt>
           <dd className="mt-1 text-sm font-semibold text-ink">
             {market.name}
           </dd>

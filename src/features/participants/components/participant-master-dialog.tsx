@@ -4,7 +4,15 @@ import type { FormEvent } from "react";
 import { X } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import type { ParticipantMasterDialogMode } from "@/stores/dashboard-dialog.store";
+import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { buttonVariants, inputClass, selectClass } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  SELLER,
+  SELLER_ADD_LABEL,
+  SELLER_MANAGE_LABEL,
+  SELLER_NAME_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function ParticipantMasterDialog({
@@ -25,7 +33,7 @@ export function ParticipantMasterDialog({
   onUpdateSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const isCreateMode = mode === "create";
-  const title = isCreateMode ? "부스 추가" : "부스 관리";
+  const title = isCreateMode ? SELLER_ADD_LABEL : SELLER_MANAGE_LABEL;
   const submitLabel = isCreateMode ? "추가" : "저장";
 
   return (
@@ -45,7 +53,7 @@ export function ParticipantMasterDialog({
               {title}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              부스 기본 정보와 연락처
+              {SELLER} 기본 정보와 연락처
             </p>
           </div>
           <button
@@ -66,13 +74,13 @@ export function ParticipantMasterDialog({
         >
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
             <label className="grid gap-1 text-xs font-medium text-body">
-              부스명
+              {SELLER_NAME_LABEL}
               <input
                 className={inputClass}
                 defaultValue={editingParticipant?.displayName ?? ""}
                 disabled={isSubmitting}
                 name="displayName"
-                placeholder="부스명"
+                placeholder={SELLER_NAME_LABEL}
                 required
                 type="text"
               />
@@ -85,9 +93,9 @@ export function ParticipantMasterDialog({
                 disabled={isSubmitting}
                 name="participantType"
               >
-                <option value="seller">셀러</option>
-                <option value="staff">운영진</option>
-                <option value="special_booth">특수 부스</option>
+                <option value="seller">{participantTypeLabels.seller}</option>
+                <option value="staff">{participantTypeLabels.staff}</option>
+                <option value="special_booth">{participantTypeLabels.special_booth}</option>
               </select>
             </label>
           </div>
@@ -152,7 +160,7 @@ export function ParticipantMasterDialog({
           </label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">
-              부스 기본 정보는 플리마켓 참가 설정에서 다시 연결해 사용합니다.
+              {SELLER} 기본 정보는 {FLEA_MARKET} 참가 설정에서 다시 연결해 사용합니다.
             </p>
             <div className="flex flex-wrap justify-end gap-2">
               <button

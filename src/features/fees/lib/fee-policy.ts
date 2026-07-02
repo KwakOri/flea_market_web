@@ -7,19 +7,25 @@ import type {
   SettlementFeeSettings,
 } from "@/services/settlement-settings.service";
 import { formatWon } from "@/lib/money";
+import {
+  FLEA_MARKET_FEE_PAYER_LABEL,
+  FLEA_MARKET_SETTINGS_LABEL,
+  SELLER_FEE_PAYER_LABEL,
+  SELLER_SETTINGS_LABEL,
+} from "@/lib/terminology";
 
 export type FeeSettingFieldKey = keyof SettlementFeeSettings;
 export type FeeSettingScope = "global" | "market" | "booth";
 
 export const cardFeePayerLabels: Record<CardFeePayer, string> = {
-  market: "마켓 부담",
-  participant: "참가부스 부담",
+  market: FLEA_MARKET_FEE_PAYER_LABEL,
+  participant: SELLER_FEE_PAYER_LABEL,
 };
 
 export const feeSettingScopeLabels: Record<FeeSettingScope, string> = {
   global: "전체 설정",
-  market: "플리마켓 설정",
-  booth: "부스 설정",
+  market: FLEA_MARKET_SETTINGS_LABEL,
+  booth: SELLER_SETTINGS_LABEL,
 };
 
 export const defaultFeeSettings: SettlementFeeSettings = {

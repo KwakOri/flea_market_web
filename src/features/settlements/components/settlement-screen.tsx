@@ -16,6 +16,7 @@ import { SettlementPreviewPanel } from "@/features/settlements/components/settle
 import { downloadBlob } from "@/lib/download-blob";
 import { getErrorMessage } from "@/lib/error-message";
 import { getOptionalFormString } from "@/lib/form-data";
+import { FLEA_MARKET_UNSELECTED_LABEL, SELLER } from "@/lib/terminology";
 
 export function SettlementScreen({
   market,
@@ -71,7 +72,7 @@ export function SettlementScreen({
     try {
       const result = await downloadSettlementPdfArchive.mutateAsync();
       downloadBlob(result.blob, result.filename);
-      onSaved("PDF 다운로드 완료", "부스별 정산 PDF를 다운로드했습니다.");
+      onSaved("PDF 다운로드 완료", `${SELLER}별 정산 PDF를 다운로드했습니다.`);
     } catch (error) {
       setMessage(getErrorMessage(error));
     }
@@ -80,7 +81,7 @@ export function SettlementScreen({
   return (
     <div className="min-w-0">
       <DashboardPageTitle
-        eyebrow={market?.name ?? "마켓 미선택"}
+        eyebrow={market?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
         subtitle="확정 시 현재 정산 결과가 회차 스냅샷으로 저장됩니다."
         title="정산 프리뷰 / 확정"
       />

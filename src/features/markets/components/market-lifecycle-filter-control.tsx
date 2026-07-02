@@ -2,6 +2,7 @@ import {
   marketLifecycleFilters,
   type MarketLifecycleFilter,
 } from "@/features/markets/lib/market-display";
+import { FLEA_MARKET } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function MarketLifecycleFilterControl({
@@ -13,7 +14,7 @@ export function MarketLifecycleFilterControl({
 }) {
   return (
     <div
-      aria-label="플리마켓 상태 필터"
+      aria-label={`${FLEA_MARKET} 상태 필터`}
       className="inline-flex w-fit rounded-lg border border-hairline bg-surface-sunken p-1"
       role="group"
     >

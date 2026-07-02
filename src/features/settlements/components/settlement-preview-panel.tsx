@@ -7,6 +7,13 @@ import { SettlementMetric } from '@/features/settlements/components/settlement-m
 import { SettlementPreviewTable } from '@/features/settlements/components/settlement-preview-table';
 import { buttonVariants, inputClass } from '@/lib/design-system';
 import { formatWon } from '@/lib/money';
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_FEE_PAYER_LABEL,
+  PARTICIPATING_SELLER,
+  SELLER,
+  SELLER_FEE_PAYER_LABEL,
+} from '@/lib/terminology';
 import type { Market } from '@/services/markets.service';
 import type { Receipt } from '@/services/receipts.service';
 import type {
@@ -62,7 +69,7 @@ export function SettlementPreviewPanel({
   if (!preview) {
     return (
       <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
-        마켓을 선택하면 정산 미리보기가 표시됩니다.
+        {FLEA_MARKET}을 선택하면 정산 미리보기가 표시됩니다.
       </div>
     );
   }
@@ -70,7 +77,7 @@ export function SettlementPreviewPanel({
   if (preview.participants.length === 0) {
     return (
       <div className="rounded-[12px] border border-hairline bg-surface px-4 py-12 text-center text-sm text-muted shadow-card">
-        등록된 참가부스가 없습니다.
+        등록된 {PARTICIPATING_SELLER}가 없습니다.
       </div>
     );
   }
@@ -94,12 +101,12 @@ export function SettlementPreviewPanel({
           value={formatWon(preview.salesCommissionAmount)}
         />
         <SettlementMetric
-          label="참가부스 부담 카드 수수료"
+          label={`${SELLER_FEE_PAYER_LABEL} 카드 수수료`}
           tone="blue"
           value={formatWon(preview.cardFeeChargedToParticipantAmount)}
         />
         <SettlementMetric
-          label="마켓 부담 카드 수수료"
+          label={`${FLEA_MARKET_FEE_PAYER_LABEL} 카드 수수료`}
           tone="amber"
           value={formatWon(preview.cardFeePaidByMarketAmount)}
         />
@@ -129,7 +136,7 @@ export function SettlementPreviewPanel({
           type="button"
         >
           <Download aria-hidden className="mr-2 h-4 w-4" />
-          {isDownloading ? '저장 중' : '부스별 PDF 저장'}
+          {isDownloading ? '저장 중' : `${SELLER}별 PDF 저장`}
         </button>
         <button
           className={buttonVariants()}

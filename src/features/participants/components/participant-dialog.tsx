@@ -13,6 +13,13 @@ import {
 import { ParticipantPicker } from "@/features/participants/components/participant-picker";
 import { ParticipantTypeSelect } from "@/features/participants/components/participant-type-select";
 import { buttonVariants } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_DEFAULT_LABEL,
+  PARTICIPATING_SELLER,
+  PARTICIPATING_SELLER_ADD_LABEL,
+  SELLER,
+} from "@/lib/terminology";
 
 export function ParticipantDialog({
   editingParticipant,
@@ -43,9 +50,9 @@ export function ParticipantDialog({
   const [participantSearch, setParticipantSearch] = useState("");
   const [selectedParticipantId, setSelectedParticipantId] = useState("");
   const title = isCreateMode
-    ? "참가부스 추가"
-    : "이 플리마켓 참가 설정 수정";
-  const submitLabel = isCreateMode ? "마켓에 연결" : "설정 저장";
+    ? PARTICIPATING_SELLER_ADD_LABEL
+    : `이 ${FLEA_MARKET} 참가 설정 수정`;
+  const submitLabel = isCreateMode ? `${FLEA_MARKET}에 연결` : "설정 저장";
   const selectedParticipant = isCreateMode
     ? (unlinkedParticipants.find(
         (participant) => participant.id === selectedParticipantId,
@@ -110,9 +117,9 @@ export function ParticipantDialog({
           ) : (
             <div className="grid gap-2 xl:grid-cols-[minmax(220px,1fr)_180px]">
               <div className="rounded-md border border-hairline bg-canvas-soft px-3 py-2">
-                <p className="text-xs font-medium text-muted">참가부스</p>
+                <p className="text-xs font-medium text-muted">{PARTICIPATING_SELLER}</p>
                 <p className="mt-1 text-sm font-semibold text-ink">
-                  {editingParticipant?.displayName ?? "선택된 참가부스 없음"}
+                  {editingParticipant?.displayName ?? `선택된 ${PARTICIPATING_SELLER} 없음`}
                 </p>
               </div>
               <ParticipantTypeSelect
@@ -127,7 +134,7 @@ export function ParticipantDialog({
                 <div className="grid gap-2 rounded-md border border-hairline bg-canvas-soft p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-end">
                   <div>
                     <p className="text-xs font-medium text-muted">
-                      선택된 참가부스
+                      선택된 {PARTICIPATING_SELLER}
                     </p>
                     <p className="mt-1 text-sm font-semibold text-ink">
                       {selectedParticipant.displayName}
@@ -149,7 +156,7 @@ export function ParticipantDialog({
                   onChange={(event) => onFeeOverrideChange(event.target.checked)}
                   type="checkbox"
                 />
-                이 플리마켓에서만 부스별 수수료 예외 적용
+                이 {FLEA_MARKET}에서만 {SELLER}별 수수료 예외 적용
               </label>
               <FeeSettingsFields
                 defaultValues={feeSettingsDefaults}
@@ -158,13 +165,13 @@ export function ParticipantDialog({
             </>
           ) : (
             <div className="rounded-md border border-dashed border-border bg-canvas-soft px-4 py-8 text-center text-sm text-muted">
-              참가부스를 선택하면 정산 설정을 입력할 수 있습니다.
+              {PARTICIPATING_SELLER}를 선택하면 정산 설정을 입력할 수 있습니다.
             </div>
           )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">
-              체크하지 않으면 플리마켓 기본값, 전체 기본값 순으로 적용됩니다.
-              체크한 값은 현재 플리마켓의 참가부스에만 저장됩니다.
+              체크하지 않으면 {FLEA_MARKET_DEFAULT_LABEL}, 전체 기본값 순으로 적용됩니다.
+              체크한 값은 현재 {FLEA_MARKET}의 {PARTICIPATING_SELLER}에만 저장됩니다.
             </p>
             <div className="flex flex-wrap justify-end gap-2">
               <button

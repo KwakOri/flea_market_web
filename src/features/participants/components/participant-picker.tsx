@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { Participant } from "@/services/participants.service";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { inputClass } from "@/lib/design-system";
+import { PARTICIPATING_SELLER, SELLER_NAME_LABEL } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function ParticipantPicker({
@@ -46,7 +47,7 @@ export function ParticipantPicker({
   return (
     <div className="grid gap-3">
       <label className="grid gap-1 text-xs font-medium text-body">
-        참가부스 검색
+        {PARTICIPATING_SELLER} 검색
         <input
           className={inputClass}
           disabled={disabled || participants.length === 0}
@@ -56,7 +57,7 @@ export function ParticipantPicker({
               event.preventDefault();
             }
           }}
-          placeholder="부스명, 담당자, 연락처 검색"
+          placeholder={`${SELLER_NAME_LABEL}, 담당자, 연락처 검색`}
           type="search"
           value={search}
         />
@@ -64,7 +65,7 @@ export function ParticipantPicker({
       <div className="max-h-72 overflow-y-auto rounded-md border border-hairline bg-surface">
         {participants.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-muted">
-            연결 가능한 참가부스가 없습니다.
+            연결 가능한 {PARTICIPATING_SELLER}가 없습니다.
           </div>
         ) : filteredParticipants.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-muted">
