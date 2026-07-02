@@ -185,7 +185,7 @@ export function SettlementVersionDetailScreen({
             </span>
           </div>
 
-          <div className="grid gap-[18px]">
+          <div className="grid gap-6">
             <SettlementSummary settlement={settlement} />
             {settlement.status !== "voided" && (
               <SettlementManagement
