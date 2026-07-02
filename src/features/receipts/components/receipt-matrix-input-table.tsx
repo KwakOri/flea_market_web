@@ -42,14 +42,14 @@ export function ReceiptMatrixInputTable({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-brand-deep px-6 py-[11px]">
-            <span className="font-mono text-[10.5px] tracking-[0.08em] text-muted-soft">
+          <div className="grid grid-cols-[minmax(220px,1.5fr)_minmax(180px,1fr)_96px] bg-surface-sunken px-6 py-3">
+            <span className="text-sm font-medium text-muted">
               참가 부스
             </span>
-            <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-muted-soft">
+            <span className="text-right text-sm font-medium text-muted">
               구매 금액
             </span>
-            <span className="text-right font-mono text-[10.5px] tracking-[0.08em] text-muted-soft">
+            <span className="text-right text-sm font-medium text-muted">
               유형
             </span>
           </div>

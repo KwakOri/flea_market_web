@@ -168,11 +168,11 @@ export function FeeApplicationMatrix({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[1120px]">
-          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-brand-deep px-[22px] py-[13px] text-center font-mono text-[10.5px] font-semibold tracking-[0.06em] text-muted-soft">
+          <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-surface-sunken px-[22px] py-3 text-center text-sm font-medium text-muted">
             <span>참가 부스</span>
             <span>전체 기본값</span>
             <span>플리마켓 기본값</span>
-            <span className="text-brand-spring">이 부스 설정</span>
+            <span className="font-semibold text-brand">이 부스 설정</span>
           </div>
           <div className="divide-y divide-hairline">
             {participants.map((participant) => {

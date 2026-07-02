@@ -98,28 +98,28 @@ export function ReceiptMatrixTable({
       <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-t-[12px] md:block">
         <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[12px]">
           <div
-            className="z-20 grid items-center rounded-tl-[12px] border-b border-r border-brand-deep bg-brand-deep font-mono text-[10.5px] tracking-[0.06em] text-muted-soft"
+            className="z-20 grid items-center rounded-tl-[12px] border-b border-r border-hairline bg-surface-sunken text-sm font-medium text-muted"
             style={{ gridTemplateColumns: fixedGridTemplate }}
           >
-            <div className="px-4 text-center font-semibold">판매 시각</div>
-            <div className="px-4 text-center font-semibold">결제</div>
-            <div className="px-4 text-center font-semibold">합계</div>
+            <div className="px-4 text-center">판매 시각</div>
+            <div className="px-4 text-center">결제</div>
+            <div className="px-4 text-center">합계</div>
           </div>
 
           <div
-            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden rounded-tr-[12px] border-b border-brand-deep bg-brand-deep"
+            className="scrollbar-hidden min-w-0 overflow-x-auto overflow-y-hidden rounded-tr-[12px] border-b border-hairline bg-surface-sunken"
             data-testid="receipt-booth-header"
             onScroll={handleBoothHeaderScroll}
             ref={boothHeaderRef}
           >
             {participants.length > 0 && (
               <div
-                className="grid h-full min-w-max items-center font-mono text-[10.5px] tracking-[0.06em] text-muted-soft"
+                className="grid h-full min-w-max items-center text-sm font-medium text-muted"
                 style={{ gridTemplateColumns: boothGridTemplate }}
               >
                 {participants.map((participant) => (
                   <div
-                    className="break-keep px-4 text-center font-semibold"
+                    className="break-keep px-4 text-center"
                     key={participant.id}
                   >
                     {participant.displayName}

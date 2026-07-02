@@ -222,14 +222,14 @@ export function AuditLogScreen({
             </div>
             <div className="hidden overflow-x-auto md:block">
               <table className="min-w-[920px] w-full border-collapse">
-                <thead className="bg-brand-deep text-left font-mono text-[10px] uppercase tracking-[0.06em] text-muted-soft">
+                <thead className="bg-surface-sunken text-left text-muted">
                   <tr>
-                    <th className="px-5 py-4 font-semibold">시각</th>
-                    <th className="px-5 py-4 font-semibold">구분</th>
-                    <th className="px-5 py-4 font-semibold">내용</th>
-                    <th className="px-5 py-4 font-semibold">담당자</th>
-                    <th className="px-5 py-4 font-semibold">플리마켓</th>
-                    <th className="px-5 py-4 font-semibold">대상</th>
+                    <th className="px-5 py-3 text-sm font-medium">시각</th>
+                    <th className="px-5 py-3 text-sm font-medium">구분</th>
+                    <th className="px-5 py-3 text-sm font-medium">내용</th>
+                    <th className="px-5 py-3 text-sm font-medium">담당자</th>
+                    <th className="px-5 py-3 text-sm font-medium">플리마켓</th>
+                    <th className="px-5 py-3 text-sm font-medium">대상</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-hairline bg-surface text-sm">
