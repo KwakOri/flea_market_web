@@ -95,8 +95,8 @@ export function ReceiptMatrixTable({
           />
         ))}
       </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-t-[12px] md:block">
-        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-t-[12px]">
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[12px] md:block">
+        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-[12px]">
           <div
             className="z-20 grid items-center rounded-tl-[12px] border-b border-r border-hairline bg-surface-sunken text-sm font-medium text-muted"
             style={{ gridTemplateColumns: fixedGridTemplate }}

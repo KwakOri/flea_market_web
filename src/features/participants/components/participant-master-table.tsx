@@ -36,7 +36,7 @@ export function ParticipantMasterTable({
           />
         ))}
       </div>
-      <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
+      <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-b-[12px] md:block">
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead className="bg-surface-sunken text-left text-muted">
             <tr>
