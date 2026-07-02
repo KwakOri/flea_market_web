@@ -220,7 +220,7 @@ export function AuditLogScreen({
                 />
               ))}
             </div>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto rounded-b-[12px] md:block">
               <table className="min-w-[920px] w-full border-collapse">
                 <thead className="bg-surface-sunken text-left text-muted">
                   <tr>
