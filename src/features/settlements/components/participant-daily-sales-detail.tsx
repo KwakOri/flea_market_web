@@ -14,6 +14,7 @@ import {
 import { buttonVariants } from "@/lib/design-system";
 import { formatDate, formatMarketDuration } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
+import { PARTICIPATING_SELLER } from "@/lib/terminology";
 
 export function ParticipantDailySalesDetail({
   isReceiptsLoading,
@@ -31,7 +32,7 @@ export function ParticipantDailySalesDetail({
   if (!participant) {
     return (
       <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
-        선택한 참가부스 정산 데이터를 찾을 수 없습니다.
+        선택한 {PARTICIPATING_SELLER} 정산 데이터를 찾을 수 없습니다.
       </section>
     );
   }

@@ -1,6 +1,12 @@
 import type { Settlement } from "@/services/settlements.service";
 import { formatFullDateTime } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_FEE_PAYER_LABEL,
+  PARTICIPATING_SELLER,
+  SELLER_FEE_PAYER_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 type SummaryMetric = {
@@ -22,7 +28,7 @@ export function SettlementSummary({ settlement }: { settlement: Settlement }) {
       value: formatWon(settlement.participantPayoutAmount),
     },
     {
-      label: "마켓 손익",
+      label: `${FLEA_MARKET} 손익`,
       value: formatWon(settlement.marketProfitAmount),
     },
     {
@@ -30,12 +36,12 @@ export function SettlementSummary({ settlement }: { settlement: Settlement }) {
       value: formatWon(settlement.salesCommissionAmount),
     },
     {
-      label: "참가부스 부담 카드 수수료",
+      label: `${SELLER_FEE_PAYER_LABEL} 카드 수수료`,
       tone: "blue",
       value: formatWon(settlement.cardFeeChargedToParticipantAmount),
     },
     {
-      label: "마켓 부담 카드 수수료",
+      label: `${FLEA_MARKET_FEE_PAYER_LABEL} 카드 수수료`,
       tone: "gold",
       value: formatWon(settlement.cardFeePaidByMarketAmount),
     },
@@ -71,7 +77,7 @@ export function SettlementSummary({ settlement }: { settlement: Settlement }) {
       </dl>
 
       <dl className="grid gap-5 border-t border-hairline bg-surface px-5 py-[18px] sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-        <MetaItem label="참가부스" value={`${settlement.participantCount}개`} />
+        <MetaItem label={PARTICIPATING_SELLER} value={`${settlement.participantCount}개`} />
         <MetaItem label="영수증" value={`${settlement.receiptCount}건`} />
         <MetaItem label="판매 건수" value={`${settlement.saleLineCount}건`} />
         <MetaItem label="메모" value={settlement.memo?.trim() || "—"} />

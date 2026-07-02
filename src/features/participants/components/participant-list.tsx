@@ -8,6 +8,7 @@ import {
 } from "@/features/fees/lib/fee-policy";
 import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { buttonVariants } from "@/lib/design-system";
+import { PARTICIPATING_SELLER } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function ParticipantList({
@@ -19,7 +20,7 @@ export function ParticipantList({
   onDeleteParticipant,
   onEditParticipant,
   onSelectParticipant,
-  emptyMessage = "등록된 참가부스가 없습니다.",
+  emptyMessage = `등록된 ${PARTICIPATING_SELLER}가 없습니다.`,
 }: {
   deleteDisabled?: boolean;
   globalSettings: SettlementDefaultSettings | null;

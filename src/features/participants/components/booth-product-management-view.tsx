@@ -16,6 +16,13 @@ import {
   sectionTitleClass,
   selectClass,
 } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_UNSELECTED_LABEL,
+  PARTICIPATING_SELLER_ADD_LABEL,
+  SELLER,
+  SELLER_UNSELECTED_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function BoothProductManagementView({
@@ -71,9 +78,9 @@ export function BoothProductManagementView({
           )}
         >
           <div>
-            <h2 className={sectionTitleClass}>마켓 참가 설정</h2>
+            <h2 className={sectionTitleClass}>{FLEA_MARKET} 참가 설정</h2>
             <p className={sectionDescriptionClass}>
-              {selectedMarket?.name ?? "마켓 미선택"}
+              {selectedMarket?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -84,7 +91,7 @@ export function BoothProductManagementView({
               type="button"
             >
               <Plus aria-hidden className="mr-2 h-4 w-4" />
-              참가부스 추가
+              {PARTICIPATING_SELLER_ADD_LABEL}
             </button>
           </div>
         </div>
@@ -95,7 +102,7 @@ export function BoothProductManagementView({
         )}
         <ParticipantList
           deleteDisabled={deleteParticipantDisabled}
-          emptyMessage="연결된 참가부스가 없습니다."
+          emptyMessage={`연결된 ${SELLER}가 없습니다.`}
           globalSettings={globalSettings}
           marketSettings={marketSettings}
           participants={participants}
@@ -116,8 +123,8 @@ export function BoothProductManagementView({
             <h2 className={sectionTitleClass}>상품</h2>
             <p className={sectionDescriptionClass}>
               {selectedParticipant
-                ? `${selectedMarket?.name ?? "마켓"} / ${selectedParticipant.displayName}`
-                : "참가부스 미선택"}
+                ? `${selectedMarket?.name ?? FLEA_MARKET} / ${selectedParticipant.displayName}`
+                : SELLER_UNSELECTED_LABEL}
             </p>
           </div>
           <form
@@ -133,7 +140,7 @@ export function BoothProductManagementView({
               }
               value={selectedParticipantId ?? ""}
             >
-              <option value="">참가부스 선택</option>
+              <option value="">{SELLER} 선택</option>
               {participants.map((participant) => (
                 <option key={participant.id} value={participant.id}>
                   {participant.displayName}

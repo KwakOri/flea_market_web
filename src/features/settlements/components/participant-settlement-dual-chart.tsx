@@ -4,6 +4,7 @@ import {
   truncateChartLabel,
 } from "@/features/settlements/lib/settlement-chart-format";
 import { formatWon } from "@/lib/money";
+import { FLEA_MARKET, SELLER } from "@/lib/terminology";
 
 export function ParticipantSettlementDualChart({
   participants,
@@ -18,7 +19,7 @@ export function ParticipantSettlementDualChart({
   if (!hasSales) {
     return (
       <section className="min-w-0 rounded-[12px] border border-hairline bg-surface px-4 py-10 text-center text-sm text-muted shadow-card sm:px-6 sm:py-12">
-        상점별 판매 데이터가 없습니다.
+        {SELLER}별 판매 데이터가 없습니다.
       </section>
     );
   }
@@ -58,10 +59,10 @@ export function ParticipantSettlementDualChart({
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">
-            상점별 판매 현황
+            {SELLER}별 판매 현황
           </h3>
           <p className="mt-1 text-xs text-muted">
-            플리마켓 기간 내 판매 금액과 판매 건수를 함께 확인합니다.
+            {FLEA_MARKET} 기간 내 판매 금액과 판매 건수를 함께 확인합니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-xs font-medium text-body">
@@ -77,7 +78,7 @@ export function ParticipantSettlementDualChart({
       </div>
       <div className="min-w-0 max-w-full overflow-x-auto pt-5">
         <svg
-          aria-label="상점별 판매 금액과 판매 건수 그래프"
+          aria-label={`${SELLER}별 판매 금액과 판매 건수 그래프`}
           className="block"
           height={chartHeight}
           role="img"

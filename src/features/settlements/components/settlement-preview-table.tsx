@@ -1,7 +1,8 @@
 import type { ParticipantSettlementPreview } from "@/services/settlements.service";
-import { formatPercent } from "@/features/fees/lib/fee-policy";
+import { cardFeePayerLabels, formatPercent } from "@/features/fees/lib/fee-policy";
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
 import { formatWon } from "@/lib/money";
+import { PARTICIPATING_SELLER } from "@/lib/terminology";
 
 export function SettlementPreviewTable({
   participants,
@@ -26,7 +27,7 @@ export function SettlementPreviewTable({
           <thead className="bg-surface-sunken text-center text-muted">
             <tr>
               <th className="px-4 py-3.5 text-center font-medium xl:px-6">
-                참가 부스
+                {PARTICIPATING_SELLER}
               </th>
               <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 현금
@@ -120,9 +121,7 @@ function SettlementPreviewCard({
         />
         <SettlementCardMetric
           label="카드 수수료"
-          value={`${formatWon(participant.cardFeeAmount)} ${
-            participant.cardFeePayer === "participant" ? "참가부스" : "마켓"
-          }`}
+          value={`${formatWon(participant.cardFeeAmount)} ${cardFeePayerLabels[participant.cardFeePayer]}`}
         />
         <SettlementCardMetric
           label="계좌/기타"
@@ -213,7 +212,7 @@ function SettlementPreviewRow({
           {formatPercent(participant.cardFeeRate)}
         </span>
         <span className="ml-1 font-mono text-[10px] text-muted-soft">
-          {participant.cardFeePayer === "participant" ? "참가부스" : "마켓"}
+          {cardFeePayerLabels[participant.cardFeePayer]}
         </span>
       </td>
       <td className="px-4 py-4 text-right font-display text-[15px] font-bold text-success xl:px-6">

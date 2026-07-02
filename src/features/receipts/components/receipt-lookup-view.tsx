@@ -5,6 +5,7 @@ import type { Receipt } from "@/services/receipts.service";
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
 import { ReceiptMatrixTable } from "@/features/receipts/components/receipt-matrix-table";
 import { panelVariants } from "@/lib/design-system";
+import { SELLER } from "@/lib/terminology";
 
 export function ReceiptLookupView({
   dateRangeLabel,
@@ -29,7 +30,7 @@ export function ReceiptLookupView({
     <div>
       <DashboardPageTitle
         eyebrow={dateRangeLabel}
-        subtitle="행과 부스별 기여 금액을 한 화면에서 비교합니다."
+        subtitle={`행과 ${SELLER}별 기여 금액을 한 화면에서 비교합니다.`}
         title="영수증 조회"
       />
       <section className={panelVariants()}>

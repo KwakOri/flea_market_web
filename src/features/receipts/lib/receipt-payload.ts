@@ -4,6 +4,7 @@ import type {
   CreateReceiptPaymentSplitPayload,
   PaymentMethod,
 } from "@/services/receipts.service";
+import { SELLER } from "@/lib/terminology";
 import {
   parseReceiptAmountInput,
   paymentMethods,
@@ -73,7 +74,7 @@ export function buildReceiptPayload({
   }
 
   if (saleLines.length === 0) {
-    throw new Error("부스별 구매 금액을 하나 이상 입력해주세요.");
+    throw new Error(`${SELLER}별 구매 금액을 하나 이상 입력해주세요.`);
   }
 
   const totalAmount = saleLines.reduce(

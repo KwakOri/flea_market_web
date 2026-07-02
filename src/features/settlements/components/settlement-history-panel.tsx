@@ -1,6 +1,7 @@
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { useSettlement } from "@/hooks/use-settlement-preview";
 import { formatWon } from "@/lib/money";
+import { PARTICIPATING_SELLER, SELLER } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 import type {
   Settlement,
@@ -244,7 +245,7 @@ function SettlementParticipantDeltaTable({
           }}
         >
           <span className="mono text-[11px] font-bold text-muted">
-            참가 부스
+            {PARTICIPATING_SELLER}
           </span>
           <span className="mono text-right text-[11px] font-bold text-muted">
             {previousSettlementSummary
@@ -261,7 +262,7 @@ function SettlementParticipantDeltaTable({
 
         {isLoading ? (
           <div className="px-[22px] py-10 text-center text-sm text-muted">
-            부스별 변경 내역을 불러오는 중입니다.
+            {SELLER}별 변경 내역을 불러오는 중입니다.
           </div>
         ) : rows.length > 0 ? (
           rows.map((row) => (
@@ -269,7 +270,7 @@ function SettlementParticipantDeltaTable({
           ))
         ) : (
           <div className="px-[22px] py-10 text-center text-sm text-muted">
-            저장된 부스별 변경 내역이 없습니다.
+            저장된 {SELLER}별 변경 내역이 없습니다.
           </div>
         )}
       </div>

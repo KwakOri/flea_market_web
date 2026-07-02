@@ -1,3 +1,9 @@
+import {
+  FLEA_MARKET_MANAGE_LABEL,
+  PARTICIPATING_SELLER,
+  SELLER_MANAGE_LABEL,
+} from "@/lib/terminology";
+
 export type DashboardView =
   | "home"
   | "settings"
@@ -20,9 +26,9 @@ export type DashboardSummaryItem = {
 export const dashboardViewLabels: Record<DashboardView, string> = {
   home: "관리 홈",
   settings: "설정",
-  management: "마켓관리",
-  boothMasters: "부스관리",
-  booths: "참가부스관리",
+  management: FLEA_MARKET_MANAGE_LABEL,
+  boothMasters: SELLER_MANAGE_LABEL,
+  booths: `${PARTICIPATING_SELLER} 관리`,
   feeStatus: "수수료 현황",
   salesMatrix: "영수증 입력",
   receiptLookup: "영수증 조회",

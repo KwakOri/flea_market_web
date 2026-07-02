@@ -8,13 +8,20 @@ import type { SettlementDefaultSettings } from "@/services/settlement-settings.s
 import {
   defaultFeeSettings,
   feeSettingFields,
-  feeSettingScopeLabels,
   formatFeeFieldValue,
   getParticipantFeePolicySource,
   getScopedFeeFieldValue,
   type FeeSettingScope,
 } from "@/features/fees/lib/fee-policy";
 import { ParticipantTypeBadge } from "@/features/participants/components/participant-type-badge";
+import {
+  FLEA_MARKET_DEFAULT_LABEL,
+  FLEA_MARKET_SETTINGS_LABEL,
+  PARTICIPATING_SELLER,
+  SELLER,
+  SELLER_FEE_SETTINGS_LABEL,
+  SELLER_SETTINGS_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 const feeApplicationCellVariants = cva(
@@ -89,7 +96,7 @@ export function FeeApplicationMatrix({
   if (participants.length === 0) {
     return (
       <div className="px-4 py-12 text-center text-sm text-muted">
-        연결된 참가부스가 없습니다.
+        연결된 {SELLER}가 없습니다.
       </div>
     );
   }
@@ -104,6 +111,31 @@ export function FeeApplicationMatrix({
     updatedAt: null,
   };
   const hasMarketSettings = Boolean(marketSettings?.id);
+
+  function renderParticipantFeeAction(
+    participant: Participant,
+    size: "compact" | "large",
+  ) {
+    return (
+      <button
+        aria-label={`${participant.displayName} ${SELLER_FEE_SETTINGS_LABEL}`}
+        className={cn(
+          "inline-flex shrink-0 items-center justify-center border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+          size === "large"
+            ? "h-16 w-16 rounded-[18px] shadow-card"
+            : "h-7 w-7 rounded-lg",
+        )}
+        onClick={() => onEditParticipant(participant)}
+        title={SELLER_FEE_SETTINGS_LABEL}
+        type="button"
+      >
+        <CircleDollarSign
+          aria-hidden
+          className={size === "large" ? "h-8 w-8" : "h-3.5 w-3.5"}
+        />
+      </button>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-[12px] bg-surface">
@@ -122,24 +154,13 @@ export function FeeApplicationMatrix({
               data-testid="fee-status-card"
               key={participant.id}
             >
-              <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-ink">
-                    {participant.displayName}
-                  </p>
-                  <p className="mt-2">
-                    <ParticipantTypeBadge type={participant.participantType} />
-                  </p>
-                </div>
-                <button
-                  aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                  onClick={() => onEditParticipant(participant)}
-                  title="부스별 수수료 설정"
-                  type="button"
-                >
-                  <CircleDollarSign aria-hidden className="h-4 w-4" />
-                </button>
+              <div className="min-w-0">
+                <p className="truncate text-[15px] font-semibold text-ink">
+                  {participant.displayName}
+                </p>
+                <p className="mt-2">
+                  <ParticipantTypeBadge type={participant.participantType} />
+                </p>
               </div>
               <FeeApplicationCell
                 isActive={activeScope === "global"}
@@ -151,16 +172,25 @@ export function FeeApplicationMatrix({
                 isActive={activeScope === "market"}
                 scope="market"
                 settings={hasMarketSettings ? marketSettings : null}
-                title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
-                unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
+                title={hasMarketSettings ? FLEA_MARKET_DEFAULT_LABEL : "미설정"}
+                unavailableMessage={`${FLEA_MARKET_SETTINGS_LABEL}이 없어 전체 설정을 사용합니다.`}
               />
               <FeeApplicationCell
+                action={
+                  hasBoothSettings
+                    ? renderParticipantFeeAction(participant, "compact")
+                    : undefined
+                }
                 fallbackScope={hasMarketSettings ? "market" : "global"}
                 isActive={activeScope === "booth"}
                 scope="booth"
                 settings={hasBoothSettings ? participant.settings : null}
-                title={hasBoothSettings ? "부스 설정" : "부스 설정 없음"}
-                unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
+                title={hasBoothSettings ? SELLER_SETTINGS_LABEL : `${SELLER_SETTINGS_LABEL} 없음`}
+                unavailableAction={
+                  hasBoothSettings
+                    ? undefined
+                    : renderParticipantFeeAction(participant, "large")
+                }
               />
             </article>
           );
@@ -169,10 +199,10 @@ export function FeeApplicationMatrix({
       <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
         <div className="min-w-[1120px]">
           <div className="grid grid-cols-[170px_minmax(240px,1fr)_minmax(240px,1fr)_minmax(260px,1fr)] items-center bg-surface-sunken px-[22px] py-3 text-center text-sm font-medium text-muted">
-            <span>참가 부스</span>
+            <span>{PARTICIPATING_SELLER}</span>
             <span>전체 기본값</span>
-            <span>플리마켓 기본값</span>
-            <span className="font-semibold text-brand">이 부스 설정</span>
+            <span>{FLEA_MARKET_DEFAULT_LABEL}</span>
+            <span className="font-semibold text-brand">이 {SELLER_SETTINGS_LABEL}</span>
           </div>
           <div className="divide-y divide-hairline">
             {participants.map((participant) => {
@@ -209,30 +239,25 @@ export function FeeApplicationMatrix({
                     isActive={activeScope === "market"}
                     scope="market"
                     settings={hasMarketSettings ? marketSettings : null}
-                    title={hasMarketSettings ? "플리마켓 기본값" : "미설정"}
-                    unavailableMessage="플리마켓 설정이 없어 전체 설정을 사용합니다."
+                    title={hasMarketSettings ? FLEA_MARKET_DEFAULT_LABEL : "미설정"}
+                    unavailableMessage={`${FLEA_MARKET_SETTINGS_LABEL}이 없어 전체 설정을 사용합니다.`}
                   />
                   <FeeApplicationCell
                     action={
-                      <button
-                        aria-label={`${participant.displayName} 부스별 수수료 설정`}
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-ink transition hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                        onClick={() => onEditParticipant(participant)}
-                        title="부스별 수수료 설정"
-                        type="button"
-                      >
-                        <CircleDollarSign
-                          aria-hidden
-                          className="h-3.5 w-3.5"
-                        />
-                      </button>
+                      hasBoothSettings
+                        ? renderParticipantFeeAction(participant, "compact")
+                        : undefined
                     }
                     fallbackScope={hasMarketSettings ? "market" : "global"}
                     isActive={activeScope === "booth"}
                     scope="booth"
                     settings={hasBoothSettings ? participant.settings : null}
-                    title={hasBoothSettings ? "부스 설정" : "부스 설정 없음"}
-                    unavailableMessage={`부스 설정이 없어 ${feeSettingScopeLabels[activeScope]}을 사용합니다.`}
+                    title={hasBoothSettings ? SELLER_SETTINGS_LABEL : `${SELLER_SETTINGS_LABEL} 없음`}
+                    unavailableAction={
+                      hasBoothSettings
+                        ? undefined
+                        : renderParticipantFeeAction(participant, "large")
+                    }
                   />
                 </div>
               );
@@ -251,6 +276,7 @@ function FeeApplicationCell({
   scope,
   settings,
   title,
+  unavailableAction,
   unavailableMessage,
 }: {
   action?: ReactNode;
@@ -263,12 +289,24 @@ function FeeApplicationCell({
     | null
     | undefined;
   title: string;
+  unavailableAction?: ReactNode;
   unavailableMessage?: string;
 }) {
   const isUnavailable = !settings;
 
   return (
-    <div className={feeApplicationCellVariants({ active: isActive })}>
+    <div
+      className={cn(
+        feeApplicationCellVariants({ active: isActive }),
+        isUnavailable &&
+          unavailableAction &&
+          !isActive &&
+          "opacity-70 hover:opacity-100",
+        isUnavailable &&
+          unavailableAction &&
+          "grid-rows-[auto_minmax(0,1fr)] content-stretch",
+      )}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2">
         <p
           className={cn(
@@ -290,14 +328,20 @@ function FeeApplicationCell({
         </div>
       </div>
       {isUnavailable ? (
-        <p
-          className={cn(
-            "grid min-h-[94px] place-items-center rounded-[8px] bg-canvas-soft px-3 py-4 text-center text-sm leading-relaxed",
-            isActive ? "font-medium text-muted" : "font-normal text-muted-soft",
-          )}
-        >
-          {unavailableMessage ?? "설정이 없습니다."}
-        </p>
+        unavailableAction ? (
+          <div className="grid h-full min-h-0 place-items-center px-3 py-4">
+            {unavailableAction}
+          </div>
+        ) : (
+          <p
+            className={cn(
+              "grid min-h-[94px] place-items-center rounded-[8px] bg-canvas-soft px-3 py-4 text-center text-sm leading-relaxed",
+              isActive ? "font-medium text-muted" : "font-normal text-muted-soft",
+            )}
+          >
+            {unavailableMessage ?? "설정이 없습니다."}
+          </p>
+        )
       ) : (
         <dl className="grid gap-1.5">
           {feeSettingFields.map((field) => {

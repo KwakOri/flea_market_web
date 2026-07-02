@@ -1,6 +1,7 @@
 "use client";
 
 import type { ParticipantType } from "@/services/participants.service";
+import { participantTypeLabels } from "@/features/participants/lib/participant-display";
 import { selectClass } from "@/lib/design-system";
 
 export function ParticipantTypeSelect({
@@ -17,9 +18,9 @@ export function ParticipantTypeSelect({
       disabled={disabled}
       name="participantType"
     >
-      <option value="seller">셀러</option>
-      <option value="staff">운영진</option>
-      <option value="special_booth">특수 부스</option>
+      <option value="seller">{participantTypeLabels.seller}</option>
+      <option value="staff">{participantTypeLabels.staff}</option>
+      <option value="special_booth">{participantTypeLabels.special_booth}</option>
     </select>
   );
 }

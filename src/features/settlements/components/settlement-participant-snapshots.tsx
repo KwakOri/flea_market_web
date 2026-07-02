@@ -8,6 +8,7 @@ import {
   settlementTypeLabels,
 } from "@/features/participants/lib/participant-display";
 import { formatWon } from "@/lib/money";
+import { PARTICIPATING_SELLER, SELLER_SETTLEMENT_DATA_LABEL } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 const snapshotGridColumns =
@@ -24,15 +25,15 @@ export function SettlementParticipantSnapshots({
     <section className="overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-card">
       <div className="px-5 pb-4 pt-5 sm:px-6">
         <h2 className="dsp m-0 text-[17px] font-bold text-ink">
-          부스별 정산 데이터
+          {SELLER_SETTLEMENT_DATA_LABEL}
         </h2>
         <p className="mono mt-[5px] text-[11px] tracking-[0.02em] text-muted">
-          확정 당시 저장된 참가부스별 스냅샷 {participantCount}개
+          확정 당시 저장된 {PARTICIPATING_SELLER}별 스냅샷 {participantCount}개
         </p>
       </div>
       {participants.length === 0 ? (
         <div className="px-5 py-10 text-center text-sm text-muted sm:px-6">
-          저장된 부스별 정산 데이터가 없습니다.
+          저장된 {SELLER_SETTLEMENT_DATA_LABEL}가 없습니다.
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -41,7 +42,7 @@ export function SettlementParticipantSnapshots({
               className="grid bg-surface-sunken px-5 py-3 sm:px-6"
               style={{ gridTemplateColumns: snapshotGridColumns }}
             >
-              <SnapshotHeader>참가부스</SnapshotHeader>
+              <SnapshotHeader>{PARTICIPATING_SELLER}</SnapshotHeader>
               <SnapshotHeader>유형</SnapshotHeader>
               <SnapshotHeader>정산 방식</SnapshotHeader>
               <SnapshotHeader align="right">영수증</SnapshotHeader>

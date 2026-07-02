@@ -11,6 +11,7 @@ import {
   sectionHeaderClass,
   sectionTitleClass,
 } from "@/lib/design-system";
+import { FLEA_MARKET, SELLER, SELLER_ADD_LABEL } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function BoothMasterManagementView({
@@ -47,9 +48,9 @@ export function BoothMasterManagementView({
         )}
       >
         <div>
-          <h2 className={sectionTitleClass}>부스</h2>
+          <h2 className={sectionTitleClass}>{SELLER}</h2>
           <p className={sectionDescriptionClass}>
-            플리마켓에 연결하기 전의 부스 기본 정보를 관리합니다.
+            {FLEA_MARKET}에 연결하기 전의 {SELLER} 기본 정보를 관리합니다.
           </p>
         </div>
         <button
@@ -59,7 +60,7 @@ export function BoothMasterManagementView({
           type="button"
         >
           <Plus aria-hidden className="mr-2 h-4 w-4" />
-          부스 추가
+          {SELLER_ADD_LABEL}
         </button>
       </div>
       {message && (

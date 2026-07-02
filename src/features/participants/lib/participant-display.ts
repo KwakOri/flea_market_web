@@ -2,11 +2,12 @@ import type {
   ParticipantType,
   SettlementType,
 } from "@/services/participants.service";
+import { MANAGER, SELLER, SPECIAL_SELLER } from "@/lib/terminology";
 
 export const participantTypeLabels: Record<ParticipantType, string> = {
-  staff: "운영진",
-  seller: "셀러",
-  special_booth: "특수 부스",
+  staff: MANAGER,
+  seller: SELLER,
+  special_booth: SPECIAL_SELLER,
 };
 
 export const settlementTypeLabels: Record<SettlementType, string> = {

@@ -5,6 +5,11 @@ import type {
 } from "@/services/settlements.service";
 import { formatFullDateTime } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_FEE_PAYER_LABEL,
+  SELLER_FEE_PAYER_LABEL,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 type AmountDeltaKey = keyof SettlementAmountDeltas;
@@ -30,13 +35,13 @@ const amountDeltaFields: Array<{
   { key: "cardFeeAmount", label: "카드 수수료" },
   {
     key: "cardFeeChargedToParticipantAmount",
-    label: "참가부스 부담 카드 수수료",
+    label: `${SELLER_FEE_PAYER_LABEL} 카드 수수료`,
   },
-  { key: "cardFeePaidByMarketAmount", label: "마켓 부담 카드 수수료" },
+  { key: "cardFeePaidByMarketAmount", label: `${FLEA_MARKET_FEE_PAYER_LABEL} 카드 수수료` },
   { key: "participationFeeAmount", label: "참가비" },
-  { key: "marketIncomeAmount", label: "마켓 수입" },
-  { key: "marketCostAmount", label: "마켓 비용" },
-  { key: "marketProfitAmount", label: "마켓 손익" },
+  { key: "marketIncomeAmount", label: `${FLEA_MARKET} 수입` },
+  { key: "marketCostAmount", label: `${FLEA_MARKET} 비용` },
+  { key: "marketProfitAmount", label: `${FLEA_MARKET} 손익` },
   { key: "participantPayoutAmount", label: "지급 예정" },
 ];
 

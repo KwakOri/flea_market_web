@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UIEvent } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { Participant } from "@/services/participants.service";
 import type { Receipt } from "@/services/receipts.service";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/features/receipts/lib/payment-method-display";
 import { buttonVariants } from "@/lib/design-system";
 import { formatWon } from "@/lib/money";
+import { FLEA_MARKET, PARTICIPATING_SELLER, SELLER_SALE_AMOUNT_LABEL } from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 export function ReceiptMatrixTable({
@@ -42,7 +43,7 @@ export function ReceiptMatrixTable({
     participants.length,
     1,
   )}, minmax(132px, 132px))`;
-  const fixedGridTemplate = "156px 152px 112px";
+  const fixedGridTemplate = "52px 156px 152px 112px";
 
   function syncReceiptScroll(scrollTop: number, scrollLeft: number) {
     if (fixedBodyRef.current) {
@@ -96,11 +97,12 @@ export function ReceiptMatrixTable({
         ))}
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[12px] md:block">
-        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[740px] grid-cols-[420px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-[12px]">
+        <div className="grid h-[calc(100vh-260px)] max-h-[720px] min-h-[320px] min-w-[792px] grid-cols-[472px_minmax(0,1fr)] grid-rows-[72px_minmax(0,1fr)] overflow-hidden rounded-[12px]">
           <div
             className="z-20 grid items-center rounded-tl-[12px] border-b border-r border-hairline bg-surface-sunken text-sm font-medium text-muted"
             style={{ gridTemplateColumns: fixedGridTemplate }}
           >
+            <div aria-hidden className="px-2" />
             <div className="px-4 text-center">판매 시각</div>
             <div className="px-4 text-center">결제</div>
             <div className="px-4 text-center">합계</div>
@@ -144,12 +146,15 @@ export function ReceiptMatrixTable({
                     key={receipt.id}
                     style={{ gridTemplateColumns: fixedGridTemplate }}
                   >
-                    <ReceiptTimeAndNumber
-                      actionsDisabled={actionsDisabled}
-                      receipt={receipt}
-                      onDeleteReceipt={onDeleteReceipt}
-                      onEditReceipt={onEditReceipt}
-                    />
+                    <div className="flex h-full items-center justify-center px-2">
+                      <ReceiptActionMenu
+                        actionsDisabled={actionsDisabled}
+                        receipt={receipt}
+                        onDeleteReceipt={onDeleteReceipt}
+                        onEditReceipt={onEditReceipt}
+                      />
+                    </div>
+                    <ReceiptTimeAndNumber receipt={receipt} />
                     <div className="px-4 text-center text-body">
                       <ReceiptPaymentSplits receipt={receipt} />
                     </div>
@@ -170,7 +175,7 @@ export function ReceiptMatrixTable({
           >
             {participants.length === 0 ? (
               <div className="flex h-full min-h-[248px] items-center justify-center px-4 text-sm text-muted">
-                마켓에 연결된 참가부스가 없습니다.
+                {FLEA_MARKET}에 연결된 {PARTICIPATING_SELLER}가 없습니다.
               </div>
             ) : (
               <div className="min-w-max divide-y divide-hairline">
@@ -229,7 +234,13 @@ function ReceiptMobileCard({
 
   return (
     <article className="grid gap-3 rounded-[12px] border border-hairline bg-surface p-4 shadow-card">
-      <div className="flex min-w-0 items-start justify-between gap-3">
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        <ReceiptActionMenu
+          actionsDisabled={actionsDisabled}
+          receipt={receipt}
+          onDeleteReceipt={onDeleteReceipt}
+          onEditReceipt={onEditReceipt}
+        />
         <div className="min-w-0">
           <p className="font-mono text-[11px] text-muted">
             {formatReceiptDateTime(receipt.soldAt)}
@@ -242,18 +253,12 @@ function ReceiptMobileCard({
           {formatWon(receipt.totalAmount)}
         </p>
       </div>
-      <ReceiptActionButtons
-        actionsDisabled={actionsDisabled}
-        receipt={receipt}
-        onDeleteReceipt={onDeleteReceipt}
-        onEditReceipt={onEditReceipt}
-      />
       <div className="rounded-[8px] bg-canvas-soft px-3 py-2 text-sm text-body">
         <ReceiptPaymentSplits receipt={receipt} />
       </div>
       {activeLines.length === 0 ? (
         <p className="rounded-[8px] bg-canvas-soft px-3 py-3 text-center text-sm text-muted">
-          부스별 판매 금액이 없습니다.
+          {SELLER_SALE_AMOUNT_LABEL}이 없습니다.
         </p>
       ) : (
         <dl className="grid gap-1.5">
@@ -277,83 +282,116 @@ function ReceiptMobileCard({
 }
 
 function ReceiptTimeAndNumber({
-  actionsDisabled,
   receipt,
-  onDeleteReceipt,
-  onEditReceipt,
 }: {
-  actionsDisabled: boolean;
   receipt: Receipt;
-  onDeleteReceipt: (receipt: Receipt) => void;
-  onEditReceipt: (receipt: Receipt) => void;
 }) {
   return (
     <div className="grid min-w-0 gap-1 px-3 text-center">
       <span className="whitespace-nowrap font-display text-[13px] text-body">
         {formatReceiptDateTime(receipt.soldAt)}
       </span>
-      <div className="flex min-w-0 items-center justify-center gap-1">
-        <span className="min-w-0 max-w-[72px] truncate font-mono text-[11.5px] font-semibold text-ink">
-          {receipt.receiptNo ?? "-"}
-        </span>
-        <ReceiptActionButtons
-          actionsDisabled={actionsDisabled}
-          compact
-          receipt={receipt}
-          onDeleteReceipt={onDeleteReceipt}
-          onEditReceipt={onEditReceipt}
-        />
-      </div>
+      <span className="min-w-0 truncate font-mono text-[11.5px] font-semibold text-ink">
+        {receipt.receiptNo ?? "-"}
+      </span>
     </div>
   );
 }
 
-function ReceiptActionButtons({
+function ReceiptActionMenu({
   actionsDisabled,
-  compact = false,
   receipt,
   onDeleteReceipt,
   onEditReceipt,
 }: {
   actionsDisabled: boolean;
-  compact?: boolean;
   receipt: Receipt;
   onDeleteReceipt: (receipt: Receipt) => void;
   onEditReceipt: (receipt: Receipt) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const receiptLabel = receipt.receiptNo ?? receipt.id;
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleMouseDown(event: MouseEvent) {
+      if (menuRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   return (
-    <div className={cn("flex items-center gap-1", compact && "shrink-0")}>
+    <div
+      className="relative flex shrink-0 items-center justify-center"
+      ref={menuRef}
+    >
       <button
-        aria-label={`영수증 ${receiptLabel} 수정`}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label={`영수증 ${receiptLabel} 작업 메뉴`}
         className={cn(
           buttonVariants({ intent: "secondary", size: "sm" }),
-          compact ? "h-6 w-6 rounded-md px-0" : "h-8 w-8 px-0",
+          "h-8 w-8 rounded-md px-0",
         )}
-        onClick={() => onEditReceipt(receipt)}
-        title="수정"
+        onClick={() => setIsOpen((open) => !open)}
+        title="작업"
         type="button"
       >
-        <Pencil aria-hidden className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+        <MoreHorizontal aria-hidden className="h-4 w-4" />
       </button>
-      <button
-        aria-label={`영수증 ${receiptLabel} 삭제`}
-        className={cn(
-          buttonVariants({ intent: "secondary", size: "sm" }),
-          "border-error/40 text-error hover:bg-error-tint",
-          compact ? "h-6 w-6 rounded-md px-0" : "h-8 w-8 px-0",
-        )}
-        disabled={actionsDisabled}
-        onClick={() => onDeleteReceipt(receipt)}
-        title="삭제"
-        type="button"
-      >
-        <Trash2
-          aria-hidden
-          className={compact ? "h-3 w-3" : "h-3.5 w-3.5"}
-        />
-      </button>
+      {isOpen && (
+        <div
+          className="absolute left-0 top-[calc(100%+6px)] z-40 w-28 overflow-hidden rounded-[8px] border border-border bg-surface-raised py-1 text-sm shadow-popover"
+          role="menu"
+        >
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-body transition hover:bg-canvas-soft hover:text-ink"
+            onClick={() => {
+              setIsOpen(false);
+              onEditReceipt(receipt);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <Pencil aria-hidden className="h-3.5 w-3.5" />
+            수정
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-error transition hover:bg-error-tint disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={actionsDisabled}
+            onClick={() => {
+              setIsOpen(false);
+              onDeleteReceipt(receipt);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <Trash2 aria-hidden className="h-3.5 w-3.5" />
+            삭제
+          </button>
+        </div>
+      )}
     </div>
   );
 }

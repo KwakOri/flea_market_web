@@ -6,6 +6,11 @@ import type { SettlementDefaultSettings } from "@/services/settlement-settings.s
 import { DashboardPageTitle } from "@/features/dashboard/components/dashboard-page-title";
 import { FeeApplicationMatrix } from "@/features/fees/components/fee-application-matrix";
 import { buttonVariants, panelVariants } from "@/lib/design-system";
+import {
+  FLEA_MARKET,
+  FLEA_MARKET_SETTINGS_LABEL,
+  SELLER,
+} from "@/lib/terminology";
 
 export function FeeStatusView({
   globalSettings,
@@ -25,7 +30,7 @@ export function FeeStatusView({
   return (
     <div className="min-w-0">
       <DashboardPageTitle
-        subtitle="전체 → 플리마켓 → 부스 우선순위로 적용되는 정책입니다."
+        subtitle={`전체 → ${FLEA_MARKET} → ${SELLER} 우선순위로 적용되는 정책입니다.`}
         title="수수료 정책 현황"
       />
       <div className="mb-[22px] flex flex-wrap gap-2">
@@ -39,7 +44,7 @@ export function FeeStatusView({
           className={buttonVariants({ intent: "secondary" })}
           href={`/markets/${marketId}/management`}
         >
-          플리마켓 설정
+          {FLEA_MARKET_SETTINGS_LABEL}
         </Link>
       </div>
       <section className={panelVariants()}>

@@ -28,6 +28,7 @@ import {
   getOptionalFormString,
   getRequiredNumber,
 } from "@/lib/form-data";
+import { FLEA_MARKET, PARTICIPATING_SELLER, SELLER } from "@/lib/terminology";
 
 export function BoothProductManagementScreen({
   market,
@@ -98,7 +99,7 @@ export function BoothProductManagementScreen({
     setParticipantMessage(null);
 
     const confirmed = window.confirm(
-      `${participant.displayName} 참가부스를 이 플리마켓에서 삭제할까요? 전체 부스 정보는 유지됩니다.`,
+      `${participant.displayName} ${PARTICIPATING_SELLER}를 이 ${FLEA_MARKET}에서 삭제할까요? 전체 ${SELLER} 정보는 유지됩니다.`,
     );
 
     if (!confirmed) {

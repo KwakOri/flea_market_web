@@ -1,3 +1,5 @@
+import { FLEA_MARKET } from "@/lib/terminology";
+
 export function getDefaultReceiptDateTimeInputValue(
   startsOn: string | null,
   endsOn: string | null,
@@ -35,7 +37,7 @@ export function buildReceiptSoldAtFromDateTimeInput(
   }
 
   if (!isDateTimeWithinReceiptPeriod(date, startsOn, endsOn)) {
-    throw new Error("구매 날짜와 시간은 플리마켓 기간 내로 설정해주세요.");
+    throw new Error(`구매 날짜와 시간은 ${FLEA_MARKET} 기간 내로 설정해주세요.`);
   }
 
   return date.toISOString();

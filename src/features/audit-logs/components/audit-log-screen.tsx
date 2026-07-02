@@ -18,6 +18,12 @@ import {
   panelVariants,
   selectClass,
 } from "@/lib/design-system";
+import {
+  ALL_FLEA_MARKETS_LABEL,
+  FLEA_MARKET,
+  MANAGER,
+  SELLER,
+} from "@/lib/terminology";
 import { cn } from "@/lib/utils";
 
 const categoryOptions: Array<{
@@ -25,14 +31,14 @@ const categoryOptions: Array<{
   value: AuditLogCategory;
 }> = [
   { label: "인증/보안", value: "auth_security" },
-  { label: "마켓", value: "market" },
-  { label: "참가부스", value: "booth" },
+  { label: FLEA_MARKET, value: "market" },
+  { label: SELLER, value: "booth" },
   { label: "상품", value: "product" },
   { label: "영수증", value: "receipt" },
   { label: "수수료 정책", value: "fee_policy" },
   { label: "정산", value: "settlement" },
   { label: "내보내기", value: "export" },
-  { label: "관리", value: "admin" },
+  { label: MANAGER, value: "admin" },
   { label: "시스템", value: "system" },
 ];
 
@@ -117,7 +123,7 @@ export function AuditLogScreen({
   return (
     <div className="min-w-0">
       <DashboardPageTitle
-        eyebrow={selectedMarket?.name ?? "전체 플리마켓"}
+        eyebrow={selectedMarket?.name ?? ALL_FLEA_MARKETS_LABEL}
         subtitle="영수증, 정산, 수수료 정책처럼 운영 결과에 영향을 주는 작업 기록을 확인합니다."
         title="LOG"
       />
@@ -132,7 +138,7 @@ export function AuditLogScreen({
         >
           <label className="grid gap-1.5">
             <span className="font-mono text-[10.5px] tracking-[0.06em] text-muted">
-              플리마켓
+              {FLEA_MARKET}
             </span>
             <select
               className={selectClass}
@@ -228,7 +234,7 @@ export function AuditLogScreen({
                     <th className="px-5 py-3 text-sm font-medium">구분</th>
                     <th className="px-5 py-3 text-sm font-medium">내용</th>
                     <th className="px-5 py-3 text-sm font-medium">담당자</th>
-                    <th className="px-5 py-3 text-sm font-medium">플리마켓</th>
+                    <th className="px-5 py-3 text-sm font-medium">{FLEA_MARKET}</th>
                     <th className="px-5 py-3 text-sm font-medium">대상</th>
                   </tr>
                 </thead>
@@ -332,7 +338,7 @@ function AuditLogCard({
           <dd className="text-right">{log.actorDisplayName ?? "시스템"}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-muted">플리마켓</dt>
+          <dt className="text-muted">{FLEA_MARKET}</dt>
           <dd className="text-right">{marketName}</dd>
         </div>
       </dl>
