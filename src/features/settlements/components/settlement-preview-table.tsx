@@ -23,33 +23,33 @@ export function SettlementPreviewTable({
       </div>
       <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-[12px] border border-hairline bg-surface shadow-card md:block">
         <table className="w-full min-w-[960px] border-collapse text-sm xl:min-w-[1180px]">
-          <thead className="bg-brand-deep text-center font-mono text-[10px] uppercase tracking-[0.06em] text-muted-soft">
+          <thead className="bg-surface-sunken text-center text-muted">
             <tr>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 참가 부스
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 현금
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 카드
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 계좌이체
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 기타
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 총매출
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 판매 수수료
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold xl:px-6">
+              <th className="px-4 py-3.5 text-center font-medium xl:px-6">
                 카드 수수료
               </th>
-              <th className="px-4 py-3.5 text-center font-semibold text-brand-spring xl:px-6">
+              <th className="px-4 py-3.5 text-center font-semibold text-brand xl:px-6">
                 지급 예정
               </th>
             </tr>

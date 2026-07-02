@@ -38,7 +38,7 @@ export function SettlementParticipantSnapshots({
         <div className="overflow-x-auto">
           <div className="min-w-[1180px]">
             <div
-              className="grid bg-brand-deep px-5 py-3 sm:px-6"
+              className="grid bg-surface-sunken px-5 py-3 sm:px-6"
               style={{ gridTemplateColumns: snapshotGridColumns }}
             >
               <SnapshotHeader>참가부스</SnapshotHeader>
@@ -138,8 +138,8 @@ function SnapshotHeader({
   return (
     <span
       className={cn(
-        "mono text-[10px] tracking-[0.05em]",
-        accent ? "text-brand-spring" : "text-muted-soft",
+        "text-sm",
+        accent ? "font-semibold text-brand" : "font-medium text-muted",
         align === "right" && "text-right",
       )}
     >
