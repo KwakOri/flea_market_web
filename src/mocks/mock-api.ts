@@ -8,6 +8,11 @@ import type {
 } from "@/services/audit-logs.service";
 import type { AuthResponse } from "@/services/auth.service";
 import type {
+  CreatedInvitation,
+  Invitation,
+  InvitationValidation,
+} from "@/services/invitations.service";
+import type {
   CreateMarketPayload,
   Market,
   UpdateMarketPayload,
@@ -150,6 +155,161 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     return { user: state.currentUser } satisfies AuthResponse;
   }
 
+  if (url.pathname === "/auth/invitations" && method === "GET") {
+    const state = getMockState();
+    assertMockAdmin();
+
+    state.signupInvitations = state.signupInvitations.map((invitation) => ({
+      ...invitation,
+      status: getMockInvitationStatus(invitation),
+    }));
+
+    return [...state.signupInvitations].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt),
+    );
+  }
+
+  if (url.pathname === "/auth/invitations" && method === "POST") {
+    assertMockAdmin();
+    const payload = readJsonBody<{ email?: string }>(init);
+    const email = payload.email?.trim().toLowerCase();
+
+    if (!email || !email.includes("@")) {
+      throw badRequest("A valid email is required.");
+    }
+
+    const state = getMockState();
+    if (state.currentUser.email.toLowerCase() === email) {
+      throw conflict("Email is already registered.");
+    }
+
+    const now = nowIsoString();
+    state.signupInvitations = state.signupInvitations.map((invitation) =>
+      invitation.email.toLowerCase() === email &&
+      getMockInvitationStatus(invitation) === "pending"
+        ? { ...invitation, revokedAt: now, status: "revoked" }
+        : invitation,
+    );
+
+    const id = createMockId("invitation");
+    const invitation: Invitation = {
+      id,
+      email,
+      status: "pending",
+      expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+      usedAt: null,
+      revokedAt: null,
+      createdAt: now,
+      createdByUserId: state.currentUser.id,
+      acceptedByUserId: null,
+    };
+    state.signupInvitations.unshift(invitation);
+    recordAuditLog({
+      action: "create",
+      category: "auth_security",
+      metadata: { email, mode: "mock" },
+      summary: `계정 ${email} 초대 발급`,
+      targetId: id,
+      targetType: "signup_invitation",
+    });
+    persistMockState();
+
+    return {
+      ...invitation,
+      inviteUrl: createMockInviteUrl(id),
+    } satisfies CreatedInvitation;
+  }
+
+  if (url.pathname === "/auth/invitations/validate" && method === "POST") {
+    const payload = readJsonBody<{ token?: string }>(init);
+    const invitation = findActiveMockInvitation(payload.token);
+
+    return {
+      emailHint: maskMockEmail(invitation.email),
+      expiresAt: invitation.expiresAt,
+    } satisfies InvitationValidation;
+  }
+
+  if (url.pathname === "/auth/invitations/accept" && method === "POST") {
+    const payload = readJsonBody<{
+      displayName?: string;
+      password?: string;
+      token?: string;
+    }>(init);
+    const invitation = findActiveMockInvitation(payload.token);
+    const displayName = payload.displayName?.trim();
+
+    if (!displayName || !payload.password || payload.password.length < 8) {
+      throw badRequest(
+        "Name and a password of at least 8 characters are required.",
+      );
+    }
+
+    const state = getMockState();
+    const acceptedAt = nowIsoString();
+    const userId = createMockId("user");
+    invitation.status = "accepted";
+    invitation.usedAt = acceptedAt;
+    invitation.acceptedByUserId = userId;
+    state.currentUser = {
+      id: userId,
+      email: invitation.email,
+      displayName,
+      avatarUrl: null,
+      role: "user",
+      status: "active",
+      emailVerifiedAt: acceptedAt,
+    };
+    state.isAuthenticated = true;
+    recordAuditLog({
+      action: "register",
+      category: "auth_security",
+      metadata: { email: invitation.email, mode: "mock" },
+      summary: `계정 ${displayName} 초대 가입`,
+      targetId: userId,
+      targetType: "user",
+    });
+    persistMockState();
+
+    return { user: state.currentUser } satisfies AuthResponse;
+  }
+
+  const revokeInvitationMatch = url.pathname.match(
+    /^\/auth\/invitations\/([^/]+)\/revoke$/,
+  );
+
+  if (revokeInvitationMatch?.[1] && method === "POST") {
+    assertMockAdmin();
+    const state = getMockState();
+    const invitation = state.signupInvitations.find(
+      (candidate) => candidate.id === revokeInvitationMatch[1],
+    );
+
+    if (!invitation) {
+      throw notFound("Invitation not found.");
+    }
+
+    if (getMockInvitationStatus(invitation) === "accepted") {
+      throw conflict("Accepted invitation cannot be revoked.");
+    }
+
+    if (!invitation.revokedAt) {
+      invitation.revokedAt = nowIsoString();
+      invitation.status = "revoked";
+      recordAuditLog({
+        action: "update",
+        category: "auth_security",
+        metadata: { email: invitation.email, mode: "mock" },
+        summary: `계정 ${invitation.email} 초대 폐기`,
+        targetId: invitation.id,
+        targetType: "signup_invitation",
+      });
+      persistMockState();
+    }
+
+    return invitation;
+  }
+
   if (url.pathname === "/auth/login" && method === "POST") {
     const state = getMockState();
     state.isAuthenticated = true;
@@ -158,27 +318,6 @@ function routeMockApi(path: string, init: RequestInit): unknown {
       category: "auth_security",
       metadata: { mode: "mock" },
       summary: "디자이너 프리뷰 로그인",
-      targetId: state.currentUser.id,
-      targetType: "user",
-    });
-    persistMockState();
-    return { user: state.currentUser } satisfies AuthResponse;
-  }
-
-  if (url.pathname === "/auth/register" && method === "POST") {
-    const payload = readJsonBody<{ displayName?: string; email?: string }>(init);
-    const state = getMockState();
-    state.currentUser = {
-      ...state.currentUser,
-      displayName: payload.displayName?.trim() || state.currentUser.displayName,
-      email: payload.email?.trim() || state.currentUser.email,
-    };
-    state.isAuthenticated = true;
-    recordAuditLog({
-      action: "register",
-      category: "auth_security",
-      metadata: { mode: "mock" },
-      summary: "디자이너 프리뷰 계정 생성",
       targetId: state.currentUser.id,
       targetType: "user",
     });
@@ -1633,6 +1772,71 @@ function compareSoldAtDesc(left: Receipt, right: Receipt) {
   return Date.parse(right.soldAt) - Date.parse(left.soldAt);
 }
 
+function assertMockAdmin() {
+  const state = getMockState();
+
+  if (!state.isAuthenticated) {
+    throw unauthorized("Authentication is required.");
+  }
+
+  if (state.currentUser.role !== "admin") {
+    throw forbidden("Only admins can manage invitations.");
+  }
+}
+
+function createMockInviteUrl(invitationId: string): string {
+  const origin =
+    typeof window === "undefined"
+      ? "http://localhost:3002"
+      : window.location.origin;
+  const url = new URL("/join", origin);
+  url.searchParams.set("token", `${"x".repeat(48)}.${invitationId}`);
+
+  return url.toString();
+}
+
+function findActiveMockInvitation(token: string | undefined): Invitation {
+  const invitationId = token?.split(".").at(-1);
+  const invitation = getMockState().signupInvitations.find(
+    (candidate) => candidate.id === invitationId,
+  );
+
+  if (!invitation || getMockInvitationStatus(invitation) !== "pending") {
+    throw badRequest("Invitation is invalid or expired.");
+  }
+
+  return invitation;
+}
+
+function getMockInvitationStatus(
+  invitation: Invitation,
+): Invitation["status"] {
+  if (invitation.usedAt) {
+    return "accepted";
+  }
+
+  if (invitation.revokedAt) {
+    return "revoked";
+  }
+
+  if (Date.parse(invitation.expiresAt) <= Date.now()) {
+    return "expired";
+  }
+
+  return "pending";
+}
+
+function maskMockEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  if (!localPart || !domain) {
+    return "***";
+  }
+
+  const visible = localPart.slice(0, Math.min(2, localPart.length));
+
+  return `${visible}${"*".repeat(Math.max(3, localPart.length - visible.length))}@${domain}`;
+}
+
 function notFound(message: string): MockApiError {
   return new MockApiError(404, message, { message, statusCode: 404 });
 }
@@ -1643,4 +1847,12 @@ function badRequest(message: string): MockApiError {
 
 function unauthorized(message: string): MockApiError {
   return new MockApiError(401, message, { message, statusCode: 401 });
+}
+
+function forbidden(message: string): MockApiError {
+  return new MockApiError(403, message, { message, statusCode: 403 });
+}
+
+function conflict(message: string): MockApiError {
+  return new MockApiError(409, message, { message, statusCode: 409 });
 }

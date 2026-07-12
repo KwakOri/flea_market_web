@@ -1,6 +1,7 @@
 import type { AuditLog } from "@/services/audit-logs.service";
 import type { AuthUser } from "@/services/auth.service";
 import type { Market } from "@/services/markets.service";
+import type { Invitation } from "@/services/invitations.service";
 import type { Participant } from "@/services/participants.service";
 import type { Product } from "@/services/products.service";
 import type { Receipt } from "@/services/receipts.service";
@@ -26,6 +27,7 @@ export type MockDbState = {
   counters: Record<string, number>;
   currentUser: AuthUser;
   isAuthenticated: boolean;
+  signupInvitations: Invitation[];
   globalSettlementSettings: SettlementDefaultSettings;
   marketParticipants: Participant[];
   marketSettlementSettings: SettlementDefaultSettings[];
@@ -100,6 +102,7 @@ function createInitialState(): MockDbState {
     },
     currentUser: cloneMockData(mockUser),
     isAuthenticated: true,
+    signupInvitations: [],
     globalSettlementSettings: cloneMockData(mockGlobalSettlementSettings),
     marketParticipants: cloneMockData(mockMarketParticipants),
     marketSettlementSettings: cloneMockData(mockMarketSettlementSettings),
@@ -128,6 +131,7 @@ function loadStoredState(): MockDbState | null {
     return {
       ...storedState,
       isAuthenticated: storedState.isAuthenticated ?? true,
+      signupInvitations: storedState.signupInvitations ?? [],
     };
   } catch {
     return null;

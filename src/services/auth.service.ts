@@ -19,10 +19,6 @@ export type LoginPayload = {
   password: string;
 };
 
-export type RegisterPayload = LoginPayload & {
-  displayName: string;
-};
-
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const response = await apiRequest<AuthResponse>("/auth/me");
@@ -38,15 +34,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
   return apiRequest<AuthResponse>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function register(
-  payload: RegisterPayload,
-): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });

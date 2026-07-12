@@ -210,7 +210,11 @@ export function DashboardClient({
         )}
 
         {view === "settings" && (
-          <SettingsScreen enabled={Boolean(user)} onSaved={showToast} />
+          <SettingsScreen
+            enabled={Boolean(user)}
+            isAdmin={user.role === "admin"}
+            onSaved={showToast}
+          />
         )}
 
         {view === "management" && (
