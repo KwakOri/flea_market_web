@@ -51,6 +51,7 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
     try {
       const invitation = await createInvitation.mutateAsync(email);
       setCreatedInvitation(invitation);
+      setMessage(getDeliveryMessage(invitation.deliveryStatus));
       form.reset();
     } catch (error) {
       setMessage(getErrorMessage(error));
@@ -201,4 +202,18 @@ function formatDateTime(value: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function getDeliveryMessage(
+  status: CreatedInvitation["deliveryStatus"],
+): string {
+  if (status === "sent") {
+    return "초대 메일을 발송했습니다.";
+  }
+
+  if (status === "failed") {
+    return "메일 발송에 실패했습니다. 아래 링크를 직접 전달해주세요.";
+  }
+
+  return "메일 발송이 설정되지 않았습니다. 아래 링크를 직접 전달해주세요.";
 }

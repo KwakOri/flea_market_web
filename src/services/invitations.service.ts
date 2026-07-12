@@ -2,6 +2,7 @@ import { apiRequest } from "./api-client";
 import type { AuthResponse } from "./auth.service";
 
 export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
+export type MailDeliveryStatus = "sent" | "failed" | "skipped";
 
 export type Invitation = {
   id: string;
@@ -17,6 +18,7 @@ export type Invitation = {
 
 export type CreatedInvitation = Invitation & {
   inviteUrl: string;
+  deliveryStatus: MailDeliveryStatus;
 };
 
 export type InvitationValidation = {

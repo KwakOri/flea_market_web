@@ -217,6 +217,7 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     return {
       ...invitation,
       inviteUrl: createMockInviteUrl(id),
+      deliveryStatus: "sent",
     } satisfies CreatedInvitation;
   }
 
