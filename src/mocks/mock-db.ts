@@ -25,6 +25,7 @@ export type MockDbState = {
   auditLogs: AuditLog[];
   counters: Record<string, number>;
   currentUser: AuthUser;
+  isAuthenticated: boolean;
   globalSettlementSettings: SettlementDefaultSettings;
   marketParticipants: Participant[];
   marketSettlementSettings: SettlementDefaultSettings[];
@@ -98,6 +99,7 @@ function createInitialState(): MockDbState {
       setting: 1000,
     },
     currentUser: cloneMockData(mockUser),
+    isAuthenticated: true,
     globalSettlementSettings: cloneMockData(mockGlobalSettlementSettings),
     marketParticipants: cloneMockData(mockMarketParticipants),
     marketSettlementSettings: cloneMockData(mockMarketSettlementSettings),
@@ -121,7 +123,12 @@ function loadStoredState(): MockDbState | null {
       return null;
     }
 
-    return JSON.parse(rawValue) as MockDbState;
+    const storedState = JSON.parse(rawValue) as MockDbState;
+
+    return {
+      ...storedState,
+      isAuthenticated: storedState.isAuthenticated ?? true,
+    };
   } catch {
     return null;
   }

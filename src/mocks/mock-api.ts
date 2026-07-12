@@ -40,6 +40,7 @@ import type {
   SettlementListItem,
   SettlementParticipantSnapshot,
 } from "@/services/settlements.service";
+import { ApiError } from "@/services/api-client";
 import {
   cloneMockData,
   createMockId,
@@ -62,13 +63,13 @@ type ParticipantSettlementPreviewWithMarket = ParticipantSettlementPreview & {
   marketProfitAmount: number;
 };
 
-export class MockApiError extends Error {
+export class MockApiError extends ApiError {
   constructor(
     readonly status: number,
     message: string,
     readonly body: { message: string; statusCode: number },
   ) {
-    super(message);
+    super(message, status, body);
   }
 }
 
@@ -140,20 +141,28 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (url.pathname === "/auth/me" && method === "GET") {
-    return { user: getMockState().currentUser } satisfies AuthResponse;
+    const state = getMockState();
+
+    if (!state.isAuthenticated) {
+      throw unauthorized("Authentication is required.");
+    }
+
+    return { user: state.currentUser } satisfies AuthResponse;
   }
 
   if (url.pathname === "/auth/login" && method === "POST") {
+    const state = getMockState();
+    state.isAuthenticated = true;
     recordAuditLog({
       action: "login",
       category: "auth_security",
       metadata: { mode: "mock" },
       summary: "디자이너 프리뷰 로그인",
-      targetId: getMockState().currentUser.id,
+      targetId: state.currentUser.id,
       targetType: "user",
     });
     persistMockState();
-    return { user: getMockState().currentUser } satisfies AuthResponse;
+    return { user: state.currentUser } satisfies AuthResponse;
   }
 
   if (url.pathname === "/auth/register" && method === "POST") {
@@ -164,6 +173,7 @@ function routeMockApi(path: string, init: RequestInit): unknown {
       displayName: payload.displayName?.trim() || state.currentUser.displayName,
       email: payload.email?.trim() || state.currentUser.email,
     };
+    state.isAuthenticated = true;
     recordAuditLog({
       action: "register",
       category: "auth_security",
@@ -177,14 +187,16 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (url.pathname === "/auth/logout" && method === "POST") {
+    const state = getMockState();
     recordAuditLog({
       action: "logout",
       category: "auth_security",
       metadata: { mode: "mock" },
       summary: "디자이너 프리뷰 로그아웃",
-      targetId: getMockState().currentUser.id,
+      targetId: state.currentUser.id,
       targetType: "user",
     });
+    state.isAuthenticated = false;
     persistMockState();
     return { ok: true };
   }
@@ -1627,4 +1639,8 @@ function notFound(message: string): MockApiError {
 
 function badRequest(message: string): MockApiError {
   return new MockApiError(400, message, { message, statusCode: 400 });
+}
+
+function unauthorized(message: string): MockApiError {
+  return new MockApiError(401, message, { message, statusCode: 401 });
 }
