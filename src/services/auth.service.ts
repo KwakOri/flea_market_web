@@ -1,11 +1,14 @@
 import { ApiError, apiRequest } from "./api-client";
 
+export type UserRole = "user" | "seller" | "admin";
+export type InvitableUserRole = Extract<UserRole, "user" | "seller">;
+
 export type AuthUser = {
   id: string;
   email: string;
   displayName: string;
   avatarUrl: string | null;
-  role: "user" | "admin";
+  role: UserRole;
   status: "pending_email_verification" | "active" | "disabled";
   emailVerifiedAt: string | null;
 };

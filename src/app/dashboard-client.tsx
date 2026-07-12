@@ -34,6 +34,7 @@ import { MarketParticipantDialogController } from "@/features/participants/compo
 import { ReceiptLookupScreen } from "@/features/receipts/components/receipt-lookup-screen";
 import { SalesMatrixScreen } from "@/features/receipts/components/sales-matrix-screen";
 import { SettlementScreen } from "@/features/settlements/components/settlement-screen";
+import { UserManagementScreen } from "@/features/users/components/user-management-screen";
 import { settlementStatusLabels } from "@/features/settlements/lib/settlement-display";
 import { formatDateRange } from "@/lib/date-format";
 import { formatWon } from "@/lib/money";
@@ -96,8 +97,16 @@ export function DashboardClient({
     [markets.data, selectedMarketId],
   );
   const marketSummaryItems = [
-    { accent: false, label: "BOOTHS", value: String(participants.data?.length ?? 0) },
-    { accent: false, label: "RECEIPTS", value: String(receipts.data?.length ?? 0) },
+    {
+      accent: false,
+      label: "BOOTHS",
+      value: String(participants.data?.length ?? 0),
+    },
+    {
+      accent: false,
+      label: "RECEIPTS",
+      value: String(receipts.data?.length ?? 0),
+    },
     {
       accent: false,
       label: "총매출",
@@ -204,91 +213,91 @@ export function DashboardClient({
       }}
       onLogout={handleLogout}
     >
+      {view === "home" && <HomeView />}
 
-        {view === "home" && (
-          <HomeView />
-        )}
+      {view === "settings" && (
+        <SettingsScreen enabled={Boolean(user)} onSaved={showToast} />
+      )}
 
-        {view === "settings" && (
-          <SettingsScreen
-            enabled={Boolean(user)}
-            isAdmin={user.role === "admin"}
-            onSaved={showToast}
-          />
-        )}
+      {view === "users" && (
+        <UserManagementScreen
+          enabled={Boolean(user)}
+          isAdmin={user.role === "admin"}
+        />
+      )}
 
-        {view === "management" && (
-          <MarketManagementScreen
-            enabled={Boolean(user)}
-            marketId={marketId ?? null}
-            onSaved={showToast}
-          />
-        )}
+      {view === "management" && (
+        <MarketManagementScreen
+          enabled={Boolean(user)}
+          marketId={marketId ?? null}
+          onSaved={showToast}
+        />
+      )}
 
-        {view === "boothMasters" && (
-          <BoothMasterManagementScreen enabled={Boolean(user)} />
-        )}
+      {view === "boothMasters" && (
+        <BoothMasterManagementScreen enabled={Boolean(user)} />
+      )}
 
-        {view === "booths" && (
-          <BoothProductManagementScreen
-            market={selectedMarket}
-            marketId={selectedMarketId}
-          />
-        )}
-
-        {view === "feeStatus" && (
-          <FeeStatusScreen
-            marketId={selectedMarketId}
-            onEditParticipant={openParticipantSettingsDialog}
-          />
-        )}
-
-        {(view === "salesMatrix" || view === "receiptEdit") && (
-          <SalesMatrixScreen
-            market={selectedMarket}
-            marketId={selectedMarketId}
-            mode={view === "receiptEdit" ? "edit" : "create"}
-            onSaved={showToast}
-            receiptId={receiptId ?? null}
-          />
-        )}
-
-        {view === "receiptLookup" && (
-          <ReceiptLookupScreen
-            market={selectedMarket}
-            marketId={selectedMarketId}
-            onSaved={showToast}
-          />
-        )}
-
-        {view === "settlements" && (
-          <SettlementScreen
-            market={selectedMarket}
-            marketId={selectedMarketId}
-            selectedParticipantId={settlementParticipantId ?? null}
-            onSaved={showToast}
-          />
-        )}
-
-        {view === "logs" && (
-          <AuditLogScreen
-            key={selectedMarketId ?? "all"}
-            markets={markets.data ?? []}
-            selectedMarket={selectedMarket}
-            selectedMarketId={selectedMarketId}
-          />
-        )}
-        <MarketParticipantDialogController
-          enabled={Boolean(user && selectedMarketId)}
+      {view === "booths" && (
+        <BoothProductManagementScreen
+          market={selectedMarket}
           marketId={selectedMarketId}
-          marketName={selectedMarket?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
         />
-        <DashboardToast
-          toast={toast}
-          onDismiss={() => {
-            setToast(null);
-          }}
+      )}
+
+      {view === "feeStatus" && (
+        <FeeStatusScreen
+          marketId={selectedMarketId}
+          onEditParticipant={openParticipantSettingsDialog}
         />
+      )}
+
+      {(view === "salesMatrix" || view === "receiptEdit") && (
+        <SalesMatrixScreen
+          market={selectedMarket}
+          marketId={selectedMarketId}
+          mode={view === "receiptEdit" ? "edit" : "create"}
+          onSaved={showToast}
+          receiptId={receiptId ?? null}
+        />
+      )}
+
+      {view === "receiptLookup" && (
+        <ReceiptLookupScreen
+          market={selectedMarket}
+          marketId={selectedMarketId}
+          onSaved={showToast}
+        />
+      )}
+
+      {view === "settlements" && (
+        <SettlementScreen
+          market={selectedMarket}
+          marketId={selectedMarketId}
+          selectedParticipantId={settlementParticipantId ?? null}
+          onSaved={showToast}
+        />
+      )}
+
+      {view === "logs" && (
+        <AuditLogScreen
+          key={selectedMarketId ?? "all"}
+          markets={markets.data ?? []}
+          selectedMarket={selectedMarket}
+          selectedMarketId={selectedMarketId}
+        />
+      )}
+      <MarketParticipantDialogController
+        enabled={Boolean(user && selectedMarketId)}
+        marketId={selectedMarketId}
+        marketName={selectedMarket?.name ?? FLEA_MARKET_UNSELECTED_LABEL}
+      />
+      <DashboardToast
+        toast={toast}
+        onDismiss={() => {
+          setToast(null);
+        }}
+      />
     </DashboardShell>
   );
 }

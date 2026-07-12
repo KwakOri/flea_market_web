@@ -7,6 +7,7 @@ import {
 export type DashboardView =
   | "home"
   | "settings"
+  | "users"
   | "management"
   | "boothMasters"
   | "booths"
@@ -26,6 +27,7 @@ export type DashboardSummaryItem = {
 export const dashboardViewLabels: Record<DashboardView, string> = {
   home: "관리 홈",
   settings: "설정",
+  users: "사용자 관리",
   management: FLEA_MARKET_MANAGE_LABEL,
   boothMasters: SELLER_MANAGE_LABEL,
   booths: `${PARTICIPATING_SELLER} 관리`,

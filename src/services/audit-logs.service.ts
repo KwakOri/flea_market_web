@@ -1,4 +1,5 @@
 import { apiRequest } from "./api-client";
+import type { UserRole } from "./auth.service";
 
 export type AuditLogCategory =
   | "auth_security"
@@ -32,7 +33,7 @@ export type AuditLog = {
   occurredAt: string;
   actorUserId: string | null;
   actorDisplayName: string | null;
-  actorRole: "user" | "admin" | null;
+  actorRole: UserRole | null;
   category: AuditLogCategory;
   action: AuditLogAction;
   result: AuditLogResult;

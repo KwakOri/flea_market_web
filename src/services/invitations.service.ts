@@ -1,5 +1,5 @@
 import { apiRequest } from "./api-client";
-import type { AuthResponse } from "./auth.service";
+import type { AuthResponse, InvitableUserRole } from "./auth.service";
 
 export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
 export type MailDeliveryStatus = "sent" | "failed" | "skipped";
@@ -7,6 +7,7 @@ export type MailDeliveryStatus = "sent" | "failed" | "skipped";
 export type Invitation = {
   id: string;
   email: string;
+  role: InvitableUserRole;
   status: InvitationStatus;
   expiresAt: string;
   usedAt: string | null;
@@ -32,14 +33,21 @@ export type AcceptInvitationPayload = {
   token: string;
 };
 
+export type CreateInvitationPayload = {
+  email: string;
+  role: InvitableUserRole;
+};
+
 export function listInvitations(): Promise<Invitation[]> {
   return apiRequest<Invitation[]>("/auth/invitations");
 }
 
-export function createInvitation(email: string): Promise<CreatedInvitation> {
+export function createInvitation(
+  payload: CreateInvitationPayload,
+): Promise<CreatedInvitation> {
   return apiRequest<CreatedInvitation>("/auth/invitations", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(payload),
   });
 }
 

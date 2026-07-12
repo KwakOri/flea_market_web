@@ -12,6 +12,7 @@ import {
   buttonVariants,
   inputClass,
   panelVariants,
+  selectClass,
   sectionDescriptionClass,
   sectionHeaderClass,
   sectionTitleClass,
@@ -21,6 +22,8 @@ import type {
   CreatedInvitation,
   InvitationStatus,
 } from "@/services/invitations.service";
+import type { InvitableUserRole } from "@/services/auth.service";
+import { invitableUserRoles, userRoleLabels } from "@/lib/user-role";
 
 const invitationStatusLabels: Record<InvitationStatus, string> = {
   pending: "대기",
@@ -42,14 +45,16 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
     setMessage(null);
 
     const form = event.currentTarget;
-    const email = getFormString(new FormData(form), "email").trim();
+    const formData = new FormData(form);
+    const email = getFormString(formData, "email").trim();
+    const role = getInvitableUserRole(formData.get("role"));
     if (!email) {
       setMessage("초대할 이메일을 입력해주세요.");
       return;
     }
 
     try {
-      const invitation = await createInvitation.mutateAsync(email);
+      const invitation = await createInvitation.mutateAsync({ email, role });
       setCreatedInvitation(invitation);
       setMessage(getDeliveryMessage(invitation.deliveryStatus));
       form.reset();
@@ -90,13 +95,13 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
       <div className={sectionHeaderClass}>
         <p className={sectionTitleClass}>계정 초대</p>
         <p className={sectionDescriptionClass}>
-          가입 링크를 발급한 뒤 이메일이나 카카오톡으로 전달하세요. 링크는
-          72시간 동안 한 번만 사용할 수 있습니다.
+          역할을 지정해 가입 링크를 발급합니다. 링크는 72시간 동안 한 번만
+          사용할 수 있습니다.
         </p>
       </div>
 
       <form
-        className="grid gap-3 border-b border-hairline p-5 sm:grid-cols-[minmax(0,1fr)_auto]"
+        className="grid gap-3 border-b border-hairline p-5 sm:grid-cols-[minmax(0,1fr)_160px_auto]"
         onSubmit={handleCreate}
       >
         <input
@@ -106,6 +111,18 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
           placeholder="seller@example.com"
           type="email"
         />
+        <select
+          aria-label="초대 역할"
+          className={selectClass}
+          defaultValue="user"
+          name="role"
+        >
+          {invitableUserRoles.map((role) => (
+            <option key={role.value} value={role.value}>
+              {role.label}
+            </option>
+          ))}
+        </select>
         <button
           className={buttonVariants()}
           disabled={createInvitation.isPending}
@@ -166,6 +183,7 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
                     {invitation.email}
                   </p>
                   <p className="mt-1 text-xs text-muted">
+                    {userRoleLabels[invitation.role]} ·{" "}
                     {invitationStatusLabels[invitation.status]} · 만료{" "}
                     {formatDateTime(invitation.expiresAt)}
                   </p>
@@ -195,6 +213,12 @@ export function InvitationManagement({ enabled }: { enabled: boolean }) {
 function getFormString(formData: FormData, name: string): string {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
+}
+
+function getInvitableUserRole(
+  value: FormDataEntryValue | null,
+): InvitableUserRole {
+  return value === "seller" ? "seller" : "user";
 }
 
 function formatDateTime(value: string): string {

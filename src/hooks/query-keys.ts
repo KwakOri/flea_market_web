@@ -9,6 +9,10 @@ export const invitationKeys = {
     ["auth", "invitation-validation", token] as const,
 };
 
+export const userKeys = {
+  all: ["users"] as const,
+};
+
 export const healthKeys = {
   status: ["health", "status"] as const,
 };

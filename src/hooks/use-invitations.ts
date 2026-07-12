@@ -10,6 +10,7 @@ import {
   revokeInvitation,
   validateInvitation,
   type AcceptInvitationPayload,
+  type CreateInvitationPayload,
 } from "@/services/invitations.service";
 
 export function useInvitations(enabled: boolean) {
@@ -34,7 +35,7 @@ export function useCreateInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createInvitation,
+    mutationFn: (payload: CreateInvitationPayload) => createInvitation(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: invitationKeys.all });
     },
