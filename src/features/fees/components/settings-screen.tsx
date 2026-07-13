@@ -38,14 +38,16 @@ export function SettingsScreen({
   }
 
   return (
-    <SettingsView
-      defaultValues={globalFeeSettings.data}
-      disabled={
-        globalFeeSettings.isLoading || updateGlobalFeeSettings.isPending
-      }
-      message={message}
-      submitLabel={updateGlobalFeeSettings.isPending ? "저장 중" : "저장"}
-      onSubmit={handleUpdateGlobalFeeSettings}
-    />
+    <div className="grid gap-5">
+      <SettingsView
+        defaultValues={globalFeeSettings.data}
+        disabled={
+          globalFeeSettings.isLoading || updateGlobalFeeSettings.isPending
+        }
+        message={message}
+        submitLabel={updateGlobalFeeSettings.isPending ? "저장 중" : "저장"}
+        onSubmit={handleUpdateGlobalFeeSettings}
+      />
+    </div>
   );
 }

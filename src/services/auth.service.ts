@@ -1,11 +1,14 @@
 import { ApiError, apiRequest } from "./api-client";
 
+export type UserRole = "user" | "seller" | "admin";
+export type InvitableUserRole = Extract<UserRole, "user" | "seller">;
+
 export type AuthUser = {
   id: string;
   email: string;
   displayName: string;
   avatarUrl: string | null;
-  role: "user" | "admin";
+  role: UserRole;
   status: "pending_email_verification" | "active" | "disabled";
   emailVerifiedAt: string | null;
 };
@@ -17,10 +20,6 @@ export type AuthResponse = {
 export type LoginPayload = {
   email: string;
   password: string;
-};
-
-export type RegisterPayload = LoginPayload & {
-  displayName: string;
 };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -38,15 +37,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
   return apiRequest<AuthResponse>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function register(
-  payload: RegisterPayload,
-): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });

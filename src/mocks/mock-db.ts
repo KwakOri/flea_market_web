@@ -1,11 +1,13 @@
 import type { AuditLog } from "@/services/audit-logs.service";
 import type { AuthUser } from "@/services/auth.service";
 import type { Market } from "@/services/markets.service";
+import type { Invitation } from "@/services/invitations.service";
 import type { Participant } from "@/services/participants.service";
 import type { Product } from "@/services/products.service";
 import type { Receipt } from "@/services/receipts.service";
 import type { SettlementDefaultSettings } from "@/services/settlement-settings.service";
 import type { Settlement } from "@/services/settlements.service";
+import type { ManagedUser } from "@/services/users.service";
 import {
   mockAuditLogs,
   mockGlobalSettlementSettings,
@@ -25,6 +27,9 @@ export type MockDbState = {
   auditLogs: AuditLog[];
   counters: Record<string, number>;
   currentUser: AuthUser;
+  isAuthenticated: boolean;
+  managedUsers: ManagedUser[];
+  signupInvitations: Invitation[];
   globalSettlementSettings: SettlementDefaultSettings;
   marketParticipants: Participant[];
   marketSettlementSettings: SettlementDefaultSettings[];
@@ -98,6 +103,9 @@ function createInitialState(): MockDbState {
       setting: 1000,
     },
     currentUser: cloneMockData(mockUser),
+    isAuthenticated: true,
+    managedUsers: [createMockManagedUser(mockUser)],
+    signupInvitations: [],
     globalSettlementSettings: cloneMockData(mockGlobalSettlementSettings),
     marketParticipants: cloneMockData(mockMarketParticipants),
     marketSettlementSettings: cloneMockData(mockMarketSettlementSettings),
@@ -121,10 +129,37 @@ function loadStoredState(): MockDbState | null {
       return null;
     }
 
-    return JSON.parse(rawValue) as MockDbState;
+    const storedState = JSON.parse(rawValue) as MockDbState;
+
+    return {
+      ...storedState,
+      isAuthenticated: storedState.isAuthenticated ?? true,
+      managedUsers: storedState.managedUsers ?? [
+        createMockManagedUser(storedState.currentUser),
+      ],
+      signupInvitations: (storedState.signupInvitations ?? []).map(
+        (invitation) => ({
+          ...invitation,
+          role: invitation.role ?? "user",
+        }),
+      ),
+    };
   } catch {
     return null;
   }
+}
+
+function createMockManagedUser(user: AuthUser): ManagedUser {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    status: user.status,
+    emailVerifiedAt: user.emailVerifiedAt,
+    lastLoginAt: null,
+    createdAt: "2026-05-01T09:00:00.000+09:00",
+  };
 }
 
 function shouldPersistToLocalStorage(): boolean {

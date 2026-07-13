@@ -2,6 +2,17 @@ export const authKeys = {
   me: ["auth", "me"] as const,
 };
 
+export const invitationKeys = {
+  all: ["auth", "invitations"] as const,
+  validations: ["auth", "invitation-validation"] as const,
+  validation: (token: string) =>
+    ["auth", "invitation-validation", token] as const,
+};
+
+export const userKeys = {
+  all: ["users"] as const,
+};
+
 export const healthKeys = {
   status: ["health", "status"] as const,
 };
@@ -36,7 +47,8 @@ export const receiptKeys = {
   marketLists: ["receipts", "by-market"] as const,
   byMarket: (marketId: string | null) =>
     ["receipts", "by-market", marketId] as const,
-  detail: (receiptId: string | null) => ["receipts", "detail", receiptId] as const,
+  detail: (receiptId: string | null) =>
+    ["receipts", "detail", receiptId] as const,
 };
 
 export const settlementPreviewKeys = {

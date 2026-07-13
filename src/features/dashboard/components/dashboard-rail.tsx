@@ -13,6 +13,7 @@ import {
   Settings,
   Store,
   type LucideIcon,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
@@ -38,7 +39,12 @@ const dashboardTabs: Array<{
     segment: "management",
     view: "management",
   },
-  { icon: Users, label: PARTICIPATING_SELLER, segment: "booths", view: "booths" },
+  {
+    icon: Users,
+    label: PARTICIPATING_SELLER,
+    segment: "booths",
+    view: "booths",
+  },
   {
     icon: ClipboardList,
     label: "영수증 입력",
@@ -52,7 +58,12 @@ const dashboardTabs: Array<{
     view: "receiptLookup",
   },
   { icon: Percent, label: "수수료 정책", segment: "fees", view: "feeStatus" },
-  { icon: BarChart3, label: "정산", segment: "settlements", view: "settlements" },
+  {
+    icon: BarChart3,
+    label: "정산",
+    segment: "settlements",
+    view: "settlements",
+  },
   { icon: FileClock, label: "로그", segment: "logs", view: "logs" },
 ];
 
@@ -60,10 +71,28 @@ const workspaceTabs: Array<{
   href: string;
   icon: LucideIcon;
   label: string;
+  adminOnly?: boolean;
   view: DashboardView;
 }> = [
-  { href: "/markets", icon: Store, label: FLEA_MARKET_MANAGE_LABEL, view: "management" },
-  { href: "/booths", icon: Users, label: SELLER_MANAGE_LABEL, view: "boothMasters" },
+  {
+    href: "/markets",
+    icon: Store,
+    label: FLEA_MARKET_MANAGE_LABEL,
+    view: "management",
+  },
+  {
+    href: "/booths",
+    icon: Users,
+    label: SELLER_MANAGE_LABEL,
+    view: "boothMasters",
+  },
+  {
+    href: "/users",
+    icon: UserCog,
+    label: "사용자 관리",
+    adminOnly: true,
+    view: "users",
+  },
   { href: "/settings", icon: Settings, label: "설정", view: "settings" },
 ];
 
@@ -84,7 +113,7 @@ export function DashboardRail({
   const openRail = useDashboardUiStore((state) => state.openRail);
   const closeRail = useDashboardUiStore((state) => state.closeRail);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navItems = getDashboardNavItems(marketId);
+  const navItems = getDashboardNavItems(marketId, user);
   const activeView = view === "receiptEdit" ? "receiptLookup" : view;
   const activeItem = navItems.find((item) => item.view === activeView);
 
@@ -267,14 +296,16 @@ export function DashboardRail({
   );
 }
 
-function getDashboardNavItems(marketId: string | null) {
+function getDashboardNavItems(marketId: string | null, user: AuthUser) {
   if (!marketId) {
-    return workspaceTabs.map((tab) => ({
-      href: tab.href,
-      icon: tab.icon,
-      label: tab.label,
-      view: tab.view,
-    }));
+    return workspaceTabs
+      .filter((tab) => !tab.adminOnly || user.role === "admin")
+      .map((tab) => ({
+        href: tab.href,
+        icon: tab.icon,
+        label: tab.label,
+        view: tab.view,
+      }));
   }
 
   return dashboardTabs.map((tab) => ({

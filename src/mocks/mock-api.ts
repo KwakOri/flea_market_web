@@ -6,7 +6,12 @@ import type {
   AuditLogListResponse,
   AuditLogResult,
 } from "@/services/audit-logs.service";
-import type { AuthResponse } from "@/services/auth.service";
+import type { AuthResponse, InvitableUserRole } from "@/services/auth.service";
+import type {
+  CreatedInvitation,
+  Invitation,
+  InvitationValidation,
+} from "@/services/invitations.service";
 import type {
   CreateMarketPayload,
   Market,
@@ -40,6 +45,8 @@ import type {
   SettlementListItem,
   SettlementParticipantSnapshot,
 } from "@/services/settlements.service";
+import type { ManagedUser } from "@/services/users.service";
+import { ApiError } from "@/services/api-client";
 import {
   cloneMockData,
   createMockId,
@@ -62,13 +69,13 @@ type ParticipantSettlementPreviewWithMarket = ParticipantSettlementPreview & {
   marketProfitAmount: number;
 };
 
-export class MockApiError extends Error {
+export class MockApiError extends ApiError {
   constructor(
     readonly status: number,
     message: string,
     readonly body: { message: string; statusCode: number },
   ) {
-    super(message);
+    super(message, status, body);
   }
 }
 
@@ -140,35 +147,198 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (url.pathname === "/auth/me" && method === "GET") {
-    return { user: getMockState().currentUser } satisfies AuthResponse;
+    const state = getMockState();
+
+    if (!state.isAuthenticated) {
+      throw unauthorized("Authentication is required.");
+    }
+
+    return { user: state.currentUser } satisfies AuthResponse;
+  }
+
+  if (url.pathname === "/auth/invitations" && method === "GET") {
+    const state = getMockState();
+    assertMockAdmin();
+
+    state.signupInvitations = state.signupInvitations.map((invitation) => ({
+      ...invitation,
+      status: getMockInvitationStatus(invitation),
+    }));
+
+    return [...state.signupInvitations].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt),
+    );
+  }
+
+  if (url.pathname === "/auth/invitations" && method === "POST") {
+    assertMockAdmin();
+    const payload = readJsonBody<{
+      email?: string;
+      role?: InvitableUserRole;
+    }>(init);
+    const email = payload.email?.trim().toLowerCase();
+    const role = payload.role;
+
+    if (!email || !email.includes("@") || !isInvitableUserRole(role)) {
+      throw badRequest("A valid email and role are required.");
+    }
+
+    const state = getMockState();
+    if (
+      state.managedUsers.some(
+        (managedUser) => managedUser.email.toLowerCase() === email,
+      )
+    ) {
+      throw conflict("Email is already registered.");
+    }
+
+    const now = nowIsoString();
+    state.signupInvitations = state.signupInvitations.map((invitation) =>
+      invitation.email.toLowerCase() === email &&
+      getMockInvitationStatus(invitation) === "pending"
+        ? { ...invitation, revokedAt: now, status: "revoked" }
+        : invitation,
+    );
+
+    const id = createMockId("invitation");
+    const invitation: Invitation = {
+      id,
+      email,
+      role,
+      status: "pending",
+      expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+      usedAt: null,
+      revokedAt: null,
+      createdAt: now,
+      createdByUserId: state.currentUser.id,
+      acceptedByUserId: null,
+    };
+    state.signupInvitations.unshift(invitation);
+    recordAuditLog({
+      action: "create",
+      category: "auth_security",
+      metadata: { email, mode: "mock", role },
+      summary: `계정 ${email} 초대 발급`,
+      targetId: id,
+      targetType: "signup_invitation",
+    });
+    persistMockState();
+
+    return {
+      ...invitation,
+      inviteUrl: createMockInviteUrl(id),
+      deliveryStatus: "sent",
+    } satisfies CreatedInvitation;
+  }
+
+  if (url.pathname === "/auth/invitations/validate" && method === "POST") {
+    const payload = readJsonBody<{ token?: string }>(init);
+    const invitation = findActiveMockInvitation(payload.token);
+
+    return {
+      emailHint: maskMockEmail(invitation.email),
+      expiresAt: invitation.expiresAt,
+    } satisfies InvitationValidation;
+  }
+
+  if (url.pathname === "/auth/invitations/accept" && method === "POST") {
+    const payload = readJsonBody<{
+      displayName?: string;
+      password?: string;
+      token?: string;
+    }>(init);
+    const invitation = findActiveMockInvitation(payload.token);
+    const displayName = payload.displayName?.trim();
+
+    if (!displayName || !payload.password || payload.password.length < 8) {
+      throw badRequest(
+        "Name and a password of at least 8 characters are required.",
+      );
+    }
+
+    const state = getMockState();
+    const acceptedAt = nowIsoString();
+    const userId = createMockId("user");
+    invitation.status = "accepted";
+    invitation.usedAt = acceptedAt;
+    invitation.acceptedByUserId = userId;
+    state.currentUser = {
+      id: userId,
+      email: invitation.email,
+      displayName,
+      avatarUrl: null,
+      role: invitation.role,
+      status: "active",
+      emailVerifiedAt: acceptedAt,
+    };
+    state.isAuthenticated = true;
+    state.managedUsers.unshift({
+      id: userId,
+      email: invitation.email,
+      displayName,
+      role: invitation.role,
+      status: "active",
+      emailVerifiedAt: acceptedAt,
+      lastLoginAt: null,
+      createdAt: acceptedAt,
+    });
+    recordAuditLog({
+      action: "register",
+      category: "auth_security",
+      metadata: { email: invitation.email, mode: "mock" },
+      summary: `계정 ${displayName} 초대 가입`,
+      targetId: userId,
+      targetType: "user",
+    });
+    persistMockState();
+
+    return { user: state.currentUser } satisfies AuthResponse;
+  }
+
+  const revokeInvitationMatch = url.pathname.match(
+    /^\/auth\/invitations\/([^/]+)\/revoke$/,
+  );
+
+  if (revokeInvitationMatch?.[1] && method === "POST") {
+    assertMockAdmin();
+    const state = getMockState();
+    const invitation = state.signupInvitations.find(
+      (candidate) => candidate.id === revokeInvitationMatch[1],
+    );
+
+    if (!invitation) {
+      throw notFound("Invitation not found.");
+    }
+
+    if (getMockInvitationStatus(invitation) === "accepted") {
+      throw conflict("Accepted invitation cannot be revoked.");
+    }
+
+    if (!invitation.revokedAt) {
+      invitation.revokedAt = nowIsoString();
+      invitation.status = "revoked";
+      recordAuditLog({
+        action: "update",
+        category: "auth_security",
+        metadata: { email: invitation.email, mode: "mock" },
+        summary: `계정 ${invitation.email} 초대 폐기`,
+        targetId: invitation.id,
+        targetType: "signup_invitation",
+      });
+      persistMockState();
+    }
+
+    return invitation;
   }
 
   if (url.pathname === "/auth/login" && method === "POST") {
+    const state = getMockState();
+    state.isAuthenticated = true;
     recordAuditLog({
       action: "login",
       category: "auth_security",
       metadata: { mode: "mock" },
       summary: "디자이너 프리뷰 로그인",
-      targetId: getMockState().currentUser.id,
-      targetType: "user",
-    });
-    persistMockState();
-    return { user: getMockState().currentUser } satisfies AuthResponse;
-  }
-
-  if (url.pathname === "/auth/register" && method === "POST") {
-    const payload = readJsonBody<{ displayName?: string; email?: string }>(init);
-    const state = getMockState();
-    state.currentUser = {
-      ...state.currentUser,
-      displayName: payload.displayName?.trim() || state.currentUser.displayName,
-      email: payload.email?.trim() || state.currentUser.email,
-    };
-    recordAuditLog({
-      action: "register",
-      category: "auth_security",
-      metadata: { mode: "mock" },
-      summary: "디자이너 프리뷰 계정 생성",
       targetId: state.currentUser.id,
       targetType: "user",
     });
@@ -177,16 +347,64 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (url.pathname === "/auth/logout" && method === "POST") {
+    const state = getMockState();
     recordAuditLog({
       action: "logout",
       category: "auth_security",
       metadata: { mode: "mock" },
       summary: "디자이너 프리뷰 로그아웃",
-      targetId: getMockState().currentUser.id,
+      targetId: state.currentUser.id,
+      targetType: "user",
+    });
+    state.isAuthenticated = false;
+    persistMockState();
+    return { ok: true };
+  }
+
+  if (url.pathname === "/users" && method === "GET") {
+    assertMockAdmin();
+    return [...getMockState().managedUsers].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt),
+    );
+  }
+
+  const userRoleMatch = url.pathname.match(/^\/users\/([^/]+)\/role$/);
+
+  if (userRoleMatch?.[1] && method === "PATCH") {
+    assertMockAdmin();
+    const payload = readJsonBody<{ role?: InvitableUserRole }>(init);
+    if (!isInvitableUserRole(payload.role)) {
+      throw badRequest("A valid user role is required.");
+    }
+
+    const state = getMockState();
+    const managedUser = state.managedUsers.find(
+      (candidate) => candidate.id === userRoleMatch[1],
+    );
+    if (!managedUser) {
+      throw notFound("User not found.");
+    }
+    if (managedUser.role === "admin") {
+      throw forbidden("Administrator roles cannot be changed here.");
+    }
+
+    const previousRole = managedUser.role;
+    managedUser.role = payload.role;
+    recordAuditLog({
+      action: "update",
+      category: "admin",
+      metadata: {
+        email: managedUser.email,
+        mode: "mock",
+        nextRole: managedUser.role,
+        previousRole,
+      },
+      summary: `계정 ${managedUser.email} 역할 변경`,
+      targetId: managedUser.id,
       targetType: "user",
     });
     persistMockState();
-    return { ok: true };
+    return managedUser satisfies ManagedUser;
   }
 
   if (url.pathname === "/audit-logs" && method === "GET") {
@@ -208,7 +426,10 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (marketMatch?.[1] && method === "PATCH") {
-    return updateMarket(marketMatch[1], readJsonBody<UpdateMarketPayload>(init));
+    return updateMarket(
+      marketMatch[1],
+      readJsonBody<UpdateMarketPayload>(init),
+    );
   }
 
   const marketParticipantsMatch = url.pathname.match(
@@ -216,8 +437,10 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   );
 
   if (marketParticipantsMatch?.[1] && method === "GET") {
-    return getMockState().marketParticipants
-      .filter((participant) => participant.marketId === marketParticipantsMatch[1])
+    return getMockState()
+      .marketParticipants.filter(
+        (participant) => participant.marketId === marketParticipantsMatch[1],
+      )
       .sort(compareUpdatedDesc);
   }
 
@@ -232,7 +455,11 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     /^\/markets\/([^/]+)\/participants\/([^/]+)$/,
   );
 
-  if (marketParticipantMatch?.[1] && marketParticipantMatch[2] && method === "PATCH") {
+  if (
+    marketParticipantMatch?.[1] &&
+    marketParticipantMatch[2] &&
+    method === "PATCH"
+  ) {
     return updateMarketParticipant(
       marketParticipantMatch[1],
       marketParticipantMatch[2],
@@ -240,8 +467,15 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     );
   }
 
-  if (marketParticipantMatch?.[1] && marketParticipantMatch[2] && method === "DELETE") {
-    deleteMarketParticipant(marketParticipantMatch[1], marketParticipantMatch[2]);
+  if (
+    marketParticipantMatch?.[1] &&
+    marketParticipantMatch[2] &&
+    method === "DELETE"
+  ) {
+    deleteMarketParticipant(
+      marketParticipantMatch[1],
+      marketParticipantMatch[2],
+    );
     return undefined;
   }
 
@@ -250,7 +484,9 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (url.pathname === "/participants" && method === "POST") {
-    return createParticipantMaster(readJsonBody<CreateParticipantPayload>(init));
+    return createParticipantMaster(
+      readJsonBody<CreateParticipantPayload>(init),
+    );
   }
 
   const participantProductsMatch = url.pathname.match(
@@ -258,8 +494,10 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   );
 
   if (participantProductsMatch?.[1] && method === "GET") {
-    return getMockState().products
-      .filter((product) => product.participantId === participantProductsMatch[1])
+    return getMockState()
+      .products.filter(
+        (product) => product.participantId === participantProductsMatch[1],
+      )
       .sort(compareUpdatedDesc);
   }
 
@@ -303,8 +541,8 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     marketParticipantProductsMatch[2] &&
     method === "GET"
   ) {
-    return getMockState().products
-      .filter(
+    return getMockState()
+      .products.filter(
         (product) =>
           product.marketId === marketParticipantProductsMatch[1] &&
           product.participantId === marketParticipantProductsMatch[2],
@@ -331,14 +569,19 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (productMatch?.[1] && method === "PATCH") {
-    return updateProduct(productMatch[1], readJsonBody<UpdateProductPayload>(init));
+    return updateProduct(
+      productMatch[1],
+      readJsonBody<UpdateProductPayload>(init),
+    );
   }
 
-  const marketReceiptsMatch = url.pathname.match(/^\/markets\/([^/]+)\/receipts$/);
+  const marketReceiptsMatch = url.pathname.match(
+    /^\/markets\/([^/]+)\/receipts$/,
+  );
 
   if (marketReceiptsMatch?.[1] && method === "GET") {
-    return getMockState().receipts
-      .filter((receipt) => receipt.marketId === marketReceiptsMatch[1])
+    return getMockState()
+      .receipts.filter((receipt) => receipt.marketId === marketReceiptsMatch[1])
       .sort(compareSoldAtDesc);
   }
 
@@ -356,7 +599,10 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   }
 
   if (receiptMatch?.[1] && method === "PATCH") {
-    return updateReceipt(receiptMatch[1], readJsonBody<UpdateReceiptPayload>(init));
+    return updateReceipt(
+      receiptMatch[1],
+      readJsonBody<UpdateReceiptPayload>(init),
+    );
   }
 
   if (receiptMatch?.[1] && method === "DELETE") {
@@ -402,8 +648,10 @@ function routeMockApi(path: string, init: RequestInit): unknown {
   );
 
   if (marketSettlementsMatch?.[1] && method === "GET") {
-    return getMockState().settlements
-      .filter((settlement) => settlement.marketId === marketSettlementsMatch[1])
+    return getMockState()
+      .settlements.filter(
+        (settlement) => settlement.marketId === marketSettlementsMatch[1],
+      )
       .map(toSettlementListItem)
       .sort((left, right) => right.versionNo - left.versionNo);
   }
@@ -415,10 +663,15 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     );
   }
 
-  const settlementVoidMatch = url.pathname.match(/^\/settlements\/([^/]+)\/void$/);
+  const settlementVoidMatch = url.pathname.match(
+    /^\/settlements\/([^/]+)\/void$/,
+  );
 
   if (settlementVoidMatch?.[1] && method === "POST") {
-    return voidSettlement(settlementVoidMatch[1], readJsonBody<{ memo?: string }>(init));
+    return voidSettlement(
+      settlementVoidMatch[1],
+      readJsonBody<{ memo?: string }>(init),
+    );
   }
 
   const settlementMatch = url.pathname.match(/^\/settlements\/([^/]+)$/);
@@ -467,10 +720,16 @@ function updateMarket(marketId: string, payload: UpdateMarketPayload): Market {
       payload.description !== undefined
         ? payload.description?.trim() || null
         : market.description,
-    endsOn: payload.endsOn !== undefined ? payload.endsOn || null : market.endsOn,
-    name: payload.name !== undefined ? payload.name.trim() || market.name : market.name,
+    endsOn:
+      payload.endsOn !== undefined ? payload.endsOn || null : market.endsOn,
+    name:
+      payload.name !== undefined
+        ? payload.name.trim() || market.name
+        : market.name,
     startsOn:
-      payload.startsOn !== undefined ? payload.startsOn || null : market.startsOn,
+      payload.startsOn !== undefined
+        ? payload.startsOn || null
+        : market.startsOn,
     status: payload.status ?? market.status,
     updatedAt: nowIsoString(),
   };
@@ -479,7 +738,10 @@ function updateMarket(marketId: string, payload: UpdateMarketPayload): Market {
     action: "update",
     category: "market",
     marketId,
-    metadata: { changedFields: Object.keys(payload), status: updatedMarket.status },
+    metadata: {
+      changedFields: Object.keys(payload),
+      status: updatedMarket.status,
+    },
     summary: `${FLEA_MARKET} ${updatedMarket.name} 수정`,
     targetId: marketId,
     targetType: "market",
@@ -488,7 +750,9 @@ function updateMarket(marketId: string, payload: UpdateMarketPayload): Market {
   return updatedMarket;
 }
 
-function createParticipantMaster(payload: CreateParticipantPayload): Participant {
+function createParticipantMaster(
+  payload: CreateParticipantPayload,
+): Participant {
   const state = getMockState();
   const now = nowIsoString();
   const participant: Participant = {
@@ -539,16 +803,27 @@ function updateParticipantMaster(
         ? payload.displayName.trim() || participant.displayName
         : participant.displayName,
     email:
-      payload.email !== undefined ? payload.email?.trim() || null : participant.email,
-    memo: payload.memo !== undefined ? payload.memo?.trim() || null : participant.memo,
+      payload.email !== undefined
+        ? payload.email?.trim() || null
+        : participant.email,
+    memo:
+      payload.memo !== undefined
+        ? payload.memo?.trim() || null
+        : participant.memo,
     participantType: payload.participantType ?? participant.participantType,
     phone:
-      payload.phone !== undefined ? payload.phone?.trim() || null : participant.phone,
+      payload.phone !== undefined
+        ? payload.phone?.trim() || null
+        : participant.phone,
     status: payload.status ?? participant.status,
     updatedAt: nowIsoString(),
   };
 
-  replaceById(getMockState().participantMasters, participantId, updatedParticipant);
+  replaceById(
+    getMockState().participantMasters,
+    participantId,
+    updatedParticipant,
+  );
   syncParticipantMasterFields(updatedParticipant);
   recordAuditLog({
     action: "update",
@@ -576,7 +851,8 @@ function createMarketParticipant(
     : createParticipantMaster(payload);
   const state = getMockState();
   const existing = state.marketParticipants.find(
-    (participant) => participant.marketId === marketId && participant.id === master.id,
+    (participant) =>
+      participant.marketId === marketId && participant.id === master.id,
   );
 
   if (existing) {
@@ -627,7 +903,8 @@ function updateMarketParticipant(
 ): Participant {
   const state = getMockState();
   const index = state.marketParticipants.findIndex(
-    (participant) => participant.marketId === marketId && participant.id === participantId,
+    (participant) =>
+      participant.marketId === marketId && participant.id === participantId,
   );
 
   if (index < 0) {
@@ -639,7 +916,8 @@ function updateMarketParticipant(
   const updated: Participant = {
     ...current,
     participantType: payload.participantType ?? current.participantType,
-    status: "status" in payload && payload.status ? payload.status : current.status,
+    status:
+      "status" in payload && payload.status ? payload.status : current.status,
     settings: updateParticipantSettings(current, payload, now),
     updatedAt: now,
   };
@@ -652,7 +930,8 @@ function updateMarketParticipant(
     metadata: {
       changedFields: Object.keys(payload),
       displayName: updated.displayName,
-      feeSettingOverrideEnabled: updated.settings?.feeSettingOverrideEnabled ?? false,
+      feeSettingOverrideEnabled:
+        updated.settings?.feeSettingOverrideEnabled ?? false,
       participantType: updated.participantType,
     },
     summary: `${PARTICIPATING_SELLER} ${updated.displayName} 설정 수정`,
@@ -668,15 +947,20 @@ function deleteMarketParticipant(marketId: string, participantId: string) {
   const hasReceipt = state.receipts.some(
     (receipt) =>
       receipt.marketId === marketId &&
-      receipt.saleLines.some((saleLine) => saleLine.participantId === participantId),
+      receipt.saleLines.some(
+        (saleLine) => saleLine.participantId === participantId,
+      ),
   );
 
   if (hasReceipt) {
-    throw badRequest(`영수증 기록이 있는 ${PARTICIPATING_SELLER}는 삭제할 수 없습니다.`);
+    throw badRequest(
+      `영수증 기록이 있는 ${PARTICIPATING_SELLER}는 삭제할 수 없습니다.`,
+    );
   }
 
   const nextParticipants = state.marketParticipants.filter(
-    (participant) => !(participant.marketId === marketId && participant.id === participantId),
+    (participant) =>
+      !(participant.marketId === marketId && participant.id === participantId),
   );
 
   if (nextParticipants.length === state.marketParticipants.length) {
@@ -734,11 +1018,17 @@ function createProduct(
   return product;
 }
 
-function updateProduct(productId: string, payload: UpdateProductPayload): Product {
+function updateProduct(
+  productId: string,
+  payload: UpdateProductPayload,
+): Product {
   const product = findProduct(productId);
   const updatedProduct: Product = {
     ...product,
-    name: payload.name !== undefined ? payload.name.trim() || product.name : product.name,
+    name:
+      payload.name !== undefined
+        ? payload.name.trim() || product.name
+        : product.name,
     priceAmount: payload.priceAmount ?? product.priceAmount,
     sku: payload.sku !== undefined ? payload.sku?.trim() || null : product.sku,
     status: payload.status ?? product.status,
@@ -764,7 +1054,10 @@ function updateProduct(productId: string, payload: UpdateProductPayload): Produc
   return updatedProduct;
 }
 
-function createReceipt(marketId: string, payload: CreateReceiptPayload): Receipt {
+function createReceipt(
+  marketId: string,
+  payload: CreateReceiptPayload,
+): Receipt {
   findMarket(marketId);
   const receipt = buildReceiptFromPayload(marketId, payload);
   getMockState().receipts.unshift(receipt);
@@ -786,7 +1079,10 @@ function createReceipt(marketId: string, payload: CreateReceiptPayload): Receipt
   return receipt;
 }
 
-function updateReceipt(receiptId: string, payload: UpdateReceiptPayload): Receipt {
+function updateReceipt(
+  receiptId: string,
+  payload: UpdateReceiptPayload,
+): Receipt {
   const existing = findReceipt(receiptId);
   const receipt = buildReceiptFromPayload(existing.marketId, payload, existing);
   replaceById(getMockState().receipts, receiptId, receipt);
@@ -933,7 +1229,10 @@ function buildReceiptFromPayload(
           updatedAt: now,
         };
       });
-      const grossAmount = items.reduce((sum, item) => sum + item.grossAmount, 0);
+      const grossAmount = items.reduce(
+        (sum, item) => sum + item.grossAmount,
+        0,
+      );
       const discountAmount = items.reduce(
         (sum, item) => sum + item.discountAmount,
         0,
@@ -952,7 +1251,9 @@ function buildReceiptFromPayload(
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
-    }) ?? existing?.saleLines ?? [];
+    }) ??
+    existing?.saleLines ??
+    [];
   const subtotalAmount = saleLines.reduce(
     (sum, saleLine) => sum + saleLine.grossAmount,
     0,
@@ -961,7 +1262,10 @@ function buildReceiptFromPayload(
     (sum, saleLine) => sum + saleLine.discountAmount,
     0,
   );
-  const totalAmount = saleLines.reduce((sum, saleLine) => sum + saleLine.netAmount, 0);
+  const totalAmount = saleLines.reduce(
+    (sum, saleLine) => sum + saleLine.netAmount,
+    0,
+  );
 
   return {
     id: receiptId,
@@ -970,13 +1274,16 @@ function buildReceiptFromPayload(
     receiptNo:
       payload.receiptNo !== undefined
         ? payload.receiptNo.trim() || null
-        : existing?.receiptNo ?? null,
+        : (existing?.receiptNo ?? null),
     customerLabel: existing?.customerLabel ?? null,
     soldAt,
     subtotalAmount,
     discountAmount,
     totalAmount,
-    memo: payload.memo !== undefined ? payload.memo?.trim() || null : existing?.memo ?? null,
+    memo:
+      payload.memo !== undefined
+        ? payload.memo?.trim() || null
+        : (existing?.memo ?? null),
     createdBy: existing?.createdBy ?? getMockState().currentUser.id,
     paymentSplits:
       payload.paymentSplits?.map((paymentSplit) => ({
@@ -999,8 +1306,12 @@ function buildReceiptFromPayload(
 function buildSettlementPreview(marketId: string): MarketSettlementPreview {
   findMarket(marketId);
   const participants = getMockState()
-    .marketParticipants.filter((participant) => participant.marketId === marketId)
-    .sort((left, right) => left.displayName.localeCompare(right.displayName, "ko-KR"));
+    .marketParticipants.filter(
+      (participant) => participant.marketId === marketId,
+    )
+    .sort((left, right) =>
+      left.displayName.localeCompare(right.displayName, "ko-KR"),
+    );
   const receipts = getMockState().receipts.filter(
     (receipt) => receipt.marketId === marketId,
   );
@@ -1071,10 +1382,12 @@ function buildParticipantSettlementPreview(
       discountAmount += saleLine.discountAmount;
       netSalesAmount += saleLine.netAmount;
 
-      const ratio = receipt.totalAmount > 0 ? saleLine.netAmount / receipt.totalAmount : 0;
+      const ratio =
+        receipt.totalAmount > 0 ? saleLine.netAmount / receipt.totalAmount : 0;
 
       for (const paymentSplit of receipt.paymentSplits) {
-        paymentAmounts[paymentSplit.paymentMethod] += paymentSplit.amount * ratio;
+        paymentAmounts[paymentSplit.paymentMethod] +=
+          paymentSplit.amount * ratio;
       }
     }
   }
@@ -1131,7 +1444,10 @@ function buildParticipantSettlementPreview(
   };
 }
 
-function createSettlement(marketId: string, payload: { memo?: string }): Settlement {
+function createSettlement(
+  marketId: string,
+  payload: { memo?: string },
+): Settlement {
   const state = getMockState();
   const preview = buildSettlementPreview(marketId);
   const now = nowIsoString();
@@ -1167,7 +1483,9 @@ function createSettlement(marketId: string, payload: { memo?: string }): Settlem
         id: createMockId("settlementChange"),
         settlementId,
         baseSettlementId: baseSettlement?.id ?? null,
-        changeType: baseSettlement ? "revision_confirmation" : "initial_confirmation",
+        changeType: baseSettlement
+          ? "revision_confirmation"
+          : "initial_confirmation",
         description: payload.memo?.trim() || null,
         amountDeltas: {},
         createdBy: state.currentUser.id,
@@ -1213,7 +1531,8 @@ function voidSettlement(
         settlementId,
         baseSettlementId: settlement.baseSettlementId,
         changeType: "manual_note",
-        description: payload.memo?.trim() || "mock 모드에서 정산을 무효 처리했습니다.",
+        description:
+          payload.memo?.trim() || "mock 모드에서 정산을 무효 처리했습니다.",
         amountDeltas: {},
         createdBy: getMockState().currentUser.id,
         createdAt: now,
@@ -1240,15 +1559,17 @@ function voidSettlement(
 }
 
 function listAuditLogs(url: URL): AuditLogListResponse {
-  const params = Object.fromEntries(url.searchParams.entries()) as AuditLogListParams & {
+  const params = Object.fromEntries(
+    url.searchParams.entries(),
+  ) as AuditLogListParams & {
     actorUserId?: string;
   };
   const fromTime = params.from ? Date.parse(params.from) : null;
   const toTime = params.to ? Date.parse(params.to) : null;
   const search = params.search?.trim().toLowerCase();
   const limit = Math.min(Number(params.limit ?? 80) || 80, 100);
-  const logs = getMockState().auditLogs
-    .filter((log) => {
+  const logs = getMockState()
+    .auditLogs.filter((log) => {
       if (params.marketId && log.marketId !== params.marketId) {
         return false;
       }
@@ -1283,11 +1604,19 @@ function listAuditLogs(url: URL): AuditLogListResponse {
         return true;
       }
 
-      return [log.summary, log.targetId, log.targetType, JSON.stringify(log.metadata)]
+      return [
+        log.summary,
+        log.targetId,
+        log.targetType,
+        JSON.stringify(log.metadata),
+      ]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(search));
     })
-    .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt))
+    .sort(
+      (left, right) =>
+        Date.parse(right.occurredAt) - Date.parse(left.occurredAt),
+    )
     .slice(0, limit);
 
   return { logs };
@@ -1347,7 +1676,9 @@ function findSettlement(settlementId: string): Settlement {
   return settlement;
 }
 
-function findMarketSettlementSettings(marketId: string): SettlementDefaultSettings {
+function findMarketSettlementSettings(
+  marketId: string,
+): SettlementDefaultSettings {
   findMarket(marketId);
   const settings = getMockState().marketSettlementSettings.find(
     (item) => item.marketId === marketId,
@@ -1368,7 +1699,9 @@ function findMarketSettlementSettings(marketId: string): SettlementDefaultSettin
   };
 }
 
-function resolveSettlementSettings(participant: Participant): SettlementFeeSettings {
+function resolveSettlementSettings(
+  participant: Participant,
+): SettlementFeeSettings {
   const marketId = participant.marketId;
   const fallback = marketId
     ? findMarketSettlementSettings(marketId)
@@ -1414,7 +1747,8 @@ function buildParticipantSettings({
   payload: CreateParticipantPayload | UpdateParticipantPayload;
   now: string;
 }): NonNullable<Participant["settings"]> {
-  const overrideEnabled = payload.feeSettingOverrideEnabled ?? hasFeeSettingInput(payload);
+  const overrideEnabled =
+    payload.feeSettingOverrideEnabled ?? hasFeeSettingInput(payload);
 
   return {
     id: marketParticipantId,
@@ -1422,8 +1756,12 @@ function buildParticipantSettings({
     participantId,
     marketId,
     feeSettingOverrideEnabled: overrideEnabled,
-    settlementType: overrideEnabled ? (payload.settlementType ?? "commission") : null,
-    salesCommissionRate: overrideEnabled ? (payload.salesCommissionRate ?? 0) : null,
+    settlementType: overrideEnabled
+      ? (payload.settlementType ?? "commission")
+      : null,
+    salesCommissionRate: overrideEnabled
+      ? (payload.salesCommissionRate ?? 0)
+      : null,
     cardFeeRate: overrideEnabled ? (payload.cardFeeRate ?? 0) : null,
     cardFeePayer: overrideEnabled ? (payload.cardFeePayer ?? "market") : null,
     participationFeeAmount: overrideEnabled
@@ -1446,7 +1784,8 @@ function updateParticipantSettings(
     participant.settings ??
     buildParticipantSettings({
       marketId: participant.marketId ?? "",
-      marketParticipantId: participant.marketParticipantId ?? createMockId("marketParticipant"),
+      marketParticipantId:
+        participant.marketParticipantId ?? createMockId("marketParticipant"),
       participantId: participant.id,
       payload: {},
       now,
@@ -1470,7 +1809,8 @@ function updateParticipantSettings(
   return {
     ...current,
     feeSettingOverrideEnabled: true,
-    settlementType: payload.settlementType ?? current.settlementType ?? "commission",
+    settlementType:
+      payload.settlementType ?? current.settlementType ?? "commission",
     salesCommissionRate:
       payload.salesCommissionRate ?? current.salesCommissionRate ?? 0,
     cardFeeRate: payload.cardFeeRate ?? current.cardFeeRate ?? 0,
@@ -1613,12 +1953,82 @@ function roundMoney(value: number): number {
   return Math.round(value);
 }
 
-function compareUpdatedDesc(left: { updatedAt: string }, right: { updatedAt: string }) {
+function compareUpdatedDesc(
+  left: { updatedAt: string },
+  right: { updatedAt: string },
+) {
   return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
 }
 
 function compareSoldAtDesc(left: Receipt, right: Receipt) {
   return Date.parse(right.soldAt) - Date.parse(left.soldAt);
+}
+
+function assertMockAdmin() {
+  const state = getMockState();
+
+  if (!state.isAuthenticated) {
+    throw unauthorized("Authentication is required.");
+  }
+
+  if (state.currentUser.role !== "admin") {
+    throw forbidden("Only admins can manage invitations.");
+  }
+}
+
+function createMockInviteUrl(invitationId: string): string {
+  const origin =
+    typeof window === "undefined"
+      ? "http://localhost:3002"
+      : window.location.origin;
+  const url = new URL("/join", origin);
+  url.searchParams.set("token", `${"x".repeat(48)}.${invitationId}`);
+
+  return url.toString();
+}
+
+function findActiveMockInvitation(token: string | undefined): Invitation {
+  const invitationId = token?.split(".").at(-1);
+  const invitation = getMockState().signupInvitations.find(
+    (candidate) => candidate.id === invitationId,
+  );
+
+  if (!invitation || getMockInvitationStatus(invitation) !== "pending") {
+    throw badRequest("Invitation is invalid or expired.");
+  }
+
+  return invitation;
+}
+
+function getMockInvitationStatus(invitation: Invitation): Invitation["status"] {
+  if (invitation.usedAt) {
+    return "accepted";
+  }
+
+  if (invitation.revokedAt) {
+    return "revoked";
+  }
+
+  if (Date.parse(invitation.expiresAt) <= Date.now()) {
+    return "expired";
+  }
+
+  return "pending";
+}
+
+function isInvitableUserRole(value: unknown): value is InvitableUserRole {
+  return value === "user" || value === "seller";
+}
+
+function maskMockEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  if (!localPart || !domain) {
+    return "***";
+  }
+
+  const visible = localPart.slice(0, Math.min(2, localPart.length));
+
+  return `${visible}${"*".repeat(Math.max(3, localPart.length - visible.length))}@${domain}`;
 }
 
 function notFound(message: string): MockApiError {
@@ -1627,4 +2037,16 @@ function notFound(message: string): MockApiError {
 
 function badRequest(message: string): MockApiError {
   return new MockApiError(400, message, { message, statusCode: 400 });
+}
+
+function unauthorized(message: string): MockApiError {
+  return new MockApiError(401, message, { message, statusCode: 401 });
+}
+
+function forbidden(message: string): MockApiError {
+  return new MockApiError(403, message, { message, statusCode: 403 });
+}
+
+function conflict(message: string): MockApiError {
+  return new MockApiError(409, message, { message, statusCode: 409 });
 }
