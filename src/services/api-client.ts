@@ -2,6 +2,12 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock";
 
+type ApiRequestOptions = {
+  auth?: "auto" | "skip";
+};
+
+type AuthExpiredListener = () => void;
+
 type ApiErrorBody = {
   message?: string | string[];
   error?: string;
@@ -23,26 +29,30 @@ export type ApiDownloadResult = {
   filename: string;
 };
 
+const authExpiredListeners = new Set<AuthExpiredListener>();
+let refreshRequest: Promise<boolean> | null = null;
+
+export function subscribeToAuthExpiration(
+  listener: AuthExpiredListener,
+): () => void {
+  authExpiredListeners.add(listener);
+
+  return () => {
+    authExpiredListeners.delete(listener);
+  };
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
+  options: ApiRequestOptions = {},
 ): Promise<T> {
   if (isMockDataSource()) {
     const { handleMockApiRequest } = await import("@/mocks/mock-api");
     return handleMockApiRequest<T>(path, init);
   }
 
-  const headers = new Headers(init.headers);
-
-  if (init.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
+  const response = await fetchWithSession(path, init, options);
 
   if (!response.ok) {
     const body = await parseErrorBody(response);
@@ -66,11 +76,11 @@ export async function apiDownload(
     return handleMockApiDownload(path, fallbackFilename);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    cache: "no-store",
-    credentials: "include",
-  });
+  const response = await fetchWithSession(
+    path,
+    { ...init, cache: "no-store" },
+    { auth: "auto" },
+  );
 
   if (!response.ok) {
     const body = await parseErrorBody(response);
@@ -93,6 +103,87 @@ export async function apiDownload(
 
 function isMockDataSource(): boolean {
   return DATA_SOURCE === "mock";
+}
+
+async function fetchWithSession(
+  path: string,
+  init: RequestInit,
+  options: ApiRequestOptions,
+): Promise<Response> {
+  const request = createApiRequest(path, init);
+  const retryRequest = request.clone();
+  const response = await fetch(request);
+
+  if (response.status !== 401 || options.auth === "skip") {
+    return response;
+  }
+
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    return response;
+  }
+
+  const retryResponse = await fetch(retryRequest);
+  if (retryResponse.status === 401) {
+    notifyAuthExpired();
+  }
+
+  return retryResponse;
+}
+
+function createApiRequest(path: string, init: RequestInit): Request {
+  const headers = new Headers(init.headers);
+
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  return new Request(`${API_BASE_URL}${path}`, {
+    ...init,
+    credentials: "include",
+    headers,
+  });
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (refreshRequest) {
+    return refreshRequest;
+  }
+
+  const pendingRequest = performRefresh();
+  refreshRequest = pendingRequest;
+
+  try {
+    return await pendingRequest;
+  } finally {
+    if (refreshRequest === pendingRequest) {
+      refreshRequest = null;
+    }
+  }
+}
+
+async function performRefresh(): Promise<boolean> {
+  const response = await fetch(
+    createApiRequest("/auth/refresh", { method: "POST" }),
+  );
+
+  if (response.ok) {
+    return true;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    notifyAuthExpired();
+    return false;
+  }
+
+  const body = await parseErrorBody(response);
+  throw new ApiError(getErrorMessage(body, response.status), response.status, body);
+}
+
+function notifyAuthExpired(): void {
+  for (const listener of authExpiredListeners) {
+    listener();
+  }
 }
 
 async function parseErrorBody(response: Response): Promise<ApiErrorBody | null> {

@@ -1,7 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { authKeys } from "@/hooks/query-keys";
+import {
+  ApiError,
+  subscribeToAuthExpiration,
+} from "@/services/api-client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -11,9 +16,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 30_000,
             refetchOnWindowFocus: false,
+            retry: (failureCount, error) =>
+              !(error instanceof ApiError && error.status === 401) &&
+              failureCount < 3,
           },
         },
       }),
+  );
+
+  useEffect(
+    () =>
+      subscribeToAuthExpiration(() => {
+        queryClient.clear();
+        queryClient.setQueryData(authKeys.me, null);
+      }),
+    [queryClient],
   );
 
   return (

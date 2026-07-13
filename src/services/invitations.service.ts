@@ -61,17 +61,25 @@ export function revokeInvitation(invitationId: string): Promise<Invitation> {
 export function validateInvitation(
   token: string,
 ): Promise<InvitationValidation> {
-  return apiRequest<InvitationValidation>("/auth/invitations/validate", {
-    method: "POST",
-    body: JSON.stringify({ token }),
-  });
+  return apiRequest<InvitationValidation>(
+    "/auth/invitations/validate",
+    {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    },
+    { auth: "skip" },
+  );
 }
 
 export function acceptInvitation(
   payload: AcceptInvitationPayload,
 ): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>("/auth/invitations/accept", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<AuthResponse>(
+    "/auth/invitations/accept",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    { auth: "skip" },
+  );
 }
