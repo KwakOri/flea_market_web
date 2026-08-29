@@ -36,14 +36,20 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<AuthResponse>(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    { auth: "skip" },
+  );
 }
 
 export async function logout(): Promise<{ ok: true }> {
-  return apiRequest<{ ok: true }>("/auth/logout", {
-    method: "POST",
-  });
+  return apiRequest<{ ok: true }>(
+    "/auth/logout",
+    { method: "POST" },
+    { auth: "skip" },
+  );
 }

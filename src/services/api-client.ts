@@ -1,12 +1,33 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"
+).replace(/\/$/, "");
 const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock";
+const API_READY_CACHE_MS = 60_000;
+const API_WAKE_REQUEST_TIMEOUT_MS = 8_000;
+const API_WAKE_MAX_WAIT_MS = 90_000;
+
+let apiReadyUntil = 0;
+let apiReadinessRequest: Promise<void> | null = null;
+let apiReadinessState: ApiReadinessState = "idle";
+const apiReadinessListeners = new Set<() => void>();
+
+type ApiRequestOptions = {
+  auth?: "auto" | "skip";
+};
+
+type AuthExpiredListener = () => void;
 
 type ApiErrorBody = {
   message?: string | string[];
   error?: string;
   statusCode?: number;
 };
+
+export type ApiReadinessState =
+  | "idle"
+  | "waking"
+  | "ready"
+  | "unavailable";
 
 export class ApiError extends Error {
   constructor(
@@ -18,31 +39,62 @@ export class ApiError extends Error {
   }
 }
 
+export class ApiUnavailableError extends Error {
+  constructor() {
+    super("서비스를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.");
+    this.name = "ApiUnavailableError";
+  }
+}
+
+export function subscribeToApiReadiness(listener: () => void): () => void {
+  apiReadinessListeners.add(listener);
+
+  return () => {
+    apiReadinessListeners.delete(listener);
+  };
+}
+
+export function getApiReadinessState(): ApiReadinessState {
+  return apiReadinessState;
+}
+
+export function getApiReadinessServerSnapshot(): ApiReadinessState {
+  return "idle";
+}
+
 export type ApiDownloadResult = {
   blob: Blob;
   filename: string;
 };
 
+const authExpiredListeners = new Set<AuthExpiredListener>();
+let refreshRequest: Promise<boolean> | null = null;
+
+export function subscribeToAuthExpiration(
+  listener: AuthExpiredListener,
+): () => void {
+  authExpiredListeners.add(listener);
+
+  return () => {
+    authExpiredListeners.delete(listener);
+  };
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
+  options: ApiRequestOptions = {},
 ): Promise<T> {
   if (isMockDataSource()) {
     const { handleMockApiRequest } = await import("@/mocks/mock-api");
     return handleMockApiRequest<T>(path, init);
   }
 
-  const headers = new Headers(init.headers);
-
-  if (init.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  if (path !== "/health") {
+    await ensureApiReady();
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
+  const response = await fetchWithSession(path, init, options);
 
   if (!response.ok) {
     const body = await parseErrorBody(response);
@@ -66,11 +118,13 @@ export async function apiDownload(
     return handleMockApiDownload(path, fallbackFilename);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    cache: "no-store",
-    credentials: "include",
-  });
+  await ensureApiReady();
+
+  const response = await fetchWithSession(
+    path,
+    { ...init, cache: "no-store" },
+    { auth: "auto" },
+  );
 
   if (!response.ok) {
     const body = await parseErrorBody(response);
@@ -93,6 +147,191 @@ export async function apiDownload(
 
 function isMockDataSource(): boolean {
   return DATA_SOURCE === "mock";
+}
+
+function ensureApiReady(): Promise<void> {
+  if (Date.now() < apiReadyUntil) {
+    return Promise.resolve();
+  }
+
+  if (apiReadinessRequest) {
+    return apiReadinessRequest;
+  }
+
+  setApiReadinessState("waking");
+  const pendingRequest = waitForApiReady().then(
+    () => {
+      setApiReadinessState("ready");
+    },
+    (error) => {
+      setApiReadinessState("unavailable");
+      throw error;
+    },
+  );
+  apiReadinessRequest = pendingRequest;
+  pendingRequest.then(
+    () => clearApiReadinessRequest(pendingRequest),
+    () => clearApiReadinessRequest(pendingRequest),
+  );
+
+  return pendingRequest;
+}
+
+function setApiReadinessState(nextState: ApiReadinessState): void {
+  if (apiReadinessState === nextState) {
+    return;
+  }
+
+  apiReadinessState = nextState;
+  for (const listener of apiReadinessListeners) {
+    listener();
+  }
+}
+
+async function waitForApiReady(): Promise<void> {
+  const deadline = Date.now() + API_WAKE_MAX_WAIT_MS;
+  let retryDelay = 0;
+
+  while (Date.now() < deadline) {
+    if (retryDelay > 0) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        break;
+      }
+
+      await sleep(Math.min(retryDelay, remaining));
+      if (Date.now() >= deadline) {
+        break;
+      }
+    }
+
+    try {
+      const response = await fetchHealth();
+      if (response.ok) {
+        const body = await response.json().catch(() => null);
+        if (body?.status === "ok") {
+          apiReadyUntil = Date.now() + API_READY_CACHE_MS;
+          return;
+        }
+      }
+    } catch {
+      // Render may still be waking the service, so keep polling until the deadline.
+    }
+
+    retryDelay = retryDelay === 0 ? 1_000 : Math.min(retryDelay * 2, 15_000);
+  }
+
+  throw new ApiUnavailableError();
+}
+
+async function fetchHealth(): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    API_WAKE_REQUEST_TIMEOUT_MS,
+  );
+
+  try {
+    return await fetch(`${API_BASE_URL}/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function clearApiReadinessRequest(request: Promise<void>): void {
+  if (apiReadinessRequest === request) {
+    apiReadinessRequest = null;
+  }
+}
+
+function sleep(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+
+async function fetchWithSession(
+  path: string,
+  init: RequestInit,
+  options: ApiRequestOptions,
+): Promise<Response> {
+  const request = createApiRequest(path, init);
+  const retryRequest = request.clone();
+  const response = await fetch(request);
+
+  if (response.status !== 401 || options.auth === "skip") {
+    return response;
+  }
+
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    return response;
+  }
+
+  const retryResponse = await fetch(retryRequest);
+  if (retryResponse.status === 401) {
+    notifyAuthExpired();
+  }
+
+  return retryResponse;
+}
+
+function createApiRequest(path: string, init: RequestInit): Request {
+  const headers = new Headers(init.headers);
+
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  return new Request(`${API_BASE_URL}${path}`, {
+    ...init,
+    credentials: "include",
+    headers,
+  });
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (refreshRequest) {
+    return refreshRequest;
+  }
+
+  const pendingRequest = performRefresh();
+  refreshRequest = pendingRequest;
+
+  try {
+    return await pendingRequest;
+  } finally {
+    if (refreshRequest === pendingRequest) {
+      refreshRequest = null;
+    }
+  }
+}
+
+async function performRefresh(): Promise<boolean> {
+  const response = await fetch(
+    createApiRequest("/auth/refresh", { method: "POST" }),
+  );
+
+  if (response.ok) {
+    return true;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    notifyAuthExpired();
+    return false;
+  }
+
+  const body = await parseErrorBody(response);
+  throw new ApiError(getErrorMessage(body, response.status), response.status, body);
+}
+
+function notifyAuthExpired(): void {
+  for (const listener of authExpiredListeners) {
+    listener();
+  }
 }
 
 async function parseErrorBody(response: Response): Promise<ApiErrorBody | null> {

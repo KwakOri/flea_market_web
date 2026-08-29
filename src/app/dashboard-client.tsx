@@ -178,11 +178,15 @@ export function DashboardClient({
   }
 
   if (currentUser.isLoading) {
-    return <PageStateMessage message="사용자 정보를 확인하는 중입니다." />;
+    return (
+      <PageStateMessage message="서비스를 준비하는 중입니다. 첫 접속은 최대 1분 정도 걸릴 수 있습니다." />
+    );
   }
 
   if (currentUser.isError) {
-    return <PageStateMessage message="사용자 정보를 불러오지 못했습니다." />;
+    return (
+      <PageStateMessage message="서비스를 준비하지 못했습니다. 잠시 후 페이지를 새로고침해주세요." />
+    );
   }
 
   if (!user) {
