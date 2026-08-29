@@ -1,15 +1,29 @@
 "use client";
 
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { useApiReadiness } from "@/hooks/use-api-readiness";
+import { authKeys } from "@/hooks/query-keys";
 import { buttonVariants } from "@/lib/design-system";
 
 export function ApiReadinessOverlay() {
   const readiness = useApiReadiness();
+  const queryClient = useQueryClient();
+  const authRequestCount = useIsFetching({
+    exact: true,
+    queryKey: authKeys.me,
+  });
+  const authQueryState = queryClient.getQueryState(authKeys.me);
+  const isAuthBootstrapLoading =
+    readiness !== "idle" &&
+    authRequestCount > 0 &&
+    authQueryState?.status === "pending" &&
+    authQueryState.data === undefined;
   const isWaking = readiness === "waking";
   const isUnavailable = readiness === "unavailable";
+  const shouldShowLoading = isWaking || isAuthBootstrapLoading;
 
-  if (!isWaking && !isUnavailable) {
+  if (!shouldShowLoading && !isUnavailable) {
     return null;
   }
 

@@ -178,9 +178,7 @@ export function DashboardClient({
   }
 
   if (currentUser.isLoading) {
-    return (
-      <PageStateMessage message="서비스를 준비하는 중입니다. 첫 접속은 최대 1분 정도 걸릴 수 있습니다." />
-    );
+    return null;
   }
 
   if (currentUser.isError) {
