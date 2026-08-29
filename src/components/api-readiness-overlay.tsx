@@ -22,6 +22,12 @@ export function ApiReadinessOverlay() {
   const isWaking = readiness === "waking";
   const isUnavailable = readiness === "unavailable";
   const shouldShowLoading = isWaking || isAuthBootstrapLoading;
+  const loadingTitle = isWaking
+    ? "서비스를 준비하는 중입니다"
+    : "로딩중입니다";
+  const loadingDescription =
+    "첫 접속은 최대 1분 정도 걸릴 수 있습니다. 잠시만 기다려주세요.";
+  const shouldShowDescription = isUnavailable || isWaking;
 
   if (!shouldShowLoading && !isUnavailable) {
     return null;
@@ -29,7 +35,9 @@ export function ApiReadinessOverlay() {
 
   return (
     <div
-      aria-describedby="api-readiness-description"
+      aria-describedby={
+        shouldShowDescription ? "api-readiness-description" : undefined
+      }
       aria-labelledby="api-readiness-title"
       aria-live={isUnavailable ? "assertive" : "polite"}
       aria-modal="true"
@@ -50,16 +58,18 @@ export function ApiReadinessOverlay() {
         >
           {isUnavailable
             ? "서비스에 연결할 수 없습니다"
-            : "서비스를 준비하는 중입니다"}
+            : loadingTitle}
         </h2>
-        <p
-          className="mt-2 text-sm leading-relaxed text-muted"
-          id="api-readiness-description"
-        >
-          {isUnavailable
-            ? "잠시 후 다시 시도해주세요."
-            : "첫 접속은 최대 1분 정도 걸릴 수 있습니다. 잠시만 기다려주세요."}
-        </p>
+        {shouldShowDescription && (
+          <p
+            className="mt-2 text-sm leading-relaxed text-muted"
+            id="api-readiness-description"
+          >
+            {isUnavailable
+              ? "잠시 후 다시 시도해주세요."
+              : loadingDescription}
+          </p>
+        )}
         {isUnavailable && (
           <button
             className={`${buttonVariants({ size: "sm" })} mt-5 w-full`}
