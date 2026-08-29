@@ -14,13 +14,14 @@ export function ApiReadinessOverlay() {
     queryKey: authKeys.me,
   });
   const authQueryState = queryClient.getQueryState(authKeys.me);
+  const isWaking = readiness === "waking";
+  const isUnavailable = readiness === "unavailable";
+
   const isAuthBootstrapLoading =
-    readiness !== "idle" &&
+    readiness === "ready" &&
     authRequestCount > 0 &&
     authQueryState?.status === "pending" &&
     authQueryState.data === undefined;
-  const isWaking = readiness === "waking";
-  const isUnavailable = readiness === "unavailable";
   const shouldShowLoading = isWaking || isAuthBootstrapLoading;
   const loadingTitle = isWaking
     ? "서비스를 준비하는 중입니다"

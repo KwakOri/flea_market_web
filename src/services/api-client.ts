@@ -3,6 +3,7 @@ const API_BASE_URL = (
 ).replace(/\/$/, "");
 const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock";
 const API_READY_CACHE_MS = 60_000;
+const API_READINESS_FEEDBACK_DELAY_MS = 250;
 const API_WAKE_REQUEST_TIMEOUT_MS = 8_000;
 const API_WAKE_MAX_WAIT_MS = 90_000;
 
@@ -158,7 +159,7 @@ function ensureApiReady(): Promise<void> {
     return apiReadinessRequest;
   }
 
-  setApiReadinessState("waking");
+  setApiReadinessState("idle");
   const pendingRequest = waitForApiReady().then(
     () => {
       setApiReadinessState("ready");
@@ -169,9 +170,20 @@ function ensureApiReady(): Promise<void> {
     },
   );
   apiReadinessRequest = pendingRequest;
+  const wakingFeedbackTimer = setTimeout(() => {
+    if (apiReadinessRequest === pendingRequest) {
+      setApiReadinessState("waking");
+    }
+  }, API_READINESS_FEEDBACK_DELAY_MS);
   pendingRequest.then(
-    () => clearApiReadinessRequest(pendingRequest),
-    () => clearApiReadinessRequest(pendingRequest),
+    () => {
+      clearTimeout(wakingFeedbackTimer);
+      clearApiReadinessRequest(pendingRequest);
+    },
+    () => {
+      clearTimeout(wakingFeedbackTimer);
+      clearApiReadinessRequest(pendingRequest);
+    },
   );
 
   return pendingRequest;
