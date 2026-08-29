@@ -10,6 +10,7 @@ import type {
   AuthResponse,
   EditableUserRole,
   InvitableUserRole,
+  UserRole,
 } from "@/services/auth.service";
 import type {
   CreatedInvitation,
@@ -49,7 +50,10 @@ import type {
   SettlementListItem,
   SettlementParticipantSnapshot,
 } from "@/services/settlements.service";
-import type { ManagedUser } from "@/services/users.service";
+import type {
+  CreateUserPayload,
+  ManagedUser,
+} from "@/services/users.service";
 import { ApiError } from "@/services/api-client";
 import {
   cloneMockData,
@@ -363,6 +367,67 @@ function routeMockApi(path: string, init: RequestInit): unknown {
     state.isAuthenticated = false;
     persistMockState();
     return { ok: true };
+  }
+
+  if (url.pathname === "/users" && method === "POST") {
+    assertMockAdmin();
+    const payload = readJsonBody<Partial<CreateUserPayload>>(init);
+    const email = payload.email?.trim().toLowerCase();
+    const displayName = payload.displayName?.trim();
+    const password = payload.password;
+    const role = payload.role;
+
+    if (
+      !email ||
+      !email.includes("@") ||
+      !displayName ||
+      displayName.length < 2 ||
+      !password ||
+      password.length < 8 ||
+      !isUserRole(role)
+    ) {
+      throw badRequest(
+        "A valid email, name, password, and role are required.",
+      );
+    }
+
+    const state = getMockState();
+    if (
+      state.managedUsers.some(
+        (managedUser) => managedUser.email.toLowerCase() === email,
+      )
+    ) {
+      throw conflict("Email is already registered.");
+    }
+
+    const now = nowIsoString();
+    const managedUser: ManagedUser = {
+      id: createMockId("user"),
+      email,
+      displayName,
+      role,
+      status: "active",
+      emailVerifiedAt: now,
+      lastLoginAt: null,
+      createdAt: now,
+    };
+    state.managedUsers.unshift(managedUser);
+    recordAuditLog({
+      action: "create",
+      category: "admin",
+      metadata: {
+        email,
+        mode: "mock",
+        role,
+        signupMethod: "admin_direct",
+      },
+      summary: `계정 ${email} 직접 생성`,
+      targetId: managedUser.id,
+      targetType: "user",
+    });
+    persistMockState();
+
+    return managedUser;
   }
 
   if (url.pathname === "/users" && method === "GET") {
@@ -2021,6 +2086,10 @@ function getMockInvitationStatus(invitation: Invitation): Invitation["status"] {
 }
 
 function isInvitableUserRole(value: unknown): value is InvitableUserRole {
+  return isUserRole(value);
+}
+
+function isUserRole(value: unknown): value is UserRole {
   return value === "user" || value === "seller" || value === "admin";
 }
 

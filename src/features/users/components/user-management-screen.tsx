@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
 import { InvitationManagement } from "@/features/auth/components/invitation-management";
+import { DirectUserCreation } from "@/features/users/components/direct-user-creation";
 import { useUpdateUserRole, useUsers } from "@/hooks/use-users";
 import {
   panelVariants,
@@ -60,6 +61,7 @@ export function UserManagementScreen({
 
   return (
     <div className="grid gap-5">
+      <DirectUserCreation enabled={enabled} />
       <InvitationManagement enabled={enabled} />
       <section className={panelVariants()}>
         <div className={sectionHeaderClass}>
