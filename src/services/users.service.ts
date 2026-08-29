@@ -14,6 +14,22 @@ export type ManagedUser = {
   createdAt: string;
 };
 
+export type CreateUserPayload = {
+  displayName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+};
+
+export function createUser(
+  payload: CreateUserPayload,
+): Promise<ManagedUser> {
+  return apiRequest<ManagedUser>("/users", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listUsers(): Promise<ManagedUser[]> {
   return apiRequest<ManagedUser[]>("/users");
 }

@@ -3,13 +3,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { userKeys } from "@/hooks/query-keys";
 import type { EditableUserRole } from "@/services/auth.service";
-import { listUsers, updateUserRole } from "@/services/users.service";
+import {
+  createUser,
+  listUsers,
+  updateUserRole,
+  type CreateUserPayload,
+} from "@/services/users.service";
 
 export function useUsers(enabled: boolean) {
   return useQuery({
     queryKey: userKeys.all,
     queryFn: listUsers,
     enabled,
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateUserPayload) => createUser(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 }
 
