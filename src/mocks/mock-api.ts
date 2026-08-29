@@ -6,7 +6,11 @@ import type {
   AuditLogListResponse,
   AuditLogResult,
 } from "@/services/audit-logs.service";
-import type { AuthResponse, InvitableUserRole } from "@/services/auth.service";
+import type {
+  AuthResponse,
+  EditableUserRole,
+  InvitableUserRole,
+} from "@/services/auth.service";
 import type {
   CreatedInvitation,
   Invitation,
@@ -372,8 +376,8 @@ function routeMockApi(path: string, init: RequestInit): unknown {
 
   if (userRoleMatch?.[1] && method === "PATCH") {
     assertMockAdmin();
-    const payload = readJsonBody<{ role?: InvitableUserRole }>(init);
-    if (!isInvitableUserRole(payload.role)) {
+    const payload = readJsonBody<{ role?: EditableUserRole }>(init);
+    if (!isEditableUserRole(payload.role)) {
       throw badRequest("A valid user role is required.");
     }
 
@@ -2017,6 +2021,10 @@ function getMockInvitationStatus(invitation: Invitation): Invitation["status"] {
 }
 
 function isInvitableUserRole(value: unknown): value is InvitableUserRole {
+  return value === "user" || value === "seller" || value === "admin";
+}
+
+function isEditableUserRole(value: unknown): value is EditableUserRole {
   return value === "user" || value === "seller";
 }
 

@@ -1,5 +1,5 @@
 import { apiRequest } from "./api-client";
-import type { InvitableUserRole, UserRole } from "./auth.service";
+import type { EditableUserRole, UserRole } from "./auth.service";
 
 export type UserStatus = "pending_email_verification" | "active" | "disabled";
 
@@ -20,7 +20,7 @@ export function listUsers(): Promise<ManagedUser[]> {
 
 export function updateUserRole(
   userId: string,
-  role: InvitableUserRole,
+  role: EditableUserRole,
 ): Promise<ManagedUser> {
   return apiRequest<ManagedUser>(`/users/${encodeURIComponent(userId)}/role`, {
     method: "PATCH",

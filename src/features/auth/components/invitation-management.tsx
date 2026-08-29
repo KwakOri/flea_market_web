@@ -218,6 +218,10 @@ function getFormString(formData: FormData, name: string): string {
 function getInvitableUserRole(
   value: FormDataEntryValue | null,
 ): InvitableUserRole {
+  if (value === "admin") {
+    return "admin";
+  }
+
   return value === "seller" ? "seller" : "user";
 }
 

@@ -12,8 +12,8 @@ import {
   selectClass,
 } from "@/lib/design-system";
 import { getErrorMessage } from "@/lib/error-message";
-import { invitableUserRoles, userRoleLabels } from "@/lib/user-role";
-import type { InvitableUserRole } from "@/services/auth.service";
+import { editableUserRoles, userRoleLabels } from "@/lib/user-role";
+import type { EditableUserRole } from "@/services/auth.service";
 import type { UserStatus } from "@/services/users.service";
 
 const userStatusLabels: Record<UserStatus, string> = {
@@ -38,7 +38,7 @@ export function UserManagementScreen({
     event: ChangeEvent<HTMLSelectElement>,
   ) {
     setMessage(null);
-    const role = getInvitableUserRole(event.currentTarget.value);
+    const role = getEditableUserRole(event.currentTarget.value);
 
     try {
       await updateRole.mutateAsync({ role, userId });
@@ -65,8 +65,8 @@ export function UserManagementScreen({
         <div className={sectionHeaderClass}>
           <p className={sectionTitleClass}>가입 사용자</p>
           <p className={sectionDescriptionClass}>
-            가입한 운영자와 셀러를 확인하고 역할을 변경합니다. 관리자 역할은 이
-            화면에서 변경할 수 없습니다.
+            가입한 사용자를 확인하고 운영자와 셀러의 역할을 변경합니다. 관리자
+            역할은 이 화면에서 변경할 수 없습니다.
           </p>
         </div>
 
@@ -115,7 +115,7 @@ export function UserManagementScreen({
                       value={user.role}
                       onChange={(event) => handleRoleChange(user.id, event)}
                     >
-                      {invitableUserRoles.map((role) => (
+                      {editableUserRoles.map((role) => (
                         <option key={role.value} value={role.value}>
                           {role.label}
                         </option>
@@ -134,7 +134,7 @@ export function UserManagementScreen({
   );
 }
 
-function getInvitableUserRole(value: string): InvitableUserRole {
+function getEditableUserRole(value: string): EditableUserRole {
   return value === "seller" ? "seller" : "user";
 }
 
