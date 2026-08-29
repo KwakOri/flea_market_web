@@ -1,7 +1,8 @@
 import { ApiError, apiRequest } from "./api-client";
 
 export type UserRole = "user" | "seller" | "admin";
-export type InvitableUserRole = Extract<UserRole, "user" | "seller">;
+export type InvitableUserRole = UserRole;
+export type EditableUserRole = Exclude<UserRole, "admin">;
 
 export type AuthUser = {
   id: string;

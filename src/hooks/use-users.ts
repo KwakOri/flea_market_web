@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { userKeys } from "@/hooks/query-keys";
-import type { InvitableUserRole } from "@/services/auth.service";
+import type { EditableUserRole } from "@/services/auth.service";
 import { listUsers, updateUserRole } from "@/services/users.service";
 
 export function useUsers(enabled: boolean) {
@@ -21,7 +21,7 @@ export function useUpdateUserRole() {
       role,
       userId,
     }: {
-      role: InvitableUserRole;
+      role: EditableUserRole;
       userId: string;
     }) => updateUserRole(userId, role),
     onSuccess: () => {
