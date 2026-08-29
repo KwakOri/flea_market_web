@@ -8,6 +8,8 @@ const API_WAKE_MAX_WAIT_MS = 90_000;
 
 let apiReadyUntil = 0;
 let apiReadinessRequest: Promise<void> | null = null;
+let apiReadinessState: ApiReadinessState = "idle";
+const apiReadinessListeners = new Set<() => void>();
 
 type ApiRequestOptions = {
   auth?: "auto" | "skip";
@@ -20,6 +22,12 @@ type ApiErrorBody = {
   error?: string;
   statusCode?: number;
 };
+
+export type ApiReadinessState =
+  | "idle"
+  | "waking"
+  | "ready"
+  | "unavailable";
 
 export class ApiError extends Error {
   constructor(
@@ -36,6 +44,22 @@ export class ApiUnavailableError extends Error {
     super("서비스를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.");
     this.name = "ApiUnavailableError";
   }
+}
+
+export function subscribeToApiReadiness(listener: () => void): () => void {
+  apiReadinessListeners.add(listener);
+
+  return () => {
+    apiReadinessListeners.delete(listener);
+  };
+}
+
+export function getApiReadinessState(): ApiReadinessState {
+  return apiReadinessState;
+}
+
+export function getApiReadinessServerSnapshot(): ApiReadinessState {
+  return "idle";
 }
 
 export type ApiDownloadResult = {
@@ -134,7 +158,16 @@ function ensureApiReady(): Promise<void> {
     return apiReadinessRequest;
   }
 
-  const pendingRequest = waitForApiReady();
+  setApiReadinessState("waking");
+  const pendingRequest = waitForApiReady().then(
+    () => {
+      setApiReadinessState("ready");
+    },
+    (error) => {
+      setApiReadinessState("unavailable");
+      throw error;
+    },
+  );
   apiReadinessRequest = pendingRequest;
   pendingRequest.then(
     () => clearApiReadinessRequest(pendingRequest),
@@ -142,6 +175,17 @@ function ensureApiReady(): Promise<void> {
   );
 
   return pendingRequest;
+}
+
+function setApiReadinessState(nextState: ApiReadinessState): void {
+  if (apiReadinessState === nextState) {
+    return;
+  }
+
+  apiReadinessState = nextState;
+  for (const listener of apiReadinessListeners) {
+    listener();
+  }
 }
 
 async function waitForApiReady(): Promise<void> {
