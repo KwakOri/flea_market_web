@@ -28,8 +28,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(
     () =>
       subscribeToAuthExpiration(() => {
-        queryClient.clear();
         queryClient.setQueryData(authKeys.me, null);
+
+        const currentUserQuery = queryClient.getQueryCache().find({
+          queryKey: authKeys.me,
+          exact: true,
+        });
+
+        queryClient.removeQueries({
+          predicate: (query) => query !== currentUserQuery,
+        });
       }),
     [queryClient],
   );
