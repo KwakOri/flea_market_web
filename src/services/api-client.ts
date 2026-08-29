@@ -1,6 +1,13 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"
+).replace(/\/$/, "");
 const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock";
+const API_READY_CACHE_MS = 60_000;
+const API_WAKE_REQUEST_TIMEOUT_MS = 8_000;
+const API_WAKE_MAX_WAIT_MS = 90_000;
+
+let apiReadyUntil = 0;
+let apiReadinessRequest: Promise<void> | null = null;
 
 type ApiRequestOptions = {
   auth?: "auto" | "skip";
@@ -21,6 +28,13 @@ export class ApiError extends Error {
     readonly body: ApiErrorBody | null,
   ) {
     super(message);
+  }
+}
+
+export class ApiUnavailableError extends Error {
+  constructor() {
+    super("서비스를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.");
+    this.name = "ApiUnavailableError";
   }
 }
 
@@ -52,6 +66,10 @@ export async function apiRequest<T>(
     return handleMockApiRequest<T>(path, init);
   }
 
+  if (path !== "/health") {
+    await ensureApiReady();
+  }
+
   const response = await fetchWithSession(path, init, options);
 
   if (!response.ok) {
@@ -75,6 +93,8 @@ export async function apiDownload(
     const { handleMockApiDownload } = await import("@/mocks/mock-api");
     return handleMockApiDownload(path, fallbackFilename);
   }
+
+  await ensureApiReady();
 
   const response = await fetchWithSession(
     path,
@@ -103,6 +123,90 @@ export async function apiDownload(
 
 function isMockDataSource(): boolean {
   return DATA_SOURCE === "mock";
+}
+
+function ensureApiReady(): Promise<void> {
+  if (Date.now() < apiReadyUntil) {
+    return Promise.resolve();
+  }
+
+  if (apiReadinessRequest) {
+    return apiReadinessRequest;
+  }
+
+  const pendingRequest = waitForApiReady();
+  apiReadinessRequest = pendingRequest;
+  pendingRequest.then(
+    () => clearApiReadinessRequest(pendingRequest),
+    () => clearApiReadinessRequest(pendingRequest),
+  );
+
+  return pendingRequest;
+}
+
+async function waitForApiReady(): Promise<void> {
+  const deadline = Date.now() + API_WAKE_MAX_WAIT_MS;
+  let retryDelay = 0;
+
+  while (Date.now() < deadline) {
+    if (retryDelay > 0) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        break;
+      }
+
+      await sleep(Math.min(retryDelay, remaining));
+      if (Date.now() >= deadline) {
+        break;
+      }
+    }
+
+    try {
+      const response = await fetchHealth();
+      if (response.ok) {
+        const body = await response.json().catch(() => null);
+        if (body?.status === "ok") {
+          apiReadyUntil = Date.now() + API_READY_CACHE_MS;
+          return;
+        }
+      }
+    } catch {
+      // Render may still be waking the service, so keep polling until the deadline.
+    }
+
+    retryDelay = retryDelay === 0 ? 1_000 : Math.min(retryDelay * 2, 15_000);
+  }
+
+  throw new ApiUnavailableError();
+}
+
+async function fetchHealth(): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    API_WAKE_REQUEST_TIMEOUT_MS,
+  );
+
+  try {
+    return await fetch(`${API_BASE_URL}/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function clearApiReadinessRequest(request: Promise<void>): void {
+  if (apiReadinessRequest === request) {
+    apiReadinessRequest = null;
+  }
+}
+
+function sleep(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
 }
 
 async function fetchWithSession(

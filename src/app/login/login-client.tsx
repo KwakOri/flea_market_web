@@ -94,7 +94,13 @@ export function LoginClient({ nextPath }: { nextPath?: string }) {
               )}
               {currentUser.isLoading && (
                 <p className="text-sm text-muted">
-                  사용자 정보를 확인하는 중입니다.
+                  서비스를 준비하는 중입니다. 첫 접속은 최대 1분 정도 걸릴 수
+                  있습니다.
+                </p>
+              )}
+              {currentUser.isError && (
+                <p className="text-sm font-medium text-error">
+                  서비스를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.
                 </p>
               )}
             </form>
